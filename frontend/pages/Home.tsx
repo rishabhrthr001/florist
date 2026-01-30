@@ -36,7 +36,6 @@ const Home: React.FC = () => {
   const [hotPicks, setHotPicks] = useState<Product[]>([]);
   const [seasonal, setSeasonal] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-
   const [loading, setLoading] = useState(true);
 
   /* ---------------- FETCH HOME SECTIONS ---------------- */
@@ -52,12 +51,7 @@ const Home: React.FC = () => {
           axios.get(`${API}/category`),
         ]);
 
-        console.log("HOT:", hotRes.data);
-        console.log("SEASONAL:", seasonalRes.data);
-        console.log("CATEGORIES:", catRes.data);
-
         const hot = hotRes.data?.items?.map((i: any) => i.productId) ?? [];
-
         const seasonalItems =
           seasonalRes.data?.items?.map((i: any) => i.productId) ?? [];
 
@@ -70,9 +64,6 @@ const Home: React.FC = () => {
         setCategories(catList);
       } catch (err) {
         console.error("Homepage fetch failed", err);
-        setHotPicks([]);
-        setSeasonal([]);
-        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -116,27 +107,88 @@ const Home: React.FC = () => {
     <div className="overflow-hidden bg-[#FAF9F6]">
       {/* ---------------- HERO ---------------- */}
       <section className="relative h-screen w-full flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img src="/flowers1.webp" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/70" />
+        <div className="absolute inset-0 z-0">
+          {/* Desktop Image */}
+          <motion.img
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 12, ease: "easeOut" }}
+            src="/flowers1.webp"
+            alt="Graceful florals"
+            className="hidden md:block w-full h-full object-cover"
+          />
+
+          {/* Mobile Image */}
+          <motion.img
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 12, ease: "easeOut" }}
+            src="/flowers2.png"
+            alt="Graceful florals mobile"
+            className="block md:hidden w-full h-full object-cover object-top"
+          />
+
+          {/* Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
         </div>
 
-        <div className="relative z-10 container mx-auto px-6 md:px-24 pt-32">
-          <h1 className="font-serif text-7xl md:text-9xl text-white">
-            Pure <span className="italic text-[#F8BBD0]">Grace.</span>
-          </h1>
+        {/* CONTENT */}
+        <div className="container mx-auto px-6 md:px-24 relative z-10 pt-24 md:pt-0">
+          <div className="max-w-3xl">
+            {/* BRAND */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="flex items-center gap-4 mb-6"
+            >
+              <span className="w-8 h-px bg-[#F8BBD0]" />
+              <span className="text-[10px] uppercase tracking-[0.35em] text-[#F8BBD0] font-bold">
+                Mangalam Florist • Premier Boutique
+              </span>
+            </motion.div>
 
-          <Button
-            onClick={() => navigate("/explore")}
-            className="mt-8 bg-[#F8BBD0] text-white px-6 py-3 md:px-10 md:py-5 text-sm md:text-base"
-          >
-            Explore the Shop
-          </Button>
+            {/* TITLE */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 0.2 }}
+              className="font-serif text-5xl md:text-9xl text-white mb-6 leading-[0.95] pt-24 font-bold tracking-tighter"
+            >
+              <span className="text-white">Pure</span>{" "}
+              <span className="italic font-normal text-[#F8BBD0]">Grace.</span>
+            </motion.h1>
+
+            {/* DESCRIPTION */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1, delay: 0.4 }}
+              className="text-white/80 text-base md:text-xl max-w-lg mb-10 leading-relaxed font-light"
+            >
+              Discover our signature lily collection and artisanal confections,
+              curated to transform moments into memories.
+            </motion.p>
+
+            {/* CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              <Button
+                onClick={() => navigate("/explore")}
+                className="bg-[#F8BBD0] text-white hover:bg-[#f797b9] px-10 py-5 text-[10px] font-bold tracking-[0.2em]"
+              >
+                Explore the Shop
+              </Button>
+            </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ---------------- CATEGORIES ---------------- */}
-
       <section className="py-20 max-w-7xl mx-auto px-6">
         <div className="text-center mb-14">
           <span className="text-[10px] uppercase tracking-widest text-[#F8BBD0] font-bold block mb-2">
@@ -153,14 +205,17 @@ const Home: React.FC = () => {
                   className="h-[260px] rounded-3xl bg-gray-200 animate-pulse"
                 />
               ))
-            : Array.isArray(categories) &&
-              categories.map((cat, idx) => (
+            : categories.map((cat, idx) => (
                 <motion.div
                   key={cat._id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: idx * 0.08 }}
+                  transition={{
+                    delay: idx * 0.18,
+                    duration: 0.9,
+                    ease: "easeOut",
+                  }}
                   onClick={() => navigate(`/explore?category=${cat.slug}`)}
                   className="relative cursor-pointer overflow-hidden rounded-[2rem] group aspect-[4/5]"
                 >
@@ -172,7 +227,7 @@ const Home: React.FC = () => {
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] group-hover:scale-110"
                   />
 
-                  <div className="absolute inset-0 bg-black/50 group-hover:bg-black/60 transition" />
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/55 transition" />
 
                   <div className="absolute bottom-0 left-0 w-full p-6 text-white">
                     <h3 className="font-serif text-xl">{cat.name}</h3>
@@ -187,7 +242,6 @@ const Home: React.FC = () => {
       </section>
 
       {/* ---------------- SEASONAL ---------------- */}
-
       <section className="py-20 max-w-7xl mx-auto px-6">
         <h2 className="font-serif text-4xl mb-10">Seasonal Highlights</h2>
 
@@ -204,7 +258,6 @@ const Home: React.FC = () => {
       </section>
 
       {/* ---------------- HOT PICKS ---------------- */}
-
       <section className="py-20 bg-white border-y">
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="font-serif text-4xl mb-10 text-center">Hot Picks</h2>
@@ -223,7 +276,6 @@ const Home: React.FC = () => {
       </section>
 
       {/* ---------------- OCCASIONS ---------------- */}
-
       <section className="py-16 md:py-24 max-w-7xl mx-auto px-6">
         <div className="text-center mb-12 md:mb-16">
           <span className="text-[10px] uppercase tracking-widest text-[#F8BBD0] font-bold mb-2 block">
@@ -238,10 +290,14 @@ const Home: React.FC = () => {
           {occasionCategories.map((occ, idx) => (
             <motion.div
               key={occ.id}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
+              transition={{
+                delay: idx * 0.22,
+                duration: 1,
+                ease: "easeOut",
+              }}
               onClick={() => navigate("/explore")}
               className="group cursor-pointer relative overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] aspect-[4/5]"
             >
@@ -251,7 +307,7 @@ const Home: React.FC = () => {
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1400ms]"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
               <div className="absolute bottom-0 left-0 w-full p-6 text-white">
                 <h3 className="font-serif text-lg md:text-2xl">{occ.name}</h3>
