@@ -4,7 +4,7 @@ import axios from "axios";
 import { Menu, X } from "lucide-react";
 import { io, Socket } from "socket.io-client";
 
-import AdminSidebar from "@/admin/components/AdminSideBar";
+import AdminSidebar from "@/admin/components/AdminSidebar";
 import Dashboard from "@/admin/components/Dashboard";
 import ProductPanel from "@/admin/components/ProductPanel";
 import CategoryPanel from "@/admin/components/CategoryPanel";
