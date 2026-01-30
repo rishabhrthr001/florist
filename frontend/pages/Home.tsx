@@ -35,7 +35,6 @@ const Home: React.FC = () => {
 
   const [hotPicks, setHotPicks] = useState<Product[]>([]);
   const [seasonal, setSeasonal] = useState<Product[]>([]);
-
   const [categories, setCategories] = useState<Category[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -53,15 +52,27 @@ const Home: React.FC = () => {
           axios.get(`${API}/category`),
         ]);
 
-        setHotPicks(hotRes.data?.items?.map((i: any) => i.productId) || []);
+        console.log("HOT:", hotRes.data);
+        console.log("SEASONAL:", seasonalRes.data);
+        console.log("CATEGORIES:", catRes.data);
 
-        setSeasonal(
-          seasonalRes.data?.items?.map((i: any) => i.productId) || [],
-        );
+        const hot = hotRes.data?.items?.map((i: any) => i.productId) ?? [];
 
-        setCategories(catRes.data || []);
+        const seasonalItems =
+          seasonalRes.data?.items?.map((i: any) => i.productId) ?? [];
+
+        const catList: Category[] = Array.isArray(catRes.data)
+          ? catRes.data
+          : catRes.data?.categories || catRes.data?.items || [];
+
+        setHotPicks(Array.isArray(hot) ? hot : []);
+        setSeasonal(Array.isArray(seasonalItems) ? seasonalItems : []);
+        setCategories(catList);
       } catch (err) {
         console.error("Homepage fetch failed", err);
+        setHotPicks([]);
+        setSeasonal([]);
+        setCategories([]);
       } finally {
         setLoading(false);
       }
@@ -142,7 +153,8 @@ const Home: React.FC = () => {
                   className="h-[260px] rounded-3xl bg-gray-200 animate-pulse"
                 />
               ))
-            : categories.map((cat, idx) => (
+            : Array.isArray(categories) &&
+              categories.map((cat, idx) => (
                 <motion.div
                   key={cat._id}
                   initial={{ opacity: 0, y: 20 }}

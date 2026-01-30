@@ -15,8 +15,8 @@ interface Category {
 interface Product {
   _id: string;
   name: string;
-  images: string[];
-  categoryId: Category;
+  images?: string[];
+  categoryId?: Category;
 }
 
 interface Slot {
@@ -48,13 +48,15 @@ const HotPicks = () => {
     try {
       const { data } = await axios.get(`${API}/home-section/hot-picks`);
 
-      if (data?.items?.length) {
-        const mapped = [1, 2, 3, 4].map((pos) => {
+      console.log("HOT PICKS RESPONSE:", data);
+
+      if (Array.isArray(data?.items)) {
+        const mapped: Slot[] = [1, 2, 3, 4].map((pos) => {
           const found = data.items.find((i: any) => i.position === pos);
 
           return {
             position: pos,
-            product: found?.productId,
+            product: found?.productId || undefined,
           };
         });
 
@@ -79,9 +81,16 @@ const HotPicks = () => {
 
       const { data } = await axios.get(`${API}/product`);
 
-      setAllProducts(data);
+      console.log("PRODUCT RESPONSE:", data);
+
+      const products: Product[] = Array.isArray(data)
+        ? data
+        : data?.data || data?.products || data?.items || [];
+
+      setAllProducts(products);
     } catch {
       toast.error("Failed to load products");
+      setAllProducts([]);
     } finally {
       setLoadingProducts(false);
     }
@@ -102,11 +111,13 @@ const HotPicks = () => {
 
   /* ---------------- FILTER ---------------- */
 
-  const filtered = allProducts.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.categoryId?.name?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = Array.isArray(allProducts)
+    ? allProducts.filter(
+        (p) =>
+          p.name.toLowerCase().includes(search.toLowerCase()) ||
+          p.categoryId?.name?.toLowerCase().includes(search.toLowerCase()),
+      )
+    : [];
 
   /* ---------------- SAVE ---------------- */
 
@@ -161,8 +172,9 @@ const HotPicks = () => {
               {slot.product ? (
                 <>
                   <img
-                    src={slot.product.images[0]}
+                    src={slot.product.images?.[0] || "/placeholder.png"}
                     className="w-full h-full object-cover"
+                    alt={slot.product.name}
                   />
 
                   <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
@@ -241,8 +253,9 @@ const HotPicks = () => {
                     >
                       <div className="aspect-[4/5] rounded-xl overflow-hidden border">
                         <img
-                          src={p.images[0]}
+                          src={p.images?.[0] || "/placeholder.png"}
                           className="w-full h-full object-cover"
+                          alt={p.name}
                         />
                       </div>
 
@@ -251,7 +264,7 @@ const HotPicks = () => {
                       </p>
 
                       <p className="text-[10px] text-gray-400">
-                        {p.categoryId?.name}
+                        {p.categoryId?.name || "—"}
                       </p>
                     </button>
                   ))}
