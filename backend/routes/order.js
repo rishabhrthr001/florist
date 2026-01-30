@@ -1,6 +1,6 @@
 import express from "express";
 import Order from "../models/Order.js";
-import OrderCounter from "../models/OrderCounter.js";
+import OrderCounter from "../models/orderCounter.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { getIO } from "../socket/index.js";
 
