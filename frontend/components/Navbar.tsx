@@ -118,20 +118,18 @@ const Navbar: React.FC = () => {
 
         {/* ================= DESKTOP NAV ================= */}
 
-        {/* ================= DESKTOP NAV ================= */}
-
         <div className="hidden md:flex items-center space-x-10">
-          {/* HOME FIRST */}
+          {/* HOME */}
           <button
             onClick={() => handleNav("/")}
-            className={`text-xs uppercase tracking-widest font-semibold ${
+            className={`text-xs uppercase tracking-widest font-semibold hover:text-[#F8BBD0] ${
               location.pathname === "/" ? "text-[#F8BBD0]" : ""
             }`}
           >
             Home
           </button>
 
-          {/* SHOP SECOND + BOLD */}
+          {/* SHOP */}
           <div
             className="relative"
             onMouseEnter={() => setIsShopOpen(true)}
@@ -167,10 +165,10 @@ const Navbar: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          {/* MAKE YOUR OWN THIRD */}
+          {/* MAKE YOUR OWN — FIXED HOVER */}
           <button
             onClick={() => handleNav("/make-your-own")}
-            className="text-xs uppercase tracking-widest font-semibold"
+            className="text-xs uppercase tracking-widest font-semibold hover:text-[#F8BBD0]"
           >
             Make Your Own
           </button>
@@ -179,6 +177,16 @@ const Navbar: React.FC = () => {
         {/* ================= RIGHT SIDE ================= */}
 
         <div className="flex items-center gap-5">
+          {/* LOGIN WHEN NOT AUTH */}
+          {!loading && !user && (
+            <button
+              onClick={() => navigate("/login")}
+              className="flex items-center gap-2 hover:text-[#F8BBD0]"
+            >
+              <User size={20} />
+            </button>
+          )}
+
           {/* MOBILE USER */}
           {!loading && user && (
             <div className="md:hidden relative">
@@ -238,7 +246,7 @@ const Navbar: React.FC = () => {
           {/* DESKTOP USER */}
           {!loading && user && (
             <div className="hidden md:block relative group">
-              <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/60">
+              <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 hover:bg-white/80">
                 <div className="w-7 h-7 rounded-full bg-[#F8BBD0] text-white flex items-center justify-center text-xs font-bold uppercase">
                   {user.name.charAt(0)}
                 </div>
