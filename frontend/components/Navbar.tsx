@@ -6,6 +6,7 @@ import axios from "axios";
 
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
+import API from "@/config";
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -32,7 +33,7 @@ const Navbar: React.FC = () => {
   /* ---------------- FETCH CATEGORIES ---------------- */
 
   useEffect(() => {
-    axios.get("http://localhost:3001/category").then((res) => {
+    axios.get(`${API}/category`).then((res) => {
       setCategories(res.data);
     });
   }, []);
