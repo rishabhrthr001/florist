@@ -9,11 +9,47 @@ import { useAuth } from "../context/AuthContext";
 
 /* ---------------- TYPES ---------------- */
 
+interface CustomAddition {
+  item: {
+    id: string;
+    name: string;
+    price: number;
+  };
+  qty: number;
+}
+
+interface CustomBouquet {
+  base?: {
+    id: string;
+    name: string;
+    price: number;
+  };
+
+  wrapper?: {
+    id: string;
+    name: string;
+    price: number;
+  };
+
+  ribbon?: {
+    id: string;
+    name: string;
+    price: number;
+  };
+
+  message?: string;
+
+  additions: CustomAddition[];
+}
+
 interface OrderItem {
-  productId: string;
+  productId: string | null;
   name: string;
   quantity: number;
   price: number;
+
+  isCustom?: boolean;
+  custom?: CustomBouquet;
 }
 
 interface Order {
@@ -71,13 +107,9 @@ const MyOrders: React.FC = () => {
   useEffect(() => {
     if (!token) return;
 
-    const socket = io("http://localhost:3001", {
+    const socket = io(API, {
       auth: { token },
       withCredentials: true,
-    });
-
-    socket.on("connect", () => {
-      console.log("👤 User socket connected");
     });
 
     socket.on("order-updated", (updated: Order) => {
@@ -98,7 +130,7 @@ const MyOrders: React.FC = () => {
     };
   }, [token]);
 
-  /* ---------------- UI ---------------- */
+  /* ---------------- UI STATES ---------------- */
 
   if (loading)
     return (
@@ -115,38 +147,43 @@ const MyOrders: React.FC = () => {
     );
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-28">
-      <h1 className="font-serif text-4xl mb-12">My Orders</h1>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-24">
+      <h1 className="font-serif text-3xl sm:text-4xl mb-8 sm:mb-12">
+        My Orders
+      </h1>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {orders.map((order) => {
           const open = openId === order._id;
 
           return (
             <div
               key={order._id}
-              className="bg-white rounded-3xl border shadow-sm overflow-hidden transition hover:shadow-md"
+              className="bg-white rounded-2xl sm:rounded-3xl border shadow-sm overflow-hidden transition hover:shadow-md"
             >
               {/* HEADER */}
               <button
                 onClick={() => setOpenId(open ? null : order._id)}
-                className="w-full p-6 grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-6 text-left"
+                className="w-full px-4 py-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 text-left"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                {/* LEFT */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
                   <div>
-                    <p className="font-mono text-xs text-gray-400">
+                    <p className="font-mono text-[10px] text-gray-400">
                       {order.orderId}
                     </p>
-                    <p className="font-semibold text-xl">
+
+                    <p className="font-semibold text-lg sm:text-xl">
                       ₹{order.totalAmount}
                     </p>
-                    <p className="text-xs text-gray-500">
+
+                    <p className="text-[11px] text-gray-500">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </p>
                   </div>
 
                   <span
-                    className={`w-fit px-4 py-1.5 rounded-full text-[10px] uppercase font-bold tracking-wide ${
+                    className={`px-3 py-1 rounded-full text-[9px] uppercase font-bold tracking-wide w-fit ${
                       order.orderStatus === "delivered"
                         ? "bg-green-100 text-green-700"
                         : order.orderStatus === "cancelled"
@@ -163,8 +200,8 @@ const MyOrders: React.FC = () => {
                 </div>
 
                 <ChevronDown
-                  size={20}
-                  className={`ml-auto transition-transform ${
+                  size={18}
+                  className={`transition-transform shrink-0 ${
                     open ? "rotate-180" : ""
                   }`}
                 />
@@ -178,16 +215,17 @@ const MyOrders: React.FC = () => {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.35, ease: "easeInOut" }}
+                    transition={{ duration: 0.3 }}
                     className="overflow-hidden border-t"
                   >
-                    <div className="px-6 pb-8 pt-6 space-y-8">
+                    <div className="px-4 sm:px-6 pb-6 pt-5 space-y-6">
                       {/* Address */}
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">
+                        <p className="text-[9px] uppercase tracking-widest text-gray-400 mb-1">
                           Delivery Address
                         </p>
-                        <p className="text-sm text-gray-600 max-w-xl">
+
+                        <p className="text-xs sm:text-sm text-gray-600 max-w-xl">
                           {order.address.line1}, {order.address.city},{" "}
                           {order.address.state}
                         </p>
@@ -195,7 +233,7 @@ const MyOrders: React.FC = () => {
 
                       {/* Items */}
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">
+                        <p className="text-[9px] uppercase tracking-widest text-gray-400 mb-3">
                           Items
                         </p>
 
@@ -203,18 +241,69 @@ const MyOrders: React.FC = () => {
                           {order.items.map((i, idx) => (
                             <div
                               key={idx}
-                              className="flex justify-between items-center bg-gray-50 rounded-2xl px-5 py-4"
+                              className="bg-gray-50 rounded-xl px-4 py-3"
                             >
-                              <div>
-                                <p className="font-semibold">{i.name}</p>
-                                <p className="text-xs text-gray-500">
-                                  ₹{i.price} × {i.quantity}
+                              <div className="flex justify-between gap-3">
+                                <div>
+                                  <p className="font-semibold text-sm">
+                                    {i.name}
+                                  </p>
+
+                                  <p className="text-[11px] text-gray-500">
+                                    ₹{i.price} × {i.quantity}
+                                  </p>
+                                </div>
+
+                                <p className="font-bold text-sm">
+                                  ₹{i.price * i.quantity}
                                 </p>
                               </div>
 
-                              <p className="font-bold">
-                                ₹{i.price * i.quantity}
-                              </p>
+                              {/* CUSTOM */}
+                              {i.isCustom && i.custom && (
+                                <div className="mt-3 bg-white border rounded-lg p-3 text-[11px] space-y-1">
+                                  <p className="font-semibold text-pink-600 text-[11px]">
+                                    Custom Bouquet
+                                  </p>
+
+                                  {i.custom.base && (
+                                    <p>
+                                      <strong>Base:</strong>{" "}
+                                      {i.custom.base.name}
+                                    </p>
+                                  )}
+
+                                  {i.custom.wrapper && (
+                                    <p>
+                                      <strong>Wrapper:</strong>{" "}
+                                      {i.custom.wrapper.name}
+                                    </p>
+                                  )}
+
+                                  {i.custom.ribbon && (
+                                    <p>
+                                      <strong>Ribbon:</strong>{" "}
+                                      {i.custom.ribbon.name}
+                                    </p>
+                                  )}
+
+                                  {i.custom.additions?.length > 0 && (
+                                    <div className="ml-2">
+                                      {i.custom.additions.map((a) => (
+                                        <p key={a.item.id}>
+                                          • {a.item.name} × {a.qty}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {i.custom.message && (
+                                    <p className="italic text-gray-500">
+                                      💌 {i.custom.message}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>

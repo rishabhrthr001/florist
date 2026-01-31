@@ -36,36 +36,57 @@ const userSchema = new mongoose.Schema(
     addresses: [
       {
         label: {
-          type: String, // Home, Office etc
+          type: String, // Home / Office / Friend etc
+          required: true,
+          trim: true,
         },
 
         name: {
           type: String,
+          required: true,
+          trim: true,
         },
 
         phone: {
           type: String,
+          required: true,
+          trim: true,
         },
 
-        street: {
+        addressLine1: {
           type: String,
+          required: true,
+          trim: true,
+        },
+
+        addressLine2: {
+          type: String,
+          trim: true,
+          default: "",
+        },
+
+        landmark: {
+          type: String,
+          required: true,
+          trim: true,
         },
 
         city: {
           type: String,
+          required: true,
+          default: "Delhi",
         },
 
         state: {
           type: String,
+          required: true,
+          default: "Delhi",
         },
 
         postalCode: {
           type: String,
-        },
-
-        country: {
-          type: String,
-          default: "India",
+          required: true,
+          match: [/^1100\d{2}$/, "Delivery only inside Delhi"],
         },
 
         isDefault: {

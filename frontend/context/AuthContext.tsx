@@ -53,30 +53,31 @@ const AuthContext = createContext<AuthContextType | null>(null);
 /* ---------------- PROVIDER ---------------- */
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  // 🔥 hydrate instantly
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem("user");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem("token");
+  });
+
   const [loading, setLoading] = useState(true);
 
-  /* ---------------- RESTORE SESSION ---------------- */
+  /* ---------------- AUTO LOGOUT ---------------- */
 
-  useEffect(() => {
-    const savedToken = localStorage.getItem("token");
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
-    if (!savedToken) {
-      setLoading(false);
-      return;
-    }
+    delete axios.defaults.headers.common["Authorization"];
 
-    setToken(savedToken);
-    axios.defaults.headers.common["Authorization"] = `Bearer ${savedToken}`;
+    socket.disconnect();
 
-    // 🔥 SOCKET CONNECT ON REFRESH
-    socket.auth = { token: savedToken };
-    socket.connect();
-
-    // fetch fresh user
-    refreshUser().finally(() => setLoading(false));
-  }, []);
+    setUser(null);
+    setToken(null);
+  };
 
   /* ---------------- REFRESH USER ---------------- */
 
@@ -91,6 +92,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  /* ---------------- RESTORE SESSION ---------------- */
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+
+    if (!savedToken) {
+      setLoading(false);
+      return;
+    }
+
+    setToken(savedToken);
+    axios.defaults.headers.common["Authorization"] = `Bearer ${savedToken}`;
+
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+
+    // socket reconnect
+    socket.auth = { token: savedToken };
+    socket.connect();
+
+    refreshUser().finally(() => setLoading(false));
+  }, []);
+
   /* ---------------- LOGIN ---------------- */
 
   const login = (jwt: string, userData: User) => {
@@ -99,7 +125,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     axios.defaults.headers.common["Authorization"] = `Bearer ${jwt}`;
 
-    // 🔥 SOCKET CONNECT ON LOGIN
     socket.auth = { token: jwt };
     socket.connect();
 
@@ -107,20 +132,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(userData);
   };
 
-  /* ---------------- LOGOUT ---------------- */
+  /* ---------------- AXIOS INTERCEPTOR (AUTO LOGOUT) ---------------- */
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (res) => res,
+      (err) => {
+        if (err.response?.status === 401) {
+          console.warn("Token expired → logging out");
+          logout();
+        }
 
-    delete axios.defaults.headers.common["Authorization"];
+        return Promise.reject(err);
+      },
+    );
 
-    // 🔥 SOCKET DISCONNECT
-    socket.disconnect();
-
-    setUser(null);
-    setToken(null);
-  };
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
 
   return (
     <AuthContext.Provider

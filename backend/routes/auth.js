@@ -81,21 +81,33 @@ router.post("/login", async (req, res) => {
 
     const user = await User.findOne({ email }).select("+password");
 
-    if (!user) return res.status(400).json({ msg: "Invalid credentials" });
+    if (!user) {
+      return res.status(400).json({ msg: "Invalid credentials" });
+    }
 
     const match = await bcrypt.compare(password, user.password);
 
-    if (!match) return res.status(400).json({ msg: "Invalid credentials" });
+    if (!match) {
+      return res.status(400).json({ msg: "Invalid credentials" });
+    }
 
     const token = generateToken(user);
 
+    const safeUser = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone || null,
+      addresses: user.addresses || [],
+      totalOrders: user.totalOrders || 0,
+      totalSpent: user.totalSpent || 0,
+      createdAt: user.createdAt,
+    };
+
     res.json({
       token,
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-      },
+      user: safeUser,
     });
   } catch (err) {
     console.error(err);

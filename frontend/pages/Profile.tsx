@@ -8,6 +8,8 @@ import {
   X,
   Pencil,
   Check,
+  Trash2,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -18,13 +20,26 @@ import API from "../config";
 /* ---------------- TYPES ---------------- */
 
 interface Address {
-  line1: string;
-  line2?: string;
+  _id?: string;
+
+  label: string;
+  name: string;
+  phone: string;
+
+  addressLine1: string;
+  addressLine2: string;
+  landmark: string;
+
   city: string;
   state: string;
-  zip: string;
-  country: string;
+  postalCode: string;
+
+  isDefault?: boolean;
 }
+
+/* ---------------- CONSTANTS ---------------- */
+
+const DELHI_PIN_REGEX = /^1100\d{2}$/;
 
 /* ---------------- COMPONENT ---------------- */
 
@@ -32,6 +47,7 @@ const Profile: React.FC = () => {
   const { user, token, login } = useAuth();
 
   const [openAddressModal, setOpenAddressModal] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
 
   const [savingPhone, setSavingPhone] = useState(false);
   const [savingAddress, setSavingAddress] = useState(false);
@@ -41,12 +57,17 @@ const Profile: React.FC = () => {
   const [phone, setPhone] = useState(user?.phone || "");
 
   const [address, setAddress] = useState<Address>({
-    line1: user?.address?.line1 || "",
-    line2: user?.address?.line2 || "",
-    city: user?.address?.city || "",
-    state: user?.address?.state || "",
-    zip: user?.address?.zip || "",
-    country: user?.address?.country || "",
+    label: "",
+    name: "",
+    phone: "",
+
+    addressLine1: "",
+    addressLine2: "",
+    landmark: "",
+
+    city: "Delhi",
+    state: "Delhi",
+    postalCode: "",
   });
 
   if (!user) {
@@ -57,7 +78,7 @@ const Profile: React.FC = () => {
     );
   }
 
-  /* ---------------- SAVE PHONE ---------------- */
+  /* ---------------- PHONE ---------------- */
 
   const savePhone = async () => {
     try {
@@ -66,61 +87,109 @@ const Profile: React.FC = () => {
       const { data } = await axios.patch(
         `${API}/user/me`,
         { phone },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       login(token!, data);
       toast.success("Phone updated 📞");
       setEditingPhone(false);
-    } catch {
-      toast.error("Failed to update phone");
     } finally {
       setSavingPhone(false);
     }
   };
 
-  /* ---------------- SAVE ADDRESS ---------------- */
+  /* ---------------- VALIDATION ---------------- */
+
+  const validateAddress = () => {
+    const required = [
+      address.label,
+      address.name,
+      address.phone,
+      address.addressLine1,
+      address.landmark,
+      address.city,
+      address.state,
+      address.postalCode,
+    ];
+
+    if (required.some((v) => !v.trim())) {
+      toast.error("All address fields are required");
+      return false;
+    }
+
+    if (!DELHI_PIN_REGEX.test(address.postalCode)) {
+      toast.error("We only deliver inside Delhi 📍");
+      return false;
+    }
+
+    return true;
+  };
+
+  /* ---------------- ADDRESS CRUD ---------------- */
 
   const saveAddress = async () => {
+    if (!validateAddress()) return;
+
     try {
       setSavingAddress(true);
 
-      const { data } = await axios.patch(
-        `${API}/user/me`,
-        { address },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      const url = editingAddressId
+        ? `${API}/user/addresses/${editingAddressId}`
+        : `${API}/user/addresses`;
+
+      const method = editingAddressId ? "patch" : "post";
+
+      const { data } = await axios[method](url, address, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       login(token!, data);
-      toast.success("Address updated 📍");
+
+      toast.success(
+        editingAddressId ? "Address updated 📍" : "Address added 📍",
+      );
+
       setOpenAddressModal(false);
-    } catch {
-      toast.error("Failed to update address");
+      setEditingAddressId(null);
     } finally {
       setSavingAddress(false);
     }
   };
 
+  const deleteAddress = async (id: string) => {
+    const { data } = await axios.delete(`${API}/user/addresses/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    login(token!, data);
+    toast.success("Address removed");
+  };
+
+  const makeDefault = async (id: string) => {
+    const { data } = await axios.patch(
+      `${API}/user/addresses/${id}/default`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+
+    login(token!, data);
+    toast.success("Default address updated ⭐");
+  };
+
+  /* ---------------- UI ---------------- */
+
   return (
     <>
       <div className="min-h-screen bg-[#FAF9F6] pt-40 pb-24 px-6">
         <div className="max-w-5xl mx-auto space-y-14">
-          {/* Header */}
-
+          {/* HEADER */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-[2.5rem] shadow-xl p-10 md:p-14"
           >
             <h1 className="font-serif text-4xl md:text-5xl mb-3">My Atelier</h1>
+
             <p className="text-gray-500 text-sm">
               Manage your account and deliveries.
             </p>
@@ -144,19 +213,15 @@ const Profile: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Info + Address */}
-
+          {/* PERSONAL + ADDRESS */}
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Personal */}
-
+            {/* PERSONAL */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-[2.5rem] shadow-lg p-10"
+              className="bg-white rounded-[2.5rem] shadow-lg p-10 h-fit self-start"
             >
               <h2 className="font-serif text-2xl mb-6">Personal Details</h2>
-
-              {/* PHONE INLINE EDIT */}
 
               <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                 <div className="flex items-center gap-4">
@@ -174,7 +239,10 @@ const Profile: React.FC = () => {
                     ) : (
                       <input
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        inputMode="numeric"
+                        onChange={(e) =>
+                          setPhone(e.target.value.replace(/\D/g, ""))
+                        }
                         className="mt-1 h-9 border rounded-lg px-3 text-sm"
                       />
                     )}
@@ -187,12 +255,7 @@ const Profile: React.FC = () => {
                   </button>
                 ) : (
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setEditingPhone(false);
-                        setPhone(user.phone || "");
-                      }}
-                    >
+                    <button onClick={() => setEditingPhone(false)}>
                       <X size={16} />
                     </button>
 
@@ -210,90 +273,224 @@ const Profile: React.FC = () => {
               />
             </motion.div>
 
-            {/* Address */}
-
+            {/* ADDRESSES */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white rounded-[2.5rem] shadow-lg p-10"
             >
-              <h2 className="font-serif text-2xl mb-6">Shipping Address</h2>
+              <h2 className="font-serif text-2xl mb-6">Saved Addresses</h2>
 
-              {user.address ? (
-                <div className="space-y-3 text-sm text-gray-600">
-                  <p>{user.address.line1}</p>
-                  {user.address.line2 && <p>{user.address.line2}</p>}
-                  <p>
-                    {user.address.city}, {user.address.state}
-                  </p>
-                  <p>
-                    {user.address.zip}, {user.address.country}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-gray-400 italic text-sm">
-                  No address saved yet.
-                </p>
-              )}
+              <div className="space-y-5">
+                {user.addresses?.map((addr: Address) => (
+                  <div
+                    key={addr._id}
+                    className="border rounded-2xl p-5 relative bg-[#FAF9F6]/40 hover:bg-white transition shadow-sm"
+                  >
+                    {addr.isDefault && (
+                      <span className="absolute right-3 top-3 text-[10px] bg-green-100 text-green-700 px-3 py-1 rounded-full">
+                        Default
+                      </span>
+                    )}
+
+                    <p className="uppercase tracking-widest text-[10px] text-gray-400">
+                      {addr.label}
+                    </p>
+
+                    <p className="font-semibold text-sm">{addr.name}</p>
+
+                    <p className="text-sm text-gray-600 mt-1">
+                      {addr.addressLine1}
+                      {addr.addressLine2 && `, ${addr.addressLine2}`}
+                      <br />
+                      {addr.city}, {addr.state}
+                    </p>
+
+                    <div className="flex justify-between text-xs text-gray-500 mt-3">
+                      <span>📍 {addr.postalCode}</span>
+                      <span>📞 {addr.phone}</span>
+                    </div>
+
+                    <div className="flex gap-5 mt-4 text-xs">
+                      <button
+                        onClick={() => {
+                          setEditingAddressId(addr._id!);
+                          setAddress(addr);
+                          setOpenAddressModal(true);
+                        }}
+                        className="flex items-center gap-1 hover:text-pink-500"
+                      >
+                        <Pencil size={12} /> Edit
+                      </button>
+
+                      <button
+                        onClick={() => deleteAddress(addr._id!)}
+                        className="text-red-500 flex items-center gap-1"
+                      >
+                        <Trash2 size={12} /> Delete
+                      </button>
+
+                      {!addr.isDefault && (
+                        <button
+                          onClick={() => makeDefault(addr._id!)}
+                          className="flex items-center gap-1 hover:text-yellow-500"
+                        >
+                          <Star size={12} /> Make Default
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               <button
-                onClick={() => setOpenAddressModal(true)}
-                className="mt-6 px-6 py-3 rounded-full border text-xs uppercase tracking-widest hover:border-[#F8BBD0] hover:text-[#F8BBD0]"
+                onClick={() => {
+                  setEditingAddressId(null);
+                  setAddress({
+                    label: "",
+                    name: "",
+                    phone: "",
+                    addressLine1: "",
+                    addressLine2: "",
+                    landmark: "",
+                    city: "Delhi",
+                    state: "Delhi",
+                    postalCode: "",
+                  });
+                  setOpenAddressModal(true);
+                }}
+                className="mt-8 px-6 py-3 rounded-full border text-xs uppercase tracking-widest hover:border-[#F8BBD0]"
               >
-                Edit Address
+                Add Address
               </button>
             </motion.div>
           </div>
         </div>
       </div>
 
-      {/* ---------------- ADDRESS MODAL ---------------- */}
+      {/* ---------------- MODAL ---------------- */}
 
       <AnimatePresence>
         {openAddressModal && (
-          <Modal
-            title="Update Address"
-            onClose={() => setOpenAddressModal(false)}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-6"
           >
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Line 1"
-                value={address.line1}
-                onChange={(v) => setAddress({ ...address, line1: v })}
-              />
-              <Input
-                label="Line 2"
-                value={address.line2 || ""}
-                onChange={(v) => setAddress({ ...address, line2: v })}
-              />
-              <Input
-                label="City"
-                value={address.city}
-                onChange={(v) => setAddress({ ...address, city: v })}
-              />
-              <Input
-                label="State"
-                value={address.state}
-                onChange={(v) => setAddress({ ...address, state: v })}
-              />
-              <Input
-                label="Zip"
-                value={address.zip}
-                onChange={(v) => setAddress({ ...address, zip: v })}
-              />
-              <Input
-                label="Country"
-                value={address.country}
-                onChange={(v) => setAddress({ ...address, country: v })}
-              />
-            </div>
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="bg-white rounded-[2.5rem] w-full max-w-xl p-10 relative"
+            >
+              <button
+                onClick={() => setOpenAddressModal(false)}
+                className="absolute right-6 top-6"
+              >
+                <X />
+              </button>
 
-            <ModalActions
-              saving={savingAddress}
-              onCancel={() => setOpenAddressModal(false)}
-              onSave={saveAddress}
-            />
-          </Modal>
+              <h2 className="font-serif text-3xl mb-8">
+                {editingAddressId ? "Edit Address" : "Add Address"}
+              </h2>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Label"
+                  value={address.label}
+                  onChange={(v) => setAddress({ ...address, label: v })}
+                />
+
+                <Input
+                  label="Recipient Name"
+                  value={address.name}
+                  onChange={(v) => setAddress({ ...address, name: v })}
+                />
+
+                <Input
+                  label="Phone"
+                  numeric
+                  value={address.phone}
+                  onChange={(v) => setAddress({ ...address, phone: v })}
+                />
+
+                <Input
+                  label="Address Line 1"
+                  value={address.addressLine1}
+                  onChange={(v) =>
+                    setAddress({
+                      ...address,
+                      addressLine1: v,
+                    })
+                  }
+                />
+
+                <Input
+                  label="Address Line 2"
+                  value={address.addressLine2}
+                  onChange={(v) =>
+                    setAddress({
+                      ...address,
+                      addressLine2: v,
+                    })
+                  }
+                />
+
+                <Input
+                  label="Landmark"
+                  value={address.landmark}
+                  onChange={(v) =>
+                    setAddress({
+                      ...address,
+                      landmark: v,
+                    })
+                  }
+                />
+
+                <Input
+                  label="City"
+                  value={address.city}
+                  onChange={(v) => setAddress({ ...address, city: v })}
+                />
+
+                <Input
+                  label="State"
+                  value={address.state}
+                  onChange={(v) => setAddress({ ...address, state: v })}
+                />
+
+                <Input
+                  label="Pincode"
+                  numeric
+                  value={address.postalCode}
+                  onChange={(v) =>
+                    setAddress({
+                      ...address,
+                      postalCode: v,
+                    })
+                  }
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-10">
+                <button
+                  onClick={() => setOpenAddressModal(false)}
+                  className="px-6 py-3 rounded-full border text-xs uppercase"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={saveAddress}
+                  disabled={savingAddress}
+                  className="px-6 py-3 rounded-full bg-[#F8BBD0] text-white text-xs uppercase disabled:opacity-50"
+                >
+                  {savingAddress ? "Saving..." : "Save Address"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>
@@ -303,49 +500,6 @@ const Profile: React.FC = () => {
 export default Profile;
 
 /* ---------------- SMALL COMPONENTS ---------------- */
-
-const Modal = ({ title, onClose, children }: any) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-6"
-  >
-    <motion.div
-      initial={{ scale: 0.9 }}
-      animate={{ scale: 1 }}
-      exit={{ scale: 0.9 }}
-      className="bg-white rounded-[2.5rem] w-full max-w-xl p-10 relative"
-    >
-      <button onClick={onClose} className="absolute right-6 top-6">
-        <X />
-      </button>
-
-      <h2 className="font-serif text-3xl mb-8">{title}</h2>
-
-      {children}
-    </motion.div>
-  </motion.div>
-);
-
-const ModalActions = ({ saving, onCancel, onSave }: any) => (
-  <div className="flex justify-end gap-3 pt-8">
-    <button
-      onClick={onCancel}
-      className="px-6 py-3 rounded-full border text-xs uppercase"
-    >
-      Cancel
-    </button>
-
-    <button
-      onClick={onSave}
-      disabled={saving}
-      className="px-6 py-3 rounded-full bg-[#F8BBD0] text-white text-xs uppercase disabled:opacity-50"
-    >
-      {saving ? "Saving..." : "Save"}
-    </button>
-  </div>
-);
 
 const Stat = ({ label, value, icon }: any) => (
   <div className="rounded-2xl bg-[#FDF2F5] p-6 flex items-center gap-4">
@@ -373,14 +527,23 @@ const InfoRow = ({ icon, label, value }: any) => (
   </div>
 );
 
-const Input = ({ label, value, onChange }: any) => (
+const Input = ({ label, value, onChange, numeric = false }: any) => (
   <div>
     <label className="text-[10px] uppercase tracking-widest text-gray-400">
       {label}
     </label>
+
     <input
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      inputMode={numeric ? "numeric" : "text"}
+      pattern={numeric ? "[0-9]*" : undefined}
+      onChange={(e) => {
+        const val = numeric
+          ? e.target.value.replace(/\D/g, "")
+          : e.target.value;
+
+        onChange(val);
+      }}
       className="mt-2 w-full h-11 border rounded-xl px-4"
     />
   </div>

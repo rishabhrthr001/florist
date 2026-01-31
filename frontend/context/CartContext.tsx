@@ -15,12 +15,16 @@ interface CustomBouquet {
     name: string;
     price: number;
   };
+
   ribbon?: {
     id: string;
     name: string;
     price: number;
   };
+
   additions: CustomAddition[];
+
+  message?: string;
 }
 
 interface CartItem {
@@ -34,6 +38,7 @@ interface CartItem {
 
 interface CartContextType {
   items: CartItem[];
+
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateQty: (id: string, delta: number) => void;
@@ -41,6 +46,11 @@ interface CartContextType {
   removeCustomAddition: (cartId: string, additionId: string) => void;
   incrementCustomAddition: (cartId: string, additionId: string) => void;
   decrementCustomAddition: (cartId: string, additionId: string) => void;
+
+  updateCustomMessage: (cartId: string, message: string) => void;
+
+  // ✅ NEW
+  clearCart: () => void;
 
   totalItems: number;
 }
@@ -50,37 +60,55 @@ const CartContext = createContext<CartContextType | null>(null);
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
 
-  // Load
+  /* ---------------- LOAD ---------------- */
+
   useEffect(() => {
     const stored = localStorage.getItem("cart");
     if (stored) setItems(JSON.parse(stored));
   }, []);
 
-  // Save
+  /* ---------------- SAVE ---------------- */
+
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(items));
   }, [items]);
 
-  // ---------- NORMAL PRODUCTS ----------
-  const addToCart = (item) => {
+  /* ---------------- CLEAR CART ---------------- */
+
+  const clearCart = () => {
+    setItems([]);
+    localStorage.removeItem("cart");
+  };
+
+  /* ---------------- ADD TO CART ---------------- */
+
+  const addToCart = (item: CartItem) => {
     setItems((prev) => {
-      const found = prev.find((i) => i._id === item._id);
+      if (item.custom) {
+        return [...prev, item];
+      }
+
+      const found = prev.find((i) => i._id === item._id && !i.custom);
 
       if (found) {
         return prev.map((i) =>
           i._id === item._id
-            ? { ...i, quantity: i.quantity + item.quantity } // ✅ use qty
+            ? { ...i, quantity: i.quantity + item.quantity }
             : i,
         );
       }
 
-      return [...prev, item]; // ✅ keep passed quantity
+      return [...prev, item];
     });
   };
+
+  /* ---------------- REMOVE ---------------- */
 
   const removeFromCart = (id: string) => {
     setItems((prev) => prev.filter((i) => i._id !== id));
   };
+
+  /* ---------------- UPDATE QTY ---------------- */
 
   const updateQty = (id: string, delta: number) => {
     setItems((prev) =>
@@ -90,7 +118,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     );
   };
 
-  // ---------- CUSTOM BOUQUET CONTROLS ----------
+  /* ---------------- CUSTOM ADDITIONS ---------------- */
+
   const removeCustomAddition = (cartId: string, additionId: string) => {
     setItems((prev) =>
       prev.map((item) => {
@@ -133,6 +162,26 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     );
   };
 
+  /* ---------------- UPDATE MESSAGE ---------------- */
+
+  const updateCustomMessage = (cartId: string, message: string) => {
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item._id !== cartId || !item.custom) return item;
+
+        return {
+          ...item,
+          custom: {
+            ...item.custom,
+            message,
+          },
+        };
+      }),
+    );
+  };
+
+  /* ---------------- RECALC PRICE ---------------- */
+
   const recalcCustom = (
     item: CartItem,
     additions: CustomAddition[],
@@ -152,7 +201,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     };
   };
 
-  // ---------- TOTAL COUNT ----------
+  /* ---------------- TOTAL ---------------- */
+
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
@@ -165,6 +215,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         removeCustomAddition,
         incrementCustomAddition,
         decrementCustomAddition,
+        updateCustomMessage,
+        clearCart, // ✅ exposed
         totalItems,
       }}
     >

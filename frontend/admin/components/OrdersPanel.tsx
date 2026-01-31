@@ -4,11 +4,50 @@ import axios from "axios";
 import API from "../../config";
 import { useAuth } from "../../context/AuthContext";
 
+/* ---------------- TYPES ---------------- */
+
+export interface CustomAddition {
+  item: {
+    id: string;
+    name: string;
+    price: number;
+  };
+  qty: number;
+}
+
+export interface CustomBouquet {
+  base?: {
+    id: string;
+    name: string;
+    price: number;
+  };
+
+  wrapper?: {
+    id: string;
+    name: string;
+    price: number;
+  };
+
+  ribbon?: {
+    id: string;
+    name: string;
+    price: number;
+  };
+
+  message?: string;
+
+  additions: CustomAddition[];
+}
+
 export interface OrderItem {
-  productId: string;
+  productId: string | null;
   name: string;
   quantity: number;
   price: number;
+  image?: string;
+
+  isCustom?: boolean;
+  custom?: CustomBouquet;
 }
 
 export interface Order {
@@ -37,6 +76,8 @@ export interface Order {
 
   createdAt: string;
 }
+
+/* ---------------- COMPONENT ---------------- */
 
 interface OrdersProps {
   orders?: Order[];
@@ -259,22 +300,75 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                     Items
                   </p>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {selectedOrder.items?.map((i, idx) => (
                       <div
                         key={idx}
-                        className="flex justify-between items-center bg-gray-50 rounded-xl px-4 py-3"
+                        className="bg-gray-50 rounded-xl px-4 py-3"
                       >
-                        <div>
-                          <p className="text-sm font-semibold">{i.name}</p>
-                          <p className="text-[11px] text-gray-500">
-                            ₹{i.price} × {i.quantity}
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm font-semibold">{i.name}</p>
+                            <p className="text-[11px] text-gray-500">
+                              ₹{i.price} × {i.quantity}
+                            </p>
+                          </div>
+
+                          <p className="text-sm font-bold">
+                            ₹{i.price * i.quantity}
                           </p>
                         </div>
 
-                        <p className="text-sm font-bold">
-                          ₹{i.price * i.quantity}
-                        </p>
+                        {/* 🌸 CUSTOM BOUQUET BREAKDOWN */}
+                        {i.isCustom && i.custom && (
+                          <div className="mt-3 bg-white border rounded-lg p-3 text-xs space-y-1">
+                            <p className="font-semibold text-pink-600">
+                              Custom Bouquet
+                            </p>
+
+                            {i.custom.base && (
+                              <p>
+                                <strong>Base:</strong> {i.custom.base.name} — ₹
+                                {i.custom.base.price}
+                              </p>
+                            )}
+
+                            {i.custom.wrapper && (
+                              <p>
+                                <strong>Wrapper:</strong>{" "}
+                                {i.custom.wrapper.name} — ₹
+                                {i.custom.wrapper.price}
+                              </p>
+                            )}
+
+                            {i.custom.ribbon && (
+                              <p>
+                                <strong>Ribbon:</strong> {i.custom.ribbon.name}{" "}
+                                — ₹{i.custom.ribbon.price}
+                              </p>
+                            )}
+
+                            {i.custom.additions?.length > 0 && (
+                              <div>
+                                <strong>Additions:</strong>
+                                <div className="ml-3">
+                                  {i.custom.additions.map((a) => (
+                                    <p key={a.item.id}>
+                                      • {a.item.name} × {a.qty} — ₹
+                                      {a.item.price}
+                                    </p>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {i.custom.message && (
+                              <p className="italic mt-1">
+                                💌 {i.custom.message}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

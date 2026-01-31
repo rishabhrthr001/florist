@@ -75,7 +75,7 @@ const MakeYourOwn: React.FC = () => {
         base: selectedBase,
         ribbon: selectedRibbon,
         additions,
-        instructions,
+        message: instructions,
       },
     } as any);
 

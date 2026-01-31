@@ -50,6 +50,8 @@ const orderSchema = new mongoose.Schema(
       address: String,
     },
 
+    /* ---------------- ITEMS ---------------- */
+
     items: [
       {
         productId: {
@@ -69,7 +71,7 @@ const orderSchema = new mongoose.Schema(
         },
 
         price: {
-          type: Number,
+          type: Number, // snapshot final price
           required: true,
         },
 
@@ -80,26 +82,50 @@ const orderSchema = new mongoose.Schema(
 
         image: String,
 
+        /* -------- CUSTOM BOUQUET SNAPSHOT -------- */
+
         custom: {
-          flowers: [
+          base: {
+            id: String,
+            name: String,
+            price: Number,
+          },
+
+          ribbon: {
+            id: String,
+            name: String,
+            price: Number,
+          },
+
+          wrapper: {
+            id: String,
+            name: String,
+            price: Number,
+          },
+
+          message: String,
+
+          additions: [
             {
-              flowerId: String,
-              name: String,
-              quantity: Number,
-              price: Number,
+              item: {
+                id: String,
+                name: String,
+                price: Number,
+              },
+              qty: Number,
             },
           ],
-
-          wrapper: String,
-          ribbon: String,
-          message: String,
         },
       },
     ],
 
+    /* ---------------- TOTALS ---------------- */
+
     subtotal: Number,
     deliveryCharge: Number,
     totalAmount: Number,
+
+    /* ---------------- PAYMENT ---------------- */
 
     paymentMethod: {
       type: String,
@@ -112,6 +138,8 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "paid", "failed"],
       default: "pending",
     },
+
+    /* ---------------- ORDER STATUS ---------------- */
 
     orderStatus: {
       type: String,

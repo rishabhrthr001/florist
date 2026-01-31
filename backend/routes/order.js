@@ -1,6 +1,7 @@
 import express from "express";
 import Order from "../models/Order.js";
 import OrderCounter from "../models/orderCounter.js";
+import Product from "../models/Product.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { getIO } from "../socket/index.js";
 
@@ -28,7 +29,23 @@ const generateOrderId = async () => {
   return `FLR-${dateKey}-${String(counter.seq).padStart(4, "0")}`;
 };
 
+/* ---------------- CUSTOM PRICE CALC ---------------- */
+
+const calcCustomPrice = (custom) => {
+  const base = custom.base.price;
+  const wrapper = custom.wrapper?.price || 0;
+  const ribbon = custom.ribbon?.price || 0;
+
+  const additionsTotal = custom.additions.reduce(
+    (sum, a) => sum + a.item.price * a.qty,
+    0,
+  );
+
+  return base + wrapper + ribbon + additionsTotal;
+};
+
 /* ---------------- CREATE ORDER ---------------- */
+
 router.post("/", requireAuth, async (req, res) => {
   try {
     const {
@@ -40,12 +57,58 @@ router.post("/", requireAuth, async (req, res) => {
       isGift,
       gift,
       items,
-      subtotal,
       deliveryCharge,
-      totalAmount,
       paymentMethod,
       notes,
     } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ msg: "No items in order" });
+    }
+
+    let verifiedItems = [];
+    let serverSubtotal = 0;
+
+    for (const item of items) {
+      /* -------- CUSTOM BOUQUET -------- */
+      if (item.isCustom) {
+        if (!item.custom)
+          return res.status(400).json({ msg: "Missing custom bouquet data" });
+
+        const serverPrice = calcCustomPrice(item.custom);
+
+        if (serverPrice !== item.price) {
+          return res.status(400).json({
+            msg: "Custom bouquet price mismatch",
+          });
+        }
+
+        serverSubtotal += serverPrice * item.quantity;
+
+        verifiedItems.push({
+          ...item,
+          price: serverPrice,
+        });
+
+        /* -------- NORMAL PRODUCT -------- */
+      } else {
+        const product = await Product.findById(item.productId);
+
+        if (!product) return res.status(400).json({ msg: "Invalid product" });
+
+        if (product.price !== item.price) {
+          return res.status(400).json({
+            msg: "Product price mismatch",
+          });
+        }
+
+        serverSubtotal += product.price * item.quantity;
+
+        verifiedItems.push(item);
+      }
+    }
+
+    const serverTotal = serverSubtotal + deliveryCharge;
 
     const orderId = await generateOrderId();
 
@@ -59,10 +122,10 @@ router.post("/", requireAuth, async (req, res) => {
       deliveryDate,
       isGift,
       gift,
-      items,
-      subtotal,
+      items: verifiedItems,
+      subtotal: serverSubtotal,
       deliveryCharge,
-      totalAmount,
+      totalAmount: serverTotal,
       paymentMethod,
       paymentStatus: "pending",
       orderStatus: "placed",
@@ -85,6 +148,7 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 /* ---------------- USER: MY ORDERS ---------------- */
+
 router.get("/my", requireAuth, async (req, res) => {
   try {
     const orders = await Order.find({
@@ -99,6 +163,7 @@ router.get("/my", requireAuth, async (req, res) => {
 });
 
 /* ---------------- ADMIN: ALL ORDERS ---------------- */
+
 router.get("/", requireAuth, requireAdmin, async (req, res) => {
   try {
     const orders = await Order.find()
@@ -113,6 +178,7 @@ router.get("/", requireAuth, requireAdmin, async (req, res) => {
 });
 
 /* ---------------- ADMIN: UPDATE STATUS ---------------- */
+
 router.patch("/:id/status", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { orderStatus, paymentStatus } = req.body;
