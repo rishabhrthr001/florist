@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, ChevronDown, User } from "lucide-react";
+import { ShoppingBag, ChevronDown, User, Heart } from "lucide-react";
 import axios from "axios";
 
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import API from "@/config";
 
 const Navbar: React.FC = () => {
@@ -18,6 +19,7 @@ const Navbar: React.FC = () => {
 
   const { user, logout, loading } = useAuth();
   const { totalItems } = useCart();
+  const { totalItems: wishlistItems } = useWishlist();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,11 +52,10 @@ const Navbar: React.FC = () => {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className={`glass-nav rounded-full px-6 py-4 flex items-center justify-between transition-all duration-500 ${
-          isScrolled
+        className={`glass-nav rounded-full px-6 py-4 flex items-center justify-between transition-all duration-500 ${isScrolled
             ? "shadow-2xl py-3 border border-[#F8BBD0]/30 bg-white/80 backdrop-blur-xl"
             : "shadow-sm bg-white/60 backdrop-blur-lg"
-        }`}
+          }`}
       >
         {/* ================= MOBILE LEFT ================= */}
 
@@ -123,9 +124,8 @@ const Navbar: React.FC = () => {
           {/* HOME */}
           <button
             onClick={() => handleNav("/")}
-            className={`text-xs uppercase tracking-widest font-semibold hover:text-[#F8BBD0] ${
-              location.pathname === "/" ? "text-[#F8BBD0]" : ""
-            }`}
+            className={`text-xs uppercase tracking-widest font-semibold hover:text-[#F8BBD0] ${location.pathname === "/" ? "text-[#F8BBD0]" : ""
+              }`}
           >
             Home
           </button>
@@ -295,6 +295,17 @@ const Navbar: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* WISHLIST */}
+          <button onClick={() => navigate("/wishlist")} className="relative">
+            <Heart size={20} />
+
+            {wishlistItems > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F8BBD0] rounded-full text-white text-[10px] flex items-center justify-center">
+                {wishlistItems}
+              </span>
+            )}
+          </button>
 
           {/* CART */}
           <button onClick={() => navigate("/cart")} className="relative">

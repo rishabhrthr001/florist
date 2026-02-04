@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   Phone,
   Mail,
@@ -10,6 +11,8 @@ import {
   Check,
   Trash2,
   Star,
+  Headphones,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
@@ -45,6 +48,7 @@ const DELHI_PIN_REGEX = /^1100\d{2}$/;
 
 const Profile: React.FC = () => {
   const { user, token, login } = useAuth();
+  const navigate = useNavigate();
 
   const [openAddressModal, setOpenAddressModal] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
@@ -210,6 +214,26 @@ const Profile: React.FC = () => {
                 value={new Date(user.createdAt).toLocaleDateString()}
                 icon={<Package />}
               />
+            </div>
+
+            {/* Quick Actions */}
+            <div className="mt-8 flex flex-wrap gap-4">
+              <button
+                onClick={() => navigate("/orders")}
+                className="flex items-center gap-3 px-6 py-3 bg-[#FDF2F5] hover:bg-[#F8BBD0] hover:text-white rounded-2xl transition-all group"
+              >
+                <Package size={18} />
+                <span className="text-sm font-medium">My Orders</span>
+                <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button
+                onClick={() => navigate("/support")}
+                className="flex items-center gap-3 px-6 py-3 bg-[#FDF2F5] hover:bg-[#F8BBD0] hover:text-white rounded-2xl transition-all group"
+              >
+                <Headphones size={18} />
+                <span className="text-sm font-medium">Support Tickets</span>
+                <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
+              </button>
             </div>
           </motion.div>
 

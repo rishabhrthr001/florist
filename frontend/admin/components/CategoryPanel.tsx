@@ -5,6 +5,7 @@ import React from "react";
 
 import { Category } from "../../types";
 import CategoryModal from "./CategoryModal";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import { toast } from "sonner";
 import API from "../../config";
 
@@ -16,6 +17,14 @@ const CategoryPanel = () => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    categoryId: string | null;
+    categoryName: string;
+  }>({ isOpen: false, categoryId: null, categoryName: "" });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchCategories = async () => {
     try {
@@ -33,15 +42,31 @@ const CategoryPanel = () => {
     fetchCategories();
   }, []);
 
-  const removeCategory = async (id: string) => {
-    try {
-      await axios.delete(`${API}/category/${id}`);
+  const openDeleteConfirm = (id: string, name: string) => {
+    setDeleteConfirm({ isOpen: true, categoryId: id, categoryName: name });
+  };
 
-      setCategories((prev) => prev.filter((c) => c._id !== id));
+  const closeDeleteConfirm = () => {
+    setDeleteConfirm({ isOpen: false, categoryId: null, categoryName: "" });
+  };
+
+  const removeCategory = async () => {
+    if (!deleteConfirm.categoryId) return;
+
+    try {
+      setIsDeleting(true);
+      await axios.delete(`${API}/category/${deleteConfirm.categoryId}`);
+
+      setCategories((prev) =>
+        prev.filter((c) => c._id !== deleteConfirm.categoryId)
+      );
 
       toast.success("Category removed");
+      closeDeleteConfirm();
     } catch (err) {
       toast.error("Delete failed");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -76,7 +101,7 @@ const CategoryPanel = () => {
                 </button>
 
                 <button
-                  onClick={() => removeCategory(cat._id)}
+                  onClick={() => openDeleteConfirm(cat._id, cat.name)}
                   className="bg-white p-2.5 rounded-full shadow-lg mx-1.5"
                 >
                   <Trash2 size={16} className="text-red-500" />
@@ -126,12 +151,26 @@ const CategoryPanel = () => {
         onCreate={(created) => setCategories((prev) => [...prev, created])}
         onUpdate={(updated) =>
           setCategories((prev) =>
-            prev.map((c) => (c._id === updated._id ? updated : c)),
+            prev.map((c) => (c._id === updated._id ? updated : c))
           )
         }
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={closeDeleteConfirm}
+        onConfirm={removeCategory}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${deleteConfirm.categoryName}"? Products in this category will be moved to "Uncategorized".`}
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        isDanger={true}
+        isLoading={isDeleting}
       />
     </>
   );
 };
 
 export default CategoryPanel;
+

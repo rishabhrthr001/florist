@@ -6,12 +6,13 @@ import {
   Flame,
   ShoppingCart,
   MessageSquare,
+  MessageCircle,
   Users,
   LogOut,
   ChevronRight,
   Palette,
-  X,
   Sparkles,
+  Ticket,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -38,7 +39,16 @@ const sidebarLinks: SidebarLink[] = [
   },
   { name: "Orders", path: "/admin/orders", icon: ShoppingCart },
   { name: "Atelier Items", path: "/admin/atelier", icon: Palette },
+
+  // ✅ COMMENTS / REVIEWS PANEL
+  {
+    name: "Reviews",
+    path: "/admin/comments",
+    icon: MessageCircle,
+  },
+
   { name: "Messages", path: "/admin/messages", icon: MessageSquare },
+  { name: "Support Tickets", path: "/admin/tickets", icon: Ticket },
   { name: "Customers", path: "/admin/customers", icon: Users },
 ];
 
@@ -53,7 +63,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* ---------------- MOBILE OVERLAY ---------------- */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -66,7 +76,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
+      {/* ---------------- SIDEBAR ---------------- */}
       <aside
         className={`
           fixed md:sticky top-0 left-0 bottom-0 w-72 bg-white border-r border-[#E5E5E5]
@@ -75,7 +85,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        {/* Logo */}
+        {/* ---------------- LOGO ---------------- */}
         <div className="p-8 border-b border-[#E5E5E5] hidden md:block">
           <Link to="/" className="flex items-center space-x-2">
             <span className="font-serif text-xl italic font-bold">
@@ -87,7 +97,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
           </Link>
         </div>
 
-        {/* Nav */}
+        {/* ---------------- NAV ---------------- */}
         <nav className="flex-1 py-6 md:py-8 px-4 overflow-y-auto">
           <ul className="space-y-1.5 md:space-y-2">
             {sidebarLinks.map((link) => {
@@ -100,11 +110,10 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                 <li key={link.path}>
                   <button
                     onClick={() => handleNav(link.path)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      isActive
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
                         ? "bg-[#1A1A1A] text-white shadow-lg shadow-black/10"
                         : "text-[#4A4A4A] hover:bg-[#FDF2F5] hover:text-[#1A1A1A]"
-                    }`}
+                      }`}
                   >
                     <link.icon size={18} />
                     {link.name}
@@ -116,7 +125,7 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
           </ul>
         </nav>
 
-        {/* Exit */}
+        {/* ---------------- EXIT ADMIN ---------------- */}
         <div className="p-6 border-t border-[#E5E5E5]">
           <button
             onClick={() => navigate("/")}

@@ -17,15 +17,20 @@ import ProductDetail from "./pages/ProductDetail";
 import MakeYourOwn from "./pages/MakeYourOwn";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import AuthAction from "./pages/AuthAction";
 import ExplorePage from "./pages/ExplorePage";
 import AdminLayout from "./pages/Admin/AdminLayout";
 import Profile from "./pages/Profile";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import ContactPage from "./pages/ContactPage";
 
 import PrivateRoute from "./routes/PrivateRoute";
 import AdminRoute from "./routes/AdminRoute";
 import MyOrders from "./pages/MyOrders";
+import SupportTickets from "./pages/SupportTickets";
+import Wishlist from "./pages/Wishlist";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -58,16 +63,21 @@ const App: React.FC = () => {
               <Route path="/product/:slug" element={<ProductDetail />} />
               <Route path="/make-your-own" element={<MakeYourOwn />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/contact" element={<ContactPage />} />
 
               {/* AUTH */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/action" element={<AuthAction />} />
 
               {/* USER PROTECTED */}
               <Route element={<PrivateRoute />}>
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/orders" element={<MyOrders />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/support" element={<SupportTickets />} />
               </Route>
 
               {/* ADMIN PROTECTED */}

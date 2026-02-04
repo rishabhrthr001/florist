@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Heart, Plus, Minus } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { toast } from "sonner";
 
 import { Product } from "../types";
 
@@ -16,8 +18,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
   showControls = false,
 }) => {
   const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   const [qty, setQty] = useState(1);
+
+  const inWishlist = isInWishlist(product._id);
 
   const handleAdd = () => {
     addToCart({
@@ -27,6 +32,24 @@ const ProductCard: React.FC<ProductCardProps> = ({
       image: product.images[0],
       quantity: qty,
     });
+    toast.success(`Added ${product.name} to cart 🛒`);
+  };
+
+  const toggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (inWishlist) {
+      removeFromWishlist(product._id);
+      toast.success("Removed from wishlist 💔");
+    } else {
+      addToWishlist({
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0],
+        slug: product.slug || product._id,
+      });
+      toast.success("Added to wishlist ❤️");
+    }
   };
 
   return (
@@ -51,8 +74,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
         />
 
         <div className="absolute top-3 right-3 z-10">
-          <button className="bg-white/90 backdrop-blur-sm p-1.5 rounded-full hover:bg-[#F8BBD0] hover:text-white transition-all text-[#4A4A4A] shadow-sm">
-            <Heart size={14} />
+          <button
+            onClick={toggleWishlist}
+            className={`backdrop-blur-sm p-1.5 rounded-full transition-all shadow-sm ${inWishlist
+              ? "bg-[#F8BBD0] text-white"
+              : "bg-white/90 text-[#4A4A4A] hover:bg-[#F8BBD0] hover:text-white"
+              }`}
+          >
+            <Heart size={14} fill={inWishlist ? "currentColor" : "none"} />
           </button>
         </div>
 

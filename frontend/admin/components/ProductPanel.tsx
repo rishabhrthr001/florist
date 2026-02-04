@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import API from "../../config";
 import { Product, Category } from "../../types";
 import ProductModal from "../components/ProductModal";
+import ConfirmDialog from "../../components/ConfirmDialog";
 
 const ProductPanel = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -18,6 +19,14 @@ const ProductPanel = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const [loading, setLoading] = useState(true);
+
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    productId: string | null;
+    productName: string;
+  }>({ isOpen: false, productId: null, productName: "" });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   /* -----------------------------------
         FETCH CATEGORIES
@@ -72,15 +81,31 @@ const ProductPanel = () => {
   /* -----------------------------------
         DELETE PRODUCT
   ----------------------------------- */
-  const deleteProduct = async (id: string) => {
-    try {
-      await axios.delete(`${API}/product/${id}`);
+  const openDeleteConfirm = (id: string, name: string) => {
+    setDeleteConfirm({ isOpen: true, productId: id, productName: name });
+  };
 
-      setProducts((prev) => prev.filter((p) => p._id !== id));
+  const closeDeleteConfirm = () => {
+    setDeleteConfirm({ isOpen: false, productId: null, productName: "" });
+  };
+
+  const deleteProduct = async () => {
+    if (!deleteConfirm.productId) return;
+
+    try {
+      setIsDeleting(true);
+      await axios.delete(`${API}/product/${deleteConfirm.productId}`);
+
+      setProducts((prev) =>
+        prev.filter((p) => p._id !== deleteConfirm.productId)
+      );
 
       toast.success("Product deleted");
+      closeDeleteConfirm();
     } catch {
       toast.error("Delete failed");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -181,7 +206,7 @@ const ProductPanel = () => {
                         </button>
 
                         <button
-                          onClick={() => deleteProduct(p._id)}
+                          onClick={() => openDeleteConfirm(p._id, p.name)}
                           className="text-gray-400 hover:text-red-500"
                         >
                           <Trash2 size={14} />
@@ -204,8 +229,22 @@ const ProductPanel = () => {
         product={editingProduct}
         mode={editingProduct ? "edit" : "add"}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={closeDeleteConfirm}
+        onConfirm={deleteProduct}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${deleteConfirm.productName}"? This action cannot be undone.`}
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        isDanger={true}
+        isLoading={isDeleting}
+      />
     </>
   );
 };
 
 export default ProductPanel;
+

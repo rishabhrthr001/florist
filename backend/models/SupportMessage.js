@@ -12,9 +12,19 @@ const supportSchema = new mongoose.Schema(
       required: true,
     },
 
+    email: {
+      type: String,
+      required: true,
+    },
+
     phone: {
       type: String,
       required: true,
+    },
+
+    subject: {
+      type: String,
+      default: "General Inquiry",
     },
 
     message: {
@@ -23,7 +33,7 @@ const supportSchema = new mongoose.Schema(
     },
 
     source: {
-      type: String, // hero / product / footer
+      type: String, // hero / product / footer / contact-page
     },
 
     isRead: {
@@ -35,3 +45,4 @@ const supportSchema = new mongoose.Schema(
 );
 
 export default mongoose.model("SupportMessage", supportSchema);
+

@@ -1,20 +1,24 @@
 import React from "react";
 export interface Product {
-  id: string;
+  _id: string;
+  id?: string;
   name: string;
   price: number;
   description: string;
   category: string;
   images: string[];
   isHotPick?: boolean;
-  stock: number;
+  stock?: number;
+  slug?: string;
 }
 
 export interface Category {
-  id: string;
+  _id: string;
+  id?: string;
   name: string;
-  description: string;
+  description?: string;
   image: string;
+  slug?: string;
 }
 
 interface ProductsProps {

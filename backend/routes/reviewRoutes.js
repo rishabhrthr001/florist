@@ -23,7 +23,12 @@ router.post("/", requireAuth, async (req, res) => {
       comment,
     });
 
-    const populated = await review.populate("user", "name");
+    const populated = await review.populate([
+      { path: "user", select: "name" },
+      { path: "product", select: "name slug" },
+    ]);
+
+    req.io.emit("new-review", populated);
 
     res.status(201).json(populated);
   } catch (err) {
@@ -70,7 +75,12 @@ router.post("/:id/reply", requireAuth, async (req, res) => {
 
     await review.save();
 
-    const populated = await review.populate("replies.user", "name");
+    const populated = await review.populate([
+      { path: "replies.user", select: "name" },
+      { path: "product", select: "name slug" },
+    ]);
+
+    req.io.emit("review-replied", populated);
 
     res.json(populated);
   } catch (err) {
@@ -88,6 +98,21 @@ router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Delete failed" });
+  }
+});
+
+router.get("/admin/all", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const reviews = await Review.find()
+      .populate("user", "name email")
+      .populate("product", "name slug")
+      .populate("replies.user", "name")
+      .sort({ createdAt: -1 });
+
+    res.json(reviews);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Failed to fetch reviews" });
   }
 });
 

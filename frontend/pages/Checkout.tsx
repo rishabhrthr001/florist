@@ -15,11 +15,13 @@ type Address = {
   name?: string;
   phone?: string;
 
-  street: string;
+  addressLine1: string;
+  addressLine2?: string;
+  landmark: string;
+
   city: string;
   state: string;
   postalCode: string;
-  country: string;
 
   isDefault?: boolean;
 };
@@ -126,19 +128,19 @@ const Checkout: React.FC = () => {
 
       const finalAddress = isGift
         ? {
-            line1: giftAddress,
-            city: "Delhi",
-            state: "Delhi",
-            zip: "110001",
-            country: "India",
-          }
+          line1: giftAddress,
+          city: "Delhi",
+          state: "Delhi",
+          zip: "110001",
+        }
         : {
-            line1: selectedAddress!.street,
-            city: selectedAddress!.city,
-            state: selectedAddress!.state,
-            zip: selectedAddress!.postalCode,
-            country: selectedAddress!.country,
-          };
+          line1: selectedAddress!.addressLine1,
+          line2: selectedAddress!.addressLine2 || "",
+          landmark: selectedAddress!.landmark,
+          city: selectedAddress!.city,
+          state: selectedAddress!.state,
+          zip: selectedAddress!.postalCode,
+        };
 
       const payload = {
         customerName: finalName,
@@ -151,11 +153,11 @@ const Checkout: React.FC = () => {
 
         gift: isGift
           ? {
-              name: giftName,
-              phone: giftPhone,
-              address: giftAddress,
-              from: giftFrom || null,
-            }
+            name: giftName,
+            phone: giftPhone,
+            address: giftAddress,
+            from: giftFrom || null,
+          }
           : null,
 
         items: items.map((i) => ({
@@ -212,28 +214,44 @@ const Checkout: React.FC = () => {
               <section className="bg-white rounded-[2.8rem] shadow-xl p-10">
                 <h2 className="font-serif text-2xl mb-8">Delivery Address</h2>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  {addresses.map((addr) => (
+                {addresses.length === 0 ? (
+                  <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-3xl">
+                    <p className="text-gray-400 mb-4">
+                      No saved addresses found
+                    </p>
                     <button
-                      key={addr._id}
-                      onClick={() => setSelectedAddressId(addr._id)}
-                      className={`text-left rounded-3xl border-2 p-6 transition-all ${
-                        selectedAddressId === addr._id
+                      onClick={() => navigate("/profile")}
+                      className="bg-[#F8BBD0] text-white px-6 py-3 rounded-full hover:bg-[#f797b9] transition text-sm font-semibold"
+                    >
+                      Add Address in Profile
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {addresses.map((addr) => (
+                      <button
+                        key={addr._id}
+                        onClick={() => setSelectedAddressId(addr._id)}
+                        className={`text-left rounded-3xl border-2 p-6 transition-all ${selectedAddressId === addr._id
                           ? "border-pink-400 bg-pink-50 shadow-lg"
                           : "hover:border-pink-200 hover:bg-[#FFF7FA]"
-                      }`}
-                    >
-                      <p className="font-semibold text-sm">{addr.name}</p>
+                          }`}
+                      >
+                        <p className="font-semibold text-sm">{addr.name}</p>
 
-                      <p className="text-xs text-gray-500">{addr.phone}</p>
+                        <p className="text-xs text-gray-500">{addr.phone}</p>
 
-                      <p className="mt-2 text-sm text-gray-600">
-                        {addr.street}, {addr.city}, {addr.state} —{" "}
-                        {addr.postalCode}
-                      </p>
-                    </button>
-                  ))}
-                </div>
+                        <p className="mt-2 text-sm text-gray-600">
+                          {addr.addressLine1}
+                          {addr.addressLine2 && `, ${addr.addressLine2}`}
+                          <br />
+                          {addr.landmark}, {addr.city}, {addr.state} —{" "}
+                          {addr.postalCode}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </section>
             )}
 
@@ -246,11 +264,10 @@ const Checkout: React.FC = () => {
                   <button
                     key={slot}
                     onClick={() => setDeliveryTime(slot as any)}
-                    className={`px-10 py-4 rounded-full border text-sm ${
-                      deliveryTime === slot
-                        ? "bg-black text-white"
-                        : "hover:border-black"
-                    }`}
+                    className={`px-10 py-4 rounded-full border text-sm ${deliveryTime === slot
+                      ? "bg-black text-white"
+                      : "hover:border-black"
+                      }`}
                   >
                     {slot === "day"
                       ? "Day Delivery · ₹150"

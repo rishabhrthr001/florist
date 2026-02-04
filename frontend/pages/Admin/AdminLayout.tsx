@@ -14,10 +14,12 @@ import AtelierPanel from "@/admin/components/AtelierPanel";
 import MessagesPanel from "@/admin/components/MessagesPanel";
 import CustomersPanel from "@/admin/components/CustomersPanel";
 import SeasonalHighlights from "@/admin/components/SeasonalHighlights";
+import TicketsPanel from "@/admin/components/TicketsPanel";
 
 import API from "@/config";
 import { useAuth } from "@/context/AuthContext";
 import { Order } from "@/admin/components/OrdersPanel";
+import CommentPanel from "@/admin/components/CommentPanel";
 
 interface AdminLayoutProps {
   onEnterAdmin: () => void;
@@ -111,6 +113,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     "/admin/atelier": "Atelier Items",
     "/admin/messages": "Messages",
     "/admin/customers": "Customers",
+    "/admin/comments": "Comments",
+    "/admin/tickets": "Support Tickets",
   };
 
   const currentTitle =
@@ -164,7 +168,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           <Route path="/atelier" element={<AtelierPanel />} />
           <Route path="/messages" element={<MessagesPanel />} />
+          <Route path="/comments" element={<CommentPanel />} />
           <Route path="/customers" element={<CustomersPanel />} />
+          <Route path="/tickets" element={<TicketsPanel />} />
         </Routes>
       </main>
     </div>

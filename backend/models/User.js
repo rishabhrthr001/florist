@@ -24,7 +24,20 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: true,
+      required: function () {
+        // Password is required only if not using Google OAuth
+        return !this.googleId;
+      },
+    },
+
+    googleId: {
+      type: String,
+      sparse: true,
+      unique: true,
+    },
+
+    profilePicture: {
+      type: String,
     },
 
     role: {
@@ -92,6 +105,36 @@ const userSchema = new mongoose.Schema(
         isDefault: {
           type: Boolean,
           default: false,
+        },
+      },
+    ],
+
+    wishlist: [
+      {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        name: {
+          type: String,
+          required: true,
+        },
+        price: {
+          type: Number,
+          required: true,
+        },
+        image: {
+          type: String,
+          required: true,
+        },
+        slug: {
+          type: String,
+          required: true,
+        },
+        addedAt: {
+          type: Date,
+          default: Date.now,
         },
       },
     ],

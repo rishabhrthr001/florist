@@ -152,15 +152,48 @@ router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
       return res.status(400).json({ msg: "Invalid category ID" });
     }
 
-    const category = await Category.findByIdAndDelete(id);
+    const category = await Category.findById(id);
 
     if (!category) return res.status(404).json({ msg: "Category not found" });
+
+    // Import Product model
+    const Product = (await import("../models/Product.js")).default;
+
+    // Count products in this category
+    const productCount = await Product.countDocuments({ categoryId: id });
+
+    if (productCount > 0) {
+      // Find or create "Uncategorized" category
+      let uncategorized = await Category.findOne({ slug: "uncategorized" });
+
+      if (!uncategorized) {
+        uncategorized = await Category.create({
+          name: "Uncategorized",
+          slug: "uncategorized",
+          image:
+            "https://res.cloudinary.com/demo/image/upload/v1/samples/placeholder.jpg",
+          description: "Products without a category",
+          isActive: true,
+        });
+      }
+
+      // Move all products to Uncategorized
+      await Product.updateMany(
+        { categoryId: id },
+        { $set: { categoryId: uncategorized._id } }
+      );
+    }
+
+    // Now delete the category
+    await Category.findByIdAndDelete(id);
 
     res.json({
       msg: "Category deleted successfully",
       id,
+      productsMovedToUncategorized: productCount,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({
       msg: "Delete category failed",
       err,
