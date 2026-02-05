@@ -31,6 +31,8 @@ import AdminRoute from "./routes/AdminRoute";
 import MyOrders from "./pages/MyOrders";
 import SupportTickets from "./pages/SupportTickets";
 import Wishlist from "./pages/Wishlist";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -65,6 +67,8 @@ const App: React.FC = () => {
               <Route path="/cart" element={<Cart />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="terms-of-service" element={<TermsOfService />} />
 
               {/* AUTH */}
               <Route path="/login" element={<Login />} />

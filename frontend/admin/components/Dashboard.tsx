@@ -1,30 +1,68 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ShoppingCart, Clock, Users, Flame } from "lucide-react";
+import { ShoppingCart, Clock, Users } from "lucide-react";
+import axios from "axios";
+
+import API from "@/config";
 import { Order } from "../../types";
 
 interface DashboardProps {
-  orders: Order[];
+  orders?: Order[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ orders = [] }) => {
+const Dashboard: React.FC<DashboardProps> = () => {
+  const [todaySales, setTodaySales] = useState<number>(0);
+  const [activeOrders, setActiveOrders] = useState<number>(0);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+
+  /* ---------------- FETCH DASHBOARD STATS ---------------- */
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const [salesRes, activeRes, usersRes, recentRes] = await Promise.all([
+          axios.get(`${API}/orders/today/delivered-total`, { headers }),
+          axios.get(`${API}/orders/active`, { headers }),
+          axios.get(`${API}/user/count`, { headers }),
+          axios.get(`${API}/orders`, { headers }),
+        ]);
+
+        setTodaySales(salesRes.data.totalValue);
+        setActiveOrders(activeRes.data.count);
+        setTotalUsers(usersRes.data.totalUsers);
+        setRecentOrders(recentRes.data.slice(0, 4));
+      } catch (err) {
+        console.error("Dashboard fetch failed", err);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const stats = [
     {
       label: "Today's Sales",
-      value: "₹1,52,450",
-      change: "+12%",
+      value: `₹${todaySales.toLocaleString()}`,
+      change: "",
       icon: ShoppingCart,
     },
     {
       label: "Active Orders",
-      value: orders.length.toString(),
-      change: "+2",
+      value: activeOrders.toString(),
+      change: "",
       icon: Clock,
     },
     {
       label: "Total Customers",
-      value: "1,240",
-      change: "+84",
+      value: totalUsers.toString(),
+      change: "",
       icon: Users,
     },
   ];
@@ -45,16 +83,8 @@ const Dashboard: React.FC<DashboardProps> = ({ orders = [] }) => {
               <div className="p-2.5 md:p-3 rounded-xl md:rounded-2xl bg-[#FDF2F5] text-[#F8BBD0]">
                 <stat.icon size={20} />
               </div>
-              <span
-                className={`text-[10px] md:text-xs font-bold font-sans px-2 py-1 rounded-full ${
-                  stat.change.startsWith("+")
-                    ? "bg-green-100 text-green-600"
-                    : "bg-red-100 text-red-600"
-                }`}
-              >
-                {stat.change}
-              </span>
             </div>
+
             <h3 className="text-xs md:text-sm text-gray-500 mb-1">
               {stat.label}
             </h3>
@@ -63,58 +93,45 @@ const Dashboard: React.FC<DashboardProps> = ({ orders = [] }) => {
         ))}
       </div>
 
-      {/* Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
-        {/* Recent Orders */}
-        <div className="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl border border-[#E5E5E5] shadow-sm">
-          <h2 className="text-base md:text-lg font-bold mb-6">Recent Orders</h2>
-          <div className="space-y-3">
-            {orders.slice(0, 4).map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-[10px]">
-                    {order.customerName.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-xs md:text-sm font-semibold truncate max-w-[120px]">
-                      {order.customerName}
-                    </p>
-                    <p className="text-[10px] text-gray-400">{order.date}</p>
-                  </div>
+      {/* Recent Orders */}
+      <div className="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl border border-[#E5E5E5] shadow-sm">
+        <h2 className="text-base md:text-lg font-bold mb-6">Recent Orders</h2>
+
+        <div className="space-y-3">
+          {recentOrders.map((order) => (
+            <div
+              key={order._id}
+              className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-[10px]">
+                  {order.customerName.charAt(0)}
                 </div>
-                <div className="text-right">
-                  <p className="text-xs md:text-sm font-bold">
-                    ₹{order.total.toLocaleString()}
+
+                <div>
+                  <p className="text-xs md:text-sm font-semibold truncate max-w-[120px]">
+                    {order.customerName}
                   </p>
-                  <p className="text-[9px] uppercase font-bold text-[#F8BBD0]">
-                    {order.status}
+                  <p className="text-[10px] text-gray-400">
+                    {new Date(order.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Inventory Alert */}
-        <div className="bg-[#1A1A1A] p-6 md:p-8 rounded-2xl md:rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col justify-center min-h-[160px]">
-          <div className="relative z-10">
-            <h2 className="text-lg md:text-xl font-bold mb-2">
-              Inventory Alert
-            </h2>
-            <p className="text-gray-400 text-xs md:text-sm mb-6">
-              3 items are running low on stock.
-            </p>
-            <button className="bg-white text-black px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-[#F8BBD0] hover:text-white transition-all">
-              Manage Stock
-            </button>
-          </div>
-          <Flame
-            className="absolute -bottom-10 -right-10 text-white/5"
-            size={180}
-          />
+              <div className="text-right">
+                <p className="text-xs md:text-sm font-bold">
+                  ₹{order.totalAmount.toLocaleString()}
+                </p>
+                <p className="text-[9px] uppercase font-bold text-[#F8BBD0]">
+                  {order.orderStatus}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          {!recentOrders.length && (
+            <p className="text-sm text-gray-400">No recent orders.</p>
+          )}
         </div>
       </div>
     </div>

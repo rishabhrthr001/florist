@@ -45,6 +45,17 @@ const Navbar: React.FC = () => {
     setIsShopOpen(false);
     setIsUserOpen(false);
   };
+  const scrollToTop = () => {
+    if (location.pathname !== "/") {
+      navigate("/");
+
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 120);
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   return (
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-6xl">
@@ -52,16 +63,21 @@ const Navbar: React.FC = () => {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className={`glass-nav rounded-full px-6 py-4 flex items-center justify-between transition-all duration-500 ${isScrolled
+        className={`glass-nav rounded-full px-6 py-4 flex items-center justify-between transition-all duration-500 ${
+          isScrolled
             ? "shadow-2xl py-3 border border-[#F8BBD0]/30 bg-white/80 backdrop-blur-xl"
             : "shadow-sm bg-white/60 backdrop-blur-lg"
-          }`}
+        }`}
       >
         {/* ================= MOBILE LEFT ================= */}
 
         <div className="flex md:hidden items-center gap-4">
           <button
-            onClick={() => handleNav("/")}
+            onClick={() => {
+              setIsShopOpen(false);
+              setIsUserOpen(false);
+              scrollToTop();
+            }}
             className="text-[10px] uppercase font-bold tracking-widest"
           >
             Home
@@ -110,12 +126,15 @@ const Navbar: React.FC = () => {
         {/* ================= DESKTOP LOGO ================= */}
 
         <div
-          onClick={() => handleNav("/")}
+          onClick={scrollToTop}
+          // onClick={() => handleNav("/")}
           className="cursor-pointer hidden md:block"
         >
-          <span className="font-serif text-2xl italic font-bold tracking-tight text-[#1A1A1A]">
-            Mangalam
-          </span>
+          <img
+            src="/newLogo.png"
+            alt="Mangalam Florist"
+            className="h-10 w-auto object-contain"
+          />
         </div>
 
         {/* ================= DESKTOP NAV ================= */}
@@ -124,8 +143,9 @@ const Navbar: React.FC = () => {
           {/* HOME */}
           <button
             onClick={() => handleNav("/")}
-            className={`text-xs uppercase tracking-widest font-semibold hover:text-[#F8BBD0] ${location.pathname === "/" ? "text-[#F8BBD0]" : ""
-              }`}
+            className={`text-xs uppercase tracking-widest font-semibold hover:text-[#F8BBD0] ${
+              location.pathname === "/" ? "text-[#F8BBD0]" : ""
+            }`}
           >
             Home
           </button>

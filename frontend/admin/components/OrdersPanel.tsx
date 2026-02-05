@@ -66,6 +66,9 @@ export interface Order {
     country: string;
   };
 
+  // ✅ SPECIAL REQUEST
+  specialRequest?: string | null;
+
   items?: OrderItem[];
 
   totalAmount: number;
@@ -294,6 +297,19 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                   </div>
                 </div>
 
+                {/* ✅ SPECIAL REQUEST */}
+                {selectedOrder.specialRequest && (
+                  <div className="bg-pink-50 border border-pink-200 rounded-xl p-4">
+                    <p className="text-[10px] uppercase tracking-widest text-pink-400 mb-1">
+                      Special Request
+                    </p>
+
+                    <p className="text-sm italic text-gray-700">
+                      “{selectedOrder.specialRequest}”
+                    </p>
+                  </div>
+                )}
+
                 {/* Items */}
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">
@@ -319,7 +335,6 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                           </p>
                         </div>
 
-                        {/* 🌸 CUSTOM BOUQUET BREAKDOWN */}
                         {i.isCustom && i.custom && (
                           <div className="mt-3 bg-white border rounded-lg p-3 text-xs space-y-1">
                             <p className="font-semibold text-pink-600">

@@ -1,259 +1,299 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, Trash2, X } from "lucide-react";
-import React from "react";
-import { ComponentItem } from "../../types";
+import { Plus, Trash2, X, Image as ImageIcon, Pencil } from "lucide-react";
+import axios from "axios";
+import { toast } from "sonner";
 
-interface AtelierPanelProps {
-  items?: ComponentItem[];
-  setItems: React.Dispatch<React.SetStateAction<ComponentItem[]>>;
+import API from "@/config";
+import { useAuth } from "@/context/AuthContext";
+
+/* ---------------- TYPES ---------------- */
+
+type BouquetType = "base" | "flower" | "chocolate" | "ribbon";
+
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  images?: string[];
 }
 
-/**
- * Defensive: items default to []
- * so filter/map never crash.
- */
-const AtelierPanel = ({ items = [], setItems }: AtelierPanelProps) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+interface BouquetItem {
+  id: string;
+  type: BouquetType;
+  isActive: boolean;
 
-  const [formData, setFormData] = useState<{
-    name: string;
-    price: string;
-    type: ComponentItem["type"];
-  }>({
+  name?: string;
+  price?: number;
+  image?: string;
+
+  product?: Product;
+}
+
+/* ---------------- COMPONENT ---------------- */
+
+const AtelierPanel = () => {
+  const { token } = useAuth();
+
+  const [items, setItems] = useState<BouquetItem[]>([]);
+
+  const [flowerProducts, setFlowerProducts] = useState<Product[]>([]);
+  const [chocolateProducts, setChocolateProducts] = useState<Product[]>([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<BouquetItem | null>(null);
+
+  const [formData, setFormData] = useState({
+    type: "base" as BouquetType,
     name: "",
     price: "",
-    type: "base",
+    image: null as File | null,
+    productId: "",
   });
 
-  const handleAddItem = (e: React.FormEvent) => {
-    e.preventDefault();
+  const [preview, setPreview] = useState<string | null>(null);
 
-    const newItem: ComponentItem = {
-      id: `ci${Date.now()}`,
-      name: formData.name,
-      price: parseInt(formData.price),
-      type: formData.type,
-      image:
-        "https://images.unsplash.com/photo-1596435033235-94770e28e08d?auto=format&fit=crop&q=80&w=400",
-    };
+  /* ================= FETCH BOUQUET ================= */
 
-    setItems([...items, newItem]);
+  const fetchBouquetItems = async () => {
+    const res = await axios.get(`${API}/custom-bouquet/admin`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-    setIsModalOpen(false);
-    setFormData({
-      name: "",
-      price: "",
-      type: "base",
+    setItems(
+      res.data.map((i: any) => ({
+        ...i,
+        id: i._id,
+      })),
+    );
+  };
+
+  /* ================= FETCH FLOWERS ================= */
+
+  const fetchFlowers = async () => {
+    const res = await axios.get(`${API}/product/Flowers`);
+    setFlowerProducts(res.data);
+  };
+
+  /* ================= FETCH CHOCOLATES ================= */
+
+  const fetchChocolates = async () => {
+    const res = await axios.get(`${API}/product/Chocolate`);
+    setChocolateProducts(res.data);
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchBouquetItems();
+      fetchFlowers();
+      fetchChocolates();
+    }
+  }, [token]);
+
+  /* ================= HELPERS ================= */
+
+  const displayName = (item: BouquetItem) =>
+    item.product?.name || item.name || "—";
+
+  const displayPrice = (item: BouquetItem) =>
+    item.product?.price || item.price || 0;
+
+  const displayImage = (item: BouquetItem) =>
+    item.product?.images?.[0] ||
+    item.image ||
+    "https://via.placeholder.com/200x200?text=No+Image";
+
+  const bouquetByProductId = (pid: string) =>
+    items.find((i) => i.product?._id === pid);
+
+  /* ================= TOGGLE ================= */
+
+  const toggleItem = async (item: BouquetItem) => {
+    try {
+      if (items.find((i) => i.id === item.id)) {
+        await axios.patch(
+          `${API}/custom-bouquet/${item.id}/toggle`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+      } else {
+        await axios.post(
+          `${API}/custom-bouquet`,
+          {
+            type: item.type,
+            productId: item.product!._id,
+          },
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+      }
+
+      fetchBouquetItems();
+    } catch (err) {
+      console.error(err);
+      toast.error("Toggle failed");
+    }
+  };
+
+  /* ================= DELETE ================= */
+
+  const deleteItem = async (id: string) => {
+    toast("Delete this item?", {
+      description: "This action cannot be undone.",
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          await axios.delete(`${API}/custom-bouquet/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          fetchBouquetItems();
+        },
+      },
     });
   };
 
-  const removeItem = (id: string) => {
-    setItems(items.filter((i) => i.id !== id));
-  };
+  /* ================= UI ================= */
 
   return (
     <>
-      <div className="bg-white rounded-2xl md:rounded-3xl border border-[#E5E5E5] shadow-sm overflow-hidden">
-        {/* Header */}
-        <div className="p-6 md:p-8 border-b border-[#E5E5E5] flex flex-col sm:flex-row gap-4 justify-between items-center">
-          <div>
-            <h2 className="text-base md:text-lg font-bold">
-              Bouquet Customizer
-            </h2>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">
-              Manage bases, flowers, and additions
-            </p>
-          </div>
+      <div className="bg-white rounded-3xl border shadow-sm p-6">
+        <div className="flex justify-between mb-8">
+          <h2 className="text-lg font-bold">Bouquet Customizer</h2>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full sm:w-auto bg-[#1A1A1A] text-white px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#F8BBD0] transition-all"
+            className="bg-black text-white px-6 py-3 rounded-full text-xs font-bold uppercase flex gap-2"
           >
-            <Plus size={16} /> Add Atelier Item
+            <Plus size={14} /> Add Item
           </button>
         </div>
 
-        {/* Items */}
-        <div className="p-6 md:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {["base", "flower", "chocolate", "ribbon"].map((type) => (
-              <div key={type} className="space-y-4">
-                <h3 className="text-xs uppercase tracking-widest font-bold text-[#F8BBD0] border-b pb-2">
-                  {type}s
-                </h3>
+        {/* ================= BASES ================= */}
+        <Section
+          title="Bases"
+          items={items.filter((i) => i.type === "base")}
+          toggleItem={toggleItem}
+          deleteItem={deleteItem}
+          displayImage={displayImage}
+          displayName={displayName}
+          displayPrice={displayPrice}
+        />
 
-                <div className="space-y-3">
-                  {items
-                    .filter((i) => i.type === type)
-                    .map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-4 bg-gray-50 p-3 rounded-xl group"
-                      >
-                        <img
-                          src={item.image}
-                          className="w-10 h-10 rounded-lg object-cover"
-                          alt=""
-                        />
+        {/* ================= FLOWERS ================= */}
+        <Section
+          title="Flowers"
+          items={flowerProducts.map((p) => {
+            const existing = bouquetByProductId(p._id);
 
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold truncate">
-                            {item.name}
-                          </p>
-                          <p className="text-[10px] text-gray-400 font-medium">
-                            ₹{item.price}
-                          </p>
-                        </div>
+            return (
+              existing || {
+                id: p._id,
+                type: "flower",
+                isActive: false,
+                product: p,
+              }
+            );
+          })}
+          toggleItem={toggleItem}
+          deleteItem={deleteItem}
+          displayImage={displayImage}
+          displayName={displayName}
+          displayPrice={displayPrice}
+        />
 
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="p-2 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* ================= CHOCOLATES ================= */}
+        <Section
+          title="Chocolates"
+          items={chocolateProducts.map((p) => {
+            const existing = bouquetByProductId(p._id);
+
+            return (
+              existing || {
+                id: p._id,
+                type: "chocolate",
+                isActive: false,
+                product: p,
+              }
+            );
+          })}
+          toggleItem={toggleItem}
+          deleteItem={deleteItem}
+          displayImage={displayImage}
+          displayName={displayName}
+          displayPrice={displayPrice}
+        />
+
+        {/* ================= RIBBONS ================= */}
+        <Section
+          title="Ribbons"
+          items={items.filter((i) => i.type === "ribbon")}
+          toggleItem={toggleItem}
+          deleteItem={deleteItem}
+          displayImage={displayImage}
+          displayName={displayName}
+          displayPrice={displayPrice}
+        />
       </div>
-
-      {/* Add Item Modal */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            {/* Overlay */}
-            <motion.div
-              initial={{
-                opacity: 0,
-              }}
-              animate={{
-                opacity: 1,
-              }}
-              exit={{
-                opacity: 0,
-              }}
-              onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            />
-
-            {/* Modal */}
-            <motion.div
-              initial={{
-                opacity: 0,
-                scale: 0.95,
-                y: 20,
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                y: 0,
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.95,
-                y: 20,
-              }}
-              className="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden"
-            >
-              {/* Header */}
-              <div className="p-8 border-b border-gray-100 flex justify-between items-center">
-                <h2 className="font-serif text-2xl font-bold">
-                  New Atelier Item
-                </h2>
-
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              {/* Body */}
-              <form
-                onSubmit={handleAddItem}
-                className="p-8 space-y-4 max-h-[70vh] overflow-y-auto no-scrollbar"
-              >
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-gray-400 ml-1">
-                    Component Name
-                  </label>
-
-                  <input
-                    required
-                    placeholder="e.g. Silk Box"
-                    className="w-full p-4 border rounded-xl text-sm"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        name: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-gray-400 ml-1">
-                      Price (₹)
-                    </label>
-
-                    <input
-                      required
-                      type="number"
-                      placeholder="500"
-                      className="w-full p-4 border rounded-xl text-sm"
-                      value={formData.price}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          price: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-gray-400 ml-1">
-                      Type
-                    </label>
-
-                    <select
-                      className="w-full p-4 border rounded-xl text-sm appearance-none"
-                      value={formData.type}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          type: e.target.value as ComponentItem["type"],
-                        })
-                      }
-                    >
-                      <option value="base">Base</option>
-                      <option value="flower">Flower</option>
-                      <option value="chocolate">Chocolate</option>
-                      <option value="ribbon">Ribbon</option>
-                    </select>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-[#1A1A1A] text-white py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-[#F8BBD0] transition-colors mt-4"
-                >
-                  Add to Atelier
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </>
   );
 };
 
 export default AtelierPanel;
+
+/* ================= SECTION ================= */
+
+const Section = ({
+  title,
+  items,
+  toggleItem,
+  deleteItem,
+  displayImage,
+  displayName,
+  displayPrice,
+}: any) => (
+  <div className="mb-10">
+    <h3 className="text-sm font-bold uppercase mb-4">{title}</h3>
+
+    <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+      {items.map((item: BouquetItem) => (
+        <div
+          key={item.id}
+          className={`p-3 rounded-xl border ${
+            item.isActive
+              ? "bg-green-50 border-green-400"
+              : "bg-red-50 border-red-300"
+          }`}
+        >
+          <img
+            src={displayImage(item)}
+            className="h-20 w-full object-cover rounded-lg mb-2"
+          />
+
+          <p className="font-semibold text-sm">{displayName(item)}</p>
+
+          <p className="text-[11px] text-gray-500">₹{displayPrice(item)}</p>
+
+          <div className="flex gap-1.5 mt-2">
+            <button
+              onClick={() => toggleItem(item)}
+              className="flex-1 text-[10px] font-bold py-1.5 rounded-lg bg-white border"
+            >
+              {item.isActive ? "Disable" : "Enable"}
+            </button>
+
+            {item.id && (
+              <button
+                onClick={() => deleteItem(item.id)}
+                className="p-1.5 bg-white border rounded-lg text-red-500"
+              >
+                <Trash2 size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);

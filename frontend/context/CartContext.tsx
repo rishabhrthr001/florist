@@ -49,8 +49,11 @@ interface CartContextType {
 
   updateCustomMessage: (cartId: string, message: string) => void;
 
-  // ✅ NEW
   clearCart: () => void;
+
+  // ✅ SPECIAL REQUEST
+  specialRequest: string;
+  setSpecialRequest: React.Dispatch<React.SetStateAction<string>>;
 
   totalItems: number;
 }
@@ -59,24 +62,43 @@ const CartContext = createContext<CartContextType | null>(null);
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [specialRequest, setSpecialRequest] = useState("");
 
   /* ---------------- LOAD ---------------- */
 
   useEffect(() => {
     const stored = localStorage.getItem("cart");
-    if (stored) setItems(JSON.parse(stored));
+
+    if (stored) {
+      const parsed = JSON.parse(stored);
+
+      // backward compatible if cart was saved as array before
+      if (Array.isArray(parsed)) {
+        setItems(parsed);
+      } else {
+        setItems(parsed.items || []);
+        setSpecialRequest(parsed.specialRequest || "");
+      }
+    }
   }, []);
 
   /* ---------------- SAVE ---------------- */
 
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(items));
-  }, [items]);
+    localStorage.setItem(
+      "cart",
+      JSON.stringify({
+        items,
+        specialRequest,
+      }),
+    );
+  }, [items, specialRequest]);
 
   /* ---------------- CLEAR CART ---------------- */
 
   const clearCart = () => {
     setItems([]);
+    setSpecialRequest("");
     localStorage.removeItem("cart");
   };
 
@@ -209,6 +231,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     <CartContext.Provider
       value={{
         items,
+        specialRequest,
+        setSpecialRequest,
         addToCart,
         removeFromCart,
         updateQty,
@@ -216,7 +240,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         incrementCustomAddition,
         decrementCustomAddition,
         updateCustomMessage,
-        clearCart, // ✅ exposed
+        clearCart,
         totalItems,
       }}
     >

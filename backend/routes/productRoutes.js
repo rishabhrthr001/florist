@@ -1,5 +1,7 @@
 import express from "express";
 import Product from "../models/Product.js";
+import Category from "../models/Category.js";
+import CustomBouquet from "../models/CustomBouquet.js";
 import mongoose from "mongoose";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { uploadThree } from "../middleware/upload.js";
@@ -19,7 +21,6 @@ const makeSlug = (text) =>
 
 /* ------------------------------------
         GET ALL PRODUCTS
-        supports:
         /product
         /product?categoryId=xxxx
 ------------------------------------ */
@@ -42,6 +43,68 @@ router.get("/", async (req, res) => {
     console.error(err);
     res.status(500).json({
       msg: "Failed to fetch products",
+    });
+  }
+});
+
+/* ------------------------------------
+        GET FLOWER PRODUCTS
+------------------------------------ */
+router.get("/Flowers", async (req, res) => {
+  try {
+    const category = await Category.findOne({
+      slug: "flowers",
+      isActive: true,
+    });
+
+    if (!category)
+      return res.status(404).json({
+        msg: "Flower category not found",
+      });
+
+    const products = await Product.find({
+      categoryId: category._id,
+      isActive: true,
+    })
+      .populate("categoryId")
+      .sort({ createdAt: -1 });
+
+    res.json(products);
+  } catch (err) {
+    console.error("FLOWER FETCH ERROR:", err);
+    res.status(500).json({
+      msg: "Failed to fetch flowers",
+    });
+  }
+});
+
+/* ------------------------------------
+        GET CHOCOLATE PRODUCTS
+------------------------------------ */
+router.get("/Chocolate", async (req, res) => {
+  try {
+    const category = await Category.findOne({
+      slug: "chocolate",
+      isActive: true,
+    });
+
+    if (!category)
+      return res.status(404).json({
+        msg: "Chocolate category not found",
+      });
+
+    const products = await Product.find({
+      categoryId: category._id,
+      isActive: true,
+    })
+      .populate("categoryId")
+      .sort({ createdAt: -1 });
+
+    res.json(products);
+  } catch (err) {
+    console.error("CHOCOLATE FETCH ERROR:", err);
+    res.status(500).json({
+      msg: "Failed to fetch chocolates",
     });
   }
 });
@@ -101,8 +164,8 @@ router.get("/:id", async (req, res) => {
 ------------------------------------ */
 router.post(
   "/add",
-  // requireAuth,
-  // requireAdmin,
+  requireAuth,
+  requireAdmin,
   uploadThree,
   async (req, res) => {
     try {
@@ -153,103 +216,97 @@ router.post(
 /* ------------------------------------
         UPDATE PRODUCT
 ------------------------------------ */
-router.put(
-  "/:id",
-  // requireAuth,
-  // requireAdmin,
-  uploadThree,
-  async (req, res) => {
-    try {
-      const { name, price, description, categoryId } = req.body;
+router.put("/:id", requireAuth, requireAdmin, uploadThree, async (req, res) => {
+  try {
+    const { name, price, description, categoryId } = req.body;
 
-      if (!mongoose.Types.ObjectId.isValid(req.params.id))
-        return res.status(400).json({
-          msg: "Invalid product id",
-        });
-
-      const update = {};
-
-      if (name) {
-        update.name = name;
-
-        const baseSlug = makeSlug(name);
-
-        let slug = baseSlug;
-        let count = 1;
-
-        while (
-          await Product.findOne({
-            slug,
-            _id: { $ne: req.params.id },
-          })
-        ) {
-          slug = `${baseSlug}-${count++}`;
-        }
-
-        update.slug = slug;
-      }
-
-      if (price) update.price = price;
-      if (description) update.description = description;
-
-      if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
-        update.categoryId = categoryId;
-      }
-
-      if (req.files?.length) {
-        update.images = req.files.map((f) => f.path);
-      }
-
-      const product = await Product.findByIdAndUpdate(req.params.id, update, {
-        new: true,
-      }).populate("categoryId");
-
-      if (!product)
-        return res.status(404).json({
-          msg: "Product not found",
-        });
-
-      res.json(product);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({
-        msg: "Update failed",
+    if (!mongoose.Types.ObjectId.isValid(req.params.id))
+      return res.status(400).json({
+        msg: "Invalid product id",
       });
+
+    const update = {};
+
+    if (name) {
+      update.name = name;
+
+      const baseSlug = makeSlug(name);
+
+      let slug = baseSlug;
+      let count = 1;
+
+      while (
+        await Product.findOne({
+          slug,
+          _id: { $ne: req.params.id },
+        })
+      ) {
+        slug = `${baseSlug}-${count++}`;
+      }
+
+      update.slug = slug;
     }
-  },
-);
+
+    if (price) update.price = price;
+    if (description) update.description = description;
+
+    if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
+      update.categoryId = categoryId;
+    }
+
+    if (req.files?.length) {
+      update.images = req.files.map((f) => f.path);
+    }
+
+    const product = await Product.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+    }).populate("categoryId");
+
+    if (!product)
+      return res.status(404).json({
+        msg: "Product not found",
+      });
+
+    res.json(product);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      msg: "Update failed",
+    });
+  }
+});
 
 /* ------------------------------------
-        DELETE PRODUCT
+        DELETE PRODUCT + CLEAN BOUQUET MAP
 ------------------------------------ */
-router.delete(
-  "/:id",
-  // requireAuth,
-  // requireAdmin,
-  async (req, res) => {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.id))
-        return res.status(400).json({
-          msg: "Invalid id",
-        });
-
-      const product = await Product.findByIdAndDelete(req.params.id);
-
-      if (!product)
-        return res.status(404).json({
-          msg: "Product not found",
-        });
-
-      res.json({
-        msg: "Product deleted",
+router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id))
+      return res.status(400).json({
+        msg: "Invalid id",
       });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({
-        msg: "Delete failed",
+
+    const product = await Product.findByIdAndDelete(req.params.id);
+
+    if (!product)
+      return res.status(404).json({
+        msg: "Product not found",
       });
-    }
-  },
-);
+
+    // 🔥 remove from bouquet config
+    await CustomBouquet.deleteMany({
+      product: req.params.id,
+    });
+
+    res.json({
+      msg: "Product deleted",
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      msg: "Delete failed",
+    });
+  }
+});
 
 export default router;

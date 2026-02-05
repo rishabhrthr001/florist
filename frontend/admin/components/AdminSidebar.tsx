@@ -47,7 +47,6 @@ const sidebarLinks: SidebarLink[] = [
     icon: MessageCircle,
   },
 
-  { name: "Messages", path: "/admin/messages", icon: MessageSquare },
   { name: "Support Tickets", path: "/admin/tickets", icon: Ticket },
   { name: "Customers", path: "/admin/customers", icon: Users },
 ];
@@ -87,14 +86,17 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
       >
         {/* ---------------- LOGO ---------------- */}
         <div className="p-8 border-b border-[#E5E5E5] hidden md:block">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="font-serif text-xl italic font-bold">
-              Mangalam Flowers
-            </span>
-            <span className="text-[10px] uppercase tracking-widest bg-[#1A1A1A] text-white px-2 py-0.5 rounded ml-2">
-              Admin
-            </span>
-          </Link>
+          <div className="flex items-center">
+            <img
+              src="/newLogo.png"
+              alt="Mangalam Admin"
+              className="h-10 w-auto object-contain"
+            />
+          </div>
+
+          <span className="inline-block mt-3 text-[10px] uppercase tracking-widest bg-[#1A1A1A] text-white px-3 py-1 rounded font-bold">
+            Admin
+          </span>
         </div>
 
         {/* ---------------- NAV ---------------- */}
@@ -110,10 +112,11 @@ export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {
                 <li key={link.path}>
                   <button
                     onClick={() => handleNav(link.path)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      isActive
                         ? "bg-[#1A1A1A] text-white shadow-lg shadow-black/10"
                         : "text-[#4A4A4A] hover:bg-[#FDF2F5] hover:text-[#1A1A1A]"
-                      }`}
+                    }`}
                   >
                     <link.icon size={18} />
                     {link.name}

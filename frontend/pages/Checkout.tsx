@@ -29,7 +29,7 @@ type Address = {
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
 
-  const { items, clearCart } = useCart();
+  const { items, clearCart, specialRequest, setSpecialRequest } = useCart();
   const { user, token } = useAuth();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -128,19 +128,19 @@ const Checkout: React.FC = () => {
 
       const finalAddress = isGift
         ? {
-          line1: giftAddress,
-          city: "Delhi",
-          state: "Delhi",
-          zip: "110001",
-        }
+            line1: giftAddress,
+            city: "Delhi",
+            state: "Delhi",
+            zip: "110001",
+          }
         : {
-          line1: selectedAddress!.addressLine1,
-          line2: selectedAddress!.addressLine2 || "",
-          landmark: selectedAddress!.landmark,
-          city: selectedAddress!.city,
-          state: selectedAddress!.state,
-          zip: selectedAddress!.postalCode,
-        };
+            line1: selectedAddress!.addressLine1,
+            line2: selectedAddress!.addressLine2 || "",
+            landmark: selectedAddress!.landmark,
+            city: selectedAddress!.city,
+            state: selectedAddress!.state,
+            zip: selectedAddress!.postalCode,
+          };
 
       const payload = {
         customerName: finalName,
@@ -151,13 +151,15 @@ const Checkout: React.FC = () => {
 
         isGift,
 
+        specialRequest,
+
         gift: isGift
           ? {
-            name: giftName,
-            phone: giftPhone,
-            address: giftAddress,
-            from: giftFrom || null,
-          }
+              name: giftName,
+              phone: giftPhone,
+              address: giftAddress,
+              from: giftFrom || null,
+            }
           : null,
 
         items: items.map((i) => ({
@@ -232,10 +234,11 @@ const Checkout: React.FC = () => {
                       <button
                         key={addr._id}
                         onClick={() => setSelectedAddressId(addr._id)}
-                        className={`text-left rounded-3xl border-2 p-6 transition-all ${selectedAddressId === addr._id
-                          ? "border-pink-400 bg-pink-50 shadow-lg"
-                          : "hover:border-pink-200 hover:bg-[#FFF7FA]"
-                          }`}
+                        className={`text-left rounded-3xl border-2 p-6 transition-all ${
+                          selectedAddressId === addr._id
+                            ? "border-pink-400 bg-pink-50 shadow-lg"
+                            : "hover:border-pink-200 hover:bg-[#FFF7FA]"
+                        }`}
                       >
                         <p className="font-semibold text-sm">{addr.name}</p>
 
@@ -264,10 +267,11 @@ const Checkout: React.FC = () => {
                   <button
                     key={slot}
                     onClick={() => setDeliveryTime(slot as any)}
-                    className={`px-10 py-4 rounded-full border text-sm ${deliveryTime === slot
-                      ? "bg-black text-white"
-                      : "hover:border-black"
-                      }`}
+                    className={`px-10 py-4 rounded-full border text-sm ${
+                      deliveryTime === slot
+                        ? "bg-black text-white"
+                        : "hover:border-black"
+                    }`}
                   >
                     {slot === "day"
                       ? "Day Delivery · ₹150"
@@ -319,6 +323,23 @@ const Checkout: React.FC = () => {
                   />
                 </div>
               )}
+            </section>
+
+            {/* SPECIAL REQUEST */}
+            <section className="bg-white rounded-[2.8rem] shadow-xl p-10">
+              <h2 className="font-serif text-2xl mb-6">Special Request 💌</h2>
+
+              <textarea
+                rows={4}
+                placeholder="Any special instructions for us? (delivery notes, flower preference, etc.)"
+                value={specialRequest}
+                onChange={(e) => setSpecialRequest(e.target.value)}
+                className="w-full border rounded-2xl p-4 resize-none focus:outline-none focus:border-pink-400"
+              />
+
+              <p className="mt-3 text-xs text-gray-400 italic">
+                This will be sent to the florist with your order.
+              </p>
             </section>
           </div>
 

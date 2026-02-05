@@ -119,6 +119,11 @@ const orderSchema = new mongoose.Schema(
       },
     ],
 
+    specialRequest: {
+      type: String,
+      default: null,
+    },
+
     /* ---------------- TOTALS ---------------- */
 
     subtotal: Number,

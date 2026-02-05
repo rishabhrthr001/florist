@@ -59,7 +59,9 @@ router.post("/", requireAuth, async (req, res) => {
       items,
       deliveryCharge,
       paymentMethod,
-      notes,
+
+      // ✅ SPECIAL REQUEST
+      specialRequest,
     } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -115,50 +117,39 @@ router.post("/", requireAuth, async (req, res) => {
     const order = await Order.create({
       orderId,
       userId: req.user._id,
+
       customerName,
       phone,
       address,
       deliverySlot,
       deliveryDate,
+
       isGift,
       gift,
+
       items: verifiedItems,
+
       subtotal: serverSubtotal,
       deliveryCharge,
       totalAmount: serverTotal,
+
       paymentMethod,
       paymentStatus: "pending",
       orderStatus: "placed",
-      notes,
+
+      // ✅ SAVED
+      specialRequest: specialRequest || null,
     });
 
     const io = getIO();
 
-    // 🔥 realtime → admins
     io.to("admin").emit("new-order", order);
-
-    // 🔥 realtime → that user
     io.to(`user:${req.user._id.toString()}`).emit("new-order", order);
 
     res.status(201).json(order);
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Failed to create order" });
-  }
-});
-
-/* ---------------- USER: MY ORDERS ---------------- */
-
-router.get("/my", requireAuth, async (req, res) => {
-  try {
-    const orders = await Order.find({
-      userId: req.user._id,
-    }).sort({ createdAt: -1 });
-
-    res.json(orders);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Failed to fetch orders" });
   }
 });
 
@@ -204,6 +195,64 @@ router.patch("/:id/status", requireAuth, requireAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Update failed" });
+  }
+});
+
+router.get(
+  "/today/delivered-total",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date();
+      end.setHours(23, 59, 59, 999);
+
+      const orders = await Order.find({
+        orderStatus: "delivered",
+        createdAt: {
+          $gte: start,
+          $lte: end,
+        },
+      });
+
+      const totalValue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+
+      res.json({
+        date: start.toISOString().split("T")[0],
+        totalValue,
+        ordersCount: orders.length,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({
+        msg: "Failed to calculate today's delivered total",
+      });
+    }
+  },
+);
+
+/* ---------------- ADMIN: ACTIVE ORDERS ---------------- */
+
+router.get("/active", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const orders = await Order.find({
+      orderStatus: {
+        $nin: ["delivered", "cancelled"],
+      },
+    })
+      .populate("userId", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      count: orders.length,
+      orders,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Failed to fetch active orders" });
   }
 });
 

@@ -16,6 +16,9 @@ dist-ssr
 
 .env
 .env.local
+.env.example
+error.log
+build_error.log
 
 # Editor directories and files
 .vscode/*

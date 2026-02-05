@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
-import { Search, X } from "lucide-react";
+import { Search, X, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import API from "../config";
 
@@ -38,6 +38,8 @@ const ExplorePage: React.FC = () => {
 
   const [search, setSearch] = useState("");
   const [loadingProducts, setLoadingProducts] = useState(true);
+
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   /* ---------------- FETCH CATEGORIES ---------------- */
 
@@ -165,6 +167,70 @@ const ExplorePage: React.FC = () => {
 
         {/* ---------------- MAIN ---------------- */}
         <main className="flex-1">
+          {/* ---------------- MOBILE CATEGORY DROPDOWN ---------------- */}
+          <div className="lg:hidden mb-8 relative w-full">
+            <button
+              onClick={() => setMobileOpen((p) => !p)}
+              className="w-full bg-white border border-gray-100 rounded-full px-5 h-11 flex items-center justify-between text-xs uppercase tracking-widest font-bold shadow-sm"
+            >
+              <span>
+                {selectedSlug === "all"
+                  ? "All Products"
+                  : categories.find((c) => c.slug === selectedSlug)?.name ||
+                    "Collection"}
+              </span>
+
+              <ChevronDown
+                size={14}
+                className={`transition-transform ${
+                  mobileOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            <AnimatePresence>
+              {mobileOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 6 }}
+                  className="absolute z-40 mt-3 w-full bg-white rounded-3xl border shadow-xl overflow-hidden"
+                >
+                  <button
+                    onClick={() => {
+                      handleSelectCategory("all");
+                      setMobileOpen(false);
+                    }}
+                    className={`w-full text-left px-6 py-4 text-xs uppercase tracking-widest font-bold ${
+                      selectedSlug === "all"
+                        ? "bg-black text-white"
+                        : "hover:bg-[#FDF2F5]"
+                    }`}
+                  >
+                    All Products
+                  </button>
+
+                  {categories.map((cat) => (
+                    <button
+                      key={cat._id}
+                      onClick={() => {
+                        handleSelectCategory(cat.slug);
+                        setMobileOpen(false);
+                      }}
+                      className={`w-full text-left px-6 py-4 text-xs uppercase tracking-widest font-bold ${
+                        selectedSlug === cat.slug
+                          ? "bg-black text-white"
+                          : "hover:bg-[#FDF2F5]"
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           {/* HEADER */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
             <div>
@@ -207,7 +273,6 @@ const ExplorePage: React.FC = () => {
 
           {/* ---------------- PRODUCTS GRID ---------------- */}
 
-          {/* Skeleton Loader */}
           {loadingProducts && (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
               {Array.from({ length: 8 }).map((_, i) => (
@@ -219,7 +284,6 @@ const ExplorePage: React.FC = () => {
             </div>
           )}
 
-          {/* Animated Grid */}
           <motion.div
             layout
             transition={{ duration: 0.35, ease: "easeInOut" }}
@@ -242,7 +306,6 @@ const ExplorePage: React.FC = () => {
             </AnimatePresence>
           </motion.div>
 
-          {/* EMPTY */}
           {!loadingProducts && filteredProducts.length === 0 && (
             <div className="py-20 text-center border-2 border-dashed border-gray-100 rounded-[3rem] mt-10">
               <p className="text-gray-400 font-serif italic text-xl">

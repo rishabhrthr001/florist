@@ -1,7 +1,7 @@
 import express from "express";
-import { requireAuth } from "../middleware/auth.js";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import User from "../models/User.js";
-
+import Order from "../models/Order.js";
 const router = express.Router();
 
 /* -------------------------
@@ -210,6 +210,72 @@ router.patch("/addresses/:id/default", requireAuth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Failed to set default address" });
+  }
+});
+
+/* -------------------------
+   ADMIN: TOTAL USERS (NON-ADMIN)
+------------------------- */
+
+router.get("/count", requireAuth, async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments({
+      role: { $ne: "admin" },
+    });
+
+    res.json({ totalUsers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Failed to fetch users count" });
+  }
+});
+
+/* -------------------------
+   ADMIN: CUSTOMER STATS
+------------------------- */
+
+router.get("/customers", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const customers = await Order.aggregate([
+      {
+        $group: {
+          _id: "$userId",
+          orderCount: { $sum: 1 },
+          totalSpent: { $sum: "$totalAmount" },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $match: {
+          "user.role": { $ne: "admin" },
+        },
+      },
+      {
+        $project: {
+          _id: "$user._id",
+          name: "$user.name",
+          email: "$user.email",
+          orderCount: 1,
+          totalSpent: 1,
+        },
+      },
+      { $sort: { orderCount: -1 } },
+    ]);
+
+    res.json(customers);
+  } catch (err) {
+    console.error("❌ Failed to fetch customers", err);
+    res.status(500).json({
+      msg: "Failed to fetch customers",
+    });
   }
 });
 

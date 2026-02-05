@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Menu, X } from "lucide-react";
 import { io, Socket } from "socket.io-client";
+import { ComponentItem } from "@/types";
 
 import AdminSidebar from "@/admin/components/AdminSidebar";
 import Dashboard from "@/admin/components/Dashboard";
@@ -11,7 +12,6 @@ import CategoryPanel from "@/admin/components/CategoryPanel";
 import HotPicks from "@/admin/components/HotPicks";
 import OrdersPanel from "@/admin/components/OrdersPanel";
 import AtelierPanel from "@/admin/components/AtelierPanel";
-import MessagesPanel from "@/admin/components/MessagesPanel";
 import CustomersPanel from "@/admin/components/CustomersPanel";
 import SeasonalHighlights from "@/admin/components/SeasonalHighlights";
 import TicketsPanel from "@/admin/components/TicketsPanel";
@@ -32,6 +32,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
 }) => {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [atelierItems, setAtelierItems] = useState<ComponentItem[]>([]);
 
   const [orders, setOrders] = useState<Order[]>([]);
 
@@ -66,7 +67,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   useEffect(() => {
     if (!token) return;
 
-    const socket = io("http://localhost:3001", {
+    const socket = io(API, {
       auth: {
         token,
       },
@@ -75,11 +76,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
 
     socketRef.current = socket;
 
-    console.log("🧠 Admin socket connecting...");
-
-    socket.on("connect", () => {
-      console.log("✅ Admin socket connected");
-    });
+    socket.on("connect", () => {});
 
     socket.on("new-order", (order: Order) => {
       console.log("🔥 New order received", order);
@@ -111,7 +108,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     "/admin/hot-picks": "Hot Picks",
     "/admin/orders": "Orders",
     "/admin/atelier": "Atelier Items",
-    "/admin/messages": "Messages",
     "/admin/customers": "Customers",
     "/admin/comments": "Comments",
     "/admin/tickets": "Support Tickets",
@@ -126,9 +122,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     <div className="min-h-screen bg-[#F7F7F7] flex flex-col md:flex-row font-sans text-[#1A1A1A]">
       {/* Mobile Header */}
       <div className="md:hidden bg-white border-b border-[#E5E5E5] px-6 py-4 flex items-center justify-between sticky top-0 z-[60]">
-        <span className="font-serif italic font-bold text-lg">
-          Mangalam Admin
-        </span>
+        <img
+          src="/newLogo.png"
+          alt="Mangalam Admin"
+          className="h-8 w-auto object-contain"
+        />
+
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           className="p-2 text-gray-500 hover:text-black transition-colors"
@@ -166,8 +165,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
             element={<OrdersPanel orders={orders} setOrders={setOrders} />}
           />
 
-          <Route path="/atelier" element={<AtelierPanel />} />
-          <Route path="/messages" element={<MessagesPanel />} />
+          <Route
+            path="/atelier"
+            element={
+              <AtelierPanel items={atelierItems} setItems={setAtelierItems} />
+            }
+          />
           <Route path="/comments" element={<CommentPanel />} />
           <Route path="/customers" element={<CustomersPanel />} />
           <Route path="/tickets" element={<TicketsPanel />} />

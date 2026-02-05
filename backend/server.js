@@ -16,6 +16,7 @@ import orderRoutes from "./routes/order.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import ticketRoutes from "./routes/tickets.js";
 import wishlistRoutes from "./routes/wishlist.js";
+import customRoutes from "./routes/custom.js";
 
 import { initSocket, getIO } from "./socket/index.js";
 
@@ -31,7 +32,7 @@ const allowedOrigins = [
   "https://mangalamflorist.com",
   "https://www.mangalamflorist.com",
   "http://localhost:5173",
-  "http://localhost:3000"
+  "http://localhost:3000",
 ].filter(Boolean);
 
 const corsOptions = {
@@ -60,7 +61,9 @@ cloudinary.api
 
 // Health check endpoint for Cloud Run
 app.get("/health", (req, res) => {
-  res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
+  res
+    .status(200)
+    .json({ status: "healthy", timestamp: new Date().toISOString() });
 });
 
 app.use((req, res, next) => {
@@ -78,7 +81,7 @@ app.use("/orders", orderRoutes);
 app.use("/contact", contactRoutes);
 app.use("/tickets", ticketRoutes);
 app.use("/wishlist", wishlistRoutes);
-
+app.use("/custom-bouquet", customRoutes);
 const server = http.createServer(app);
 
 initSocket(server);

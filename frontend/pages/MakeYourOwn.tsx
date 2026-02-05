@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Button from "../components/Button";
 import { Plus, Minus, ShoppingBag, ChevronUp, ChevronDown } from "lucide-react";
 import { ComponentItem } from "../types";
-import { BOUQUET_ITEMS as ITEMS } from "../constants";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
+import axios from "axios";
+import API from "@/config";
 
 const MakeYourOwn: React.FC = () => {
   const { addToCart } = useCart();
@@ -22,7 +23,45 @@ const MakeYourOwn: React.FC = () => {
   const [instructions, setInstructions] = useState("");
   const [isSummaryMobileOpen, setIsSummaryMobileOpen] = useState(false);
 
-  /* ---------------- ADD / REMOVE ---------------- */
+  const [items, setItems] = useState<ComponentItem[]>([]);
+
+  /* ================= FETCH ENABLED BOUQUET ITEMS ================= */
+
+  useEffect(() => {
+    axios
+      .get(`${API}/custom-bouquet`)
+      .then((res) => {
+        const mapped: ComponentItem[] = res.data.map((item: any) => {
+          // flower / chocolate → product
+          if (item.type === "flower" || item.type === "chocolate") {
+            return {
+              id: item.product._id,
+              name: item.product.name,
+              price: item.product.price,
+              image: item.product.images?.[0] || "/placeholder.jpg",
+              type: item.type,
+            };
+          }
+
+          // base / ribbon → embedded
+          return {
+            id: item._id,
+            name: item.name,
+            price: item.price,
+            image: item.image || "/placeholder.jpg",
+            type: item.type,
+          };
+        });
+
+        setItems(mapped);
+      })
+      .catch((err) => {
+        console.error("BUILDER FETCH ERROR:", err);
+        toast.error("Failed to load bouquet builder");
+      });
+  }, []);
+
+  /* ================= ADD / REMOVE ================= */
 
   const handleAdd = (item: ComponentItem) => {
     if (item.type === "base") setSelectedBase(item);
@@ -30,10 +69,12 @@ const MakeYourOwn: React.FC = () => {
     else {
       setAdditions((prev) => {
         const existing = prev.find((a) => a.item.id === item.id);
+
         if (existing)
           return prev.map((a) =>
             a.item.id === item.id ? { ...a, qty: a.qty + 1 } : a,
           );
+
         return [...prev, { item, qty: 1 }];
       });
     }
@@ -42,22 +83,24 @@ const MakeYourOwn: React.FC = () => {
   const handleRemove = (id: string) => {
     setAdditions((prev) => {
       const existing = prev.find((a) => a.item.id === id);
+
       if (existing && existing.qty > 1)
         return prev.map((a) =>
           a.item.id === id ? { ...a, qty: a.qty - 1 } : a,
         );
+
       return prev.filter((a) => a.item.id !== id);
     });
   };
 
-  /* ---------------- PRICE ---------------- */
+  /* ================= PRICE ================= */
 
   const totalPrice =
     (selectedBase?.price || 0) +
     (selectedRibbon?.price || 0) +
     additions.reduce((acc, curr) => acc + curr.item.price * curr.qty, 0);
 
-  /* ---------------- FINALIZE ---------------- */
+  /* ================= FINALIZE ================= */
 
   const finalizeBouquet = () => {
     if (!selectedBase) {
@@ -102,8 +145,8 @@ const MakeYourOwn: React.FC = () => {
         animate={{ opacity: 1 }}
         className="max-w-7xl mx-auto px-6 pt-28 pb-12 grid lg:grid-cols-3 gap-12 h-[calc(100vh-80px)]"
       >
-        {/* ---------------- LEFT BUILDER (SCROLLABLE) ---------------- */}
-        <div className="lg:col-span-2 space-y-16 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-[#F8BBD0]/40 scrollbar-track-transparent">
+        {/* ---------------- LEFT BUILDER ---------------- */}
+        <div className="lg:col-span-2 space-y-16 overflow-y-auto pr-4">
           <header>
             <span className="text-[10px] uppercase tracking-widest text-[#F8BBD0] font-bold">
               The Artisan Builder
@@ -123,36 +166,38 @@ const MakeYourOwn: React.FC = () => {
               </h2>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {ITEMS.filter((i) => i.type === step.type).map((item) => {
-                  const isSelected =
-                    selectedBase?.id === item.id ||
-                    selectedRibbon?.id === item.id;
+                {items
+                  .filter((i) => i.type === step.type)
+                  .map((item) => {
+                    const isSelected =
+                      selectedBase?.id === item.id ||
+                      selectedRibbon?.id === item.id;
 
-                  return (
-                    <motion.div
-                      whileHover={{ y: -5 }}
-                      key={item.id}
-                      className={`bg-white p-4 rounded-2xl border-2 ${
-                        isSelected ? "border-[#F8BBD0]" : "border-transparent"
-                      }`}
-                    >
-                      <img
-                        src={item.image}
-                        className="aspect-square rounded-xl mb-4 object-cover"
-                      />
-
-                      <h3 className="font-bold text-sm">{item.name}</h3>
-                      <p className="text-xs text-[#F8BBD0]">₹{item.price}</p>
-
-                      <button
-                        onClick={() => handleAdd(item)}
-                        className="w-full mt-4 py-2 rounded-full bg-[#FDF2F5] text-[#F8BBD0] hover:bg-[#F8BBD0] hover:text-white text-[10px] uppercase tracking-widest font-bold"
+                    return (
+                      <motion.div
+                        whileHover={{ y: -5 }}
+                        key={item.id}
+                        className={`bg-white p-4 rounded-2xl border-2 ${
+                          isSelected ? "border-[#F8BBD0]" : "border-transparent"
+                        }`}
                       >
-                        {isSelected ? "Selected" : "Select"}
-                      </button>
-                    </motion.div>
-                  );
-                })}
+                        <img
+                          src={item.image}
+                          className="aspect-square rounded-xl mb-4 object-cover"
+                        />
+
+                        <h3 className="font-bold text-sm">{item.name}</h3>
+                        <p className="text-xs text-[#F8BBD0]">₹{item.price}</p>
+
+                        <button
+                          onClick={() => handleAdd(item)}
+                          className="w-full mt-4 py-2 rounded-full bg-[#FDF2F5] text-[#F8BBD0] hover:bg-[#F8BBD0] hover:text-white text-[10px] uppercase tracking-widest font-bold"
+                        >
+                          {isSelected ? "Selected" : "Select"}
+                        </button>
+                      </motion.div>
+                    );
+                  })}
               </div>
             </section>
           ))}
@@ -250,7 +295,13 @@ const Summary = ({
     <h2 className="font-serif text-2xl mb-8">Bouquet Summary</h2>
 
     <SummaryContent
-      {...{ selectedBase, selectedRibbon, additions, handleAdd, handleRemove }}
+      {...{
+        selectedBase,
+        selectedRibbon,
+        additions,
+        handleAdd,
+        handleRemove,
+      }}
     />
 
     <div className="border-t pt-6 mt-8">

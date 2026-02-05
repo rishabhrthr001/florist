@@ -116,4 +116,49 @@ router.get("/admin/all", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+router.delete("/:id/user", requireAuth, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) return res.status(404).json({ msg: "Review not found" });
+
+    if (review.user.toString() !== req.user._id.toString())
+      return res.status(403).json({ msg: "Not authorized" });
+
+    await review.deleteOne();
+
+    res.json({ msg: "Review deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Delete failed" });
+  }
+});
+
+router.delete("/:reviewId/reply/:replyId", requireAuth, async (req, res) => {
+  try {
+    const { reviewId, replyId } = req.params;
+
+    const review = await Review.findById(reviewId);
+
+    if (!review) return res.status(404).json({ msg: "Review not found" });
+
+    const reply = review.replies.id(replyId);
+
+    if (!reply) return res.status(404).json({ msg: "Reply not found" });
+
+    if (reply.user.toString() !== req.user._id.toString())
+      return res.status(403).json({ msg: "Not authorized" });
+
+    reply.deleteOne();
+    await review.save();
+
+    const populated = await review.populate("replies.user", "name");
+
+    res.json(populated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Delete reply failed" });
+  }
+});
+
 export default router;
