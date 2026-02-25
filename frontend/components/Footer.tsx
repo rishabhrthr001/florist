@@ -102,7 +102,7 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 uppercase tracking-widest gap-4">
-          <p>© 2024 Mangalam Flowers. All Rights Reserved.</p>
+          <p>© 2024 Mangalam Florist. All Rights Reserved.</p>
           <div className="flex gap-8">
             <Link
               to="privacy-policy"

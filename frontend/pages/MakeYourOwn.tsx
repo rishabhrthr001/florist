@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import Button from "../components/Button";
-import { Plus, Minus, ShoppingBag, ChevronUp, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import { Plus, Minus, ShoppingBag, ChevronUp, ChevronDown, Check, Trash2 } from "lucide-react";
 import { ComponentItem } from "../types";
-import { useCart } from "@/context/CartContext";
+import { useCart } from "../context/CartContext";
 import { toast } from "sonner";
 import axios from "axios";
 import API from "@/config";
 
 const MakeYourOwn: React.FC = () => {
   const { addToCart } = useCart();
+  const navigate = useNavigate();
 
   const [selectedBase, setSelectedBase] = useState<ComponentItem | null>(null);
   const [selectedRibbon, setSelectedRibbon] = useState<ComponentItem | null>(
@@ -138,63 +139,86 @@ const MakeYourOwn: React.FC = () => {
   ];
 
   return (
-    <div className="bg-[#FAF9F6] min-h-screen">
-      {/* ---------- MAIN GRID ---------- */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="max-w-7xl mx-auto px-6 pt-28 pb-12 grid lg:grid-cols-3 gap-12 h-[calc(100vh-80px)]"
-      >
-        {/* ---------------- LEFT BUILDER ---------------- */}
-        <div className="lg:col-span-2 space-y-16 overflow-y-auto pr-4">
+    <div className="min-h-screen bg-[#FAF9F6] pt-32 pb-32 px-4 md:px-6">
+      
+      {/* HEADER / BREADCRUMBS */}
+      <div className="max-w-[120rem] mx-auto mb-10 overflow-hidden">
+        <nav className="flex text-[10px] sm:text-[11px] text-gray-400 border-b border-gray-200/50 pb-4 font-bold uppercase tracking-widest">
+          <Link to="/" className="hover:text-black transition-colors shrink-0">Home</Link>
+          <span className="mx-2 shrink-0">/</span>
+          <span className="text-gray-900 truncate">Artisan Builder</span>
+        </nav>
+      </div>
+
+      <div className="max-w-[120rem] mx-auto grid lg:grid-cols-[1.5fr_1fr] gap-10 xl:gap-16">
+        {/* ================= LEFT BUILDER ================= */}
+        <motion.div
+           initial={{ opacity: 0, y: 12 }}
+           animate={{ opacity: 1, y: 0 }}
+           className="flex flex-col gap-12"
+        >
           <header>
-            <span className="text-[10px] uppercase tracking-widest text-[#F8BBD0] font-bold">
-              The Artisan Builder
+            <span className="text-[10px] uppercase tracking-widest text-[#EE1C47] font-bold flex items-center gap-2 mb-3">
+              <span className="w-1 h-1 rounded-full bg-[#EE1C47] block shadow-sm"></span> The Artisan Builder
             </span>
-            <h1 className="font-serif text-5xl mt-4">
+            <h1 className="font-serif italic text-4xl md:text-5xl lg:text-6xl tracking-tight text-gray-900 leading-[1.1]">
               Create Your Masterpiece
             </h1>
           </header>
 
           {steps.map((step, idx) => (
-            <section key={idx} className="space-y-8">
-              <h2 className="font-serif text-xl font-bold flex gap-4">
-                <span className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-xs">
+            <section key={idx} className="space-y-6">
+              <div className="flex items-center gap-4 border-b border-gray-100 pb-3">
+                <span className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center text-xs font-serif italic">
                   {idx + 1}
                 </span>
-                {step.title}
-              </h2>
+                <h2 className="font-serif text-2xl md:text-3xl text-gray-900 tracking-tight">
+                  {step.title}
+                </h2>
+              </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
                 {items
                   .filter((i) => i.type === step.type)
                   .map((item) => {
                     const isSelected =
                       selectedBase?.id === item.id ||
                       selectedRibbon?.id === item.id;
+                      
+                    const addedItem = additions.find((a) => a.item.id === item.id);
+                    const isAdded = !!addedItem;
 
                     return (
                       <motion.div
-                        whileHover={{ y: -5 }}
+                        whileHover={{ y: -4 }}
                         key={item.id}
-                        className={`bg-white p-4 rounded-2xl border-2 ${
-                          isSelected ? "border-[#F8BBD0]" : "border-transparent"
+                        onClick={() => handleAdd(item)}
+                        className={`bg-white p-3 md:p-4 rounded-[1.25rem] md:rounded-[1.5rem] border transition-all duration-300 cursor-pointer shadow-[0_2px_10px_rgba(0,0,0,0.02)] group hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] flex flex-col ${
+                          isSelected ? "border-black ring-1 ring-black" : "border-gray-100 hover:border-gray-300"
                         }`}
                       >
-                        <img
-                          src={item.image}
-                          className="aspect-square rounded-xl mb-4 object-cover"
-                        />
+                        <div className="w-full aspect-square rounded-xl bg-gray-50 overflow-hidden mb-3 md:mb-4 relative">
+                           <img
+                             src={item.image}
+                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                             alt={item.name}
+                           />
+                           {isSelected && (
+                             <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md">
+                                <Check size={10} strokeWidth={3} />
+                             </div>
+                           )}
+                           {isAdded && (item.type !== 'base' && item.type !== 'ribbon') && (
+                             <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md text-[10px] font-bold">
+                                {addedItem.qty}
+                             </div>
+                           )}
+                        </div>
 
-                        <h3 className="font-bold text-sm">{item.name}</h3>
-                        <p className="text-xs text-[#F8BBD0]">₹{item.price}</p>
-
-                        <button
-                          onClick={() => handleAdd(item)}
-                          className="w-full mt-4 py-2 rounded-full bg-[#FDF2F5] text-[#F8BBD0] hover:bg-[#F8BBD0] hover:text-white text-[10px] uppercase tracking-widest font-bold"
-                        >
-                          {isSelected ? "Selected" : "Select"}
-                        </button>
+                        <div className="mt-auto">
+                           <h3 className="font-serif text-[13px] md:text-[15px] leading-tight text-gray-900 mb-1 line-clamp-2">{item.name}</h3>
+                           <p className="font-sans font-bold text-gray-900 text-[11px] md:text-sm">₹{item.price.toLocaleString()}</p>
+                        </div>
                       </motion.div>
                     );
                   })}
@@ -203,120 +227,109 @@ const MakeYourOwn: React.FC = () => {
           ))}
 
           {/* ---------------- INSTRUCTIONS ---------------- */}
-          <section className="bg-white rounded-3xl p-8 shadow">
-            <h3 className="font-serif text-xl mb-4">Bouquet Instructions 🌷</h3>
+          <section className="bg-white rounded-[2rem] p-8 md:p-10 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-gray-100">
+            <h3 className="font-serif italic text-2xl md:text-3xl text-gray-900 mb-2 tracking-tight">Special Instructions</h3>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-6">Any wrapping style, color preference or notes?</p>
             <textarea
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Any wrapping style, flower arrangement, color preference, note message..."
-              rows={4}
-              className="w-full border rounded-2xl p-4 text-sm resize-none focus:ring-[#F8BBD0]"
+              placeholder="E.g. Wrap it in dark paper, keep it minimalistic..."
+              rows={3}
+              className="w-full bg-[#FBFBFB] border border-gray-200 rounded-2xl p-4 md:p-5 text-sm font-medium resize-none focus:outline-none focus:border-gray-400 focus:bg-white transition-all shadow-sm"
             />
           </section>
-        </div>
+        </motion.div>
 
         {/* ---------------- DESKTOP SUMMARY ---------------- */}
-        <div className="hidden lg:block sticky top-32">
-          <Summary
-            {...{
-              selectedBase,
-              selectedRibbon,
-              additions,
-              handleAdd,
-              handleRemove,
-              totalPrice,
-              finalizeBouquet,
-            }}
-          />
-        </div>
-      </motion.div>
-
-      {/* ---------------- MOBILE SUMMARY ---------------- */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-50">
-        <div
-          className={`bg-white rounded-t-3xl shadow-xl ${
-            isSummaryMobileOpen ? "h-[60vh]" : ""
-          }`}
-        >
-          <div
-            onClick={() => setIsSummaryMobileOpen(!isSummaryMobileOpen)}
-            className="flex justify-between px-8 py-4 border-b cursor-pointer"
+        <div className="relative z-10 hidden lg:block">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-[2rem] p-8 md:p-10 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-gray-100 lg:sticky lg:top-32 flex flex-col gap-6"
           >
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-[#F8BBD0]">
-                Total
-              </p>
-              <p className="font-serif text-xl">₹{totalPrice}</p>
-            </div>
-            {isSummaryMobileOpen ? <ChevronDown /> : <ChevronUp />}
-          </div>
+             <h2 className="font-serif italic text-3xl md:text-4xl text-gray-900 border-b border-gray-100 pb-6 tracking-tight">
+                Composition
+             </h2>
+             <SummaryContent
+              {...{
+                selectedBase,
+                selectedRibbon,
+                additions,
+                handleAdd,
+                handleRemove,
+                clearBase: () => setSelectedBase(null),
+                clearRibbon: () => setSelectedRibbon(null),
+              }}
+             />
+             <div className="border-t border-gray-100 pt-6 mt-2 space-y-4">
+               <div className="flex justify-between items-end border-b border-gray-100 pb-6">
+                 <span className="font-serif italic text-2xl text-gray-900">Total Price</span>
+                 <span className="font-sans font-bold text-2xl md:text-3xl text-gray-900">₹{totalPrice.toLocaleString()}</span>
+               </div>
+               <button 
+                 disabled={!selectedBase}
+                 onClick={finalizeBouquet}
+                 className="mt-4 w-full py-4 md:py-5 bg-black text-white rounded-[1.25rem] md:rounded-[1.5rem] uppercase tracking-widest text-[11px] md:text-xs font-bold hover:bg-gray-800 transition-all shadow-xl hover:shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:translate-y-0"
+               >
+                 <ShoppingBag size={14} strokeWidth={2.5}/> Add to Cart
+               </button>
+             </div>
+          </motion.div>
+        </div>
+      </div>
 
+      {/* ---------------- MOBILE SUMMARY & BOTTOM BAR ---------------- */}
+      <div className="lg:hidden fixed bottom-6 inset-x-4 z-50 flex flex-col gap-3">
+        <AnimatePresence>
           {isSummaryMobileOpen && (
-            <div className="p-8 overflow-y-auto">
-              <SummaryContent
-                {...{
-                  selectedBase,
-                  selectedRibbon,
-                  additions,
-                  handleAdd,
-                  handleRemove,
-                }}
-              />
-            </div>
-          )}
-
-          <div className="p-6">
-            <Button
-              variant="primary"
-              className="w-full"
-              onClick={finalizeBouquet}
+            <motion.div
+              initial={{ opacity: 0, y: 50, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 50, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="bg-white rounded-[2rem] p-6 shadow-[0_15px_60px_rgba(0,0,0,0.15)] border border-gray-100 overflow-y-auto max-h-[65vh]"
             >
-              Add To Cart
-            </Button>
-          </div>
+              <h2 className="font-serif italic text-2xl text-gray-900 border-b border-gray-100 pb-4 mb-4">
+                 Composition
+              </h2>
+              <SummaryContent
+                selectedBase={selectedBase}
+                selectedRibbon={selectedRibbon}
+                additions={additions}
+                handleAdd={handleAdd}
+                handleRemove={handleRemove}
+                clearBase={() => setSelectedBase(null)}
+                clearRibbon={() => setSelectedRibbon(null)}
+             />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div 
+          className="bg-white rounded-full p-2 pl-6 shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-gray-200 flex items-center justify-between cursor-pointer"
+          onClick={() => setIsSummaryMobileOpen(!isSummaryMobileOpen)}
+        >
+           <div className="flex flex-col flex-1">
+             <div className="flex items-center gap-1.5">
+               <p className="text-[10px] uppercase font-bold tracking-widest text-gray-400">Total Price</p>
+               <ChevronUp size={12} strokeWidth={3} className={`text-gray-400 transition-transform ${isSummaryMobileOpen ? 'rotate-180' : ''}`} />
+             </div>
+             <p className="font-sans font-bold text-lg leading-tight text-gray-900">₹{totalPrice.toLocaleString()}</p>
+           </div>
+           <button 
+             disabled={!selectedBase}
+             onClick={(e) => { e.stopPropagation(); finalizeBouquet(); }}
+             className="py-3 px-6 bg-black text-white rounded-full uppercase tracking-widest text-[10px] font-bold hover:bg-gray-800 transition-all disabled:opacity-40 shrink-0 shadow-md"
+           >
+             Add to Cart
+           </button>
         </div>
       </div>
     </div>
   );
 };
 
-/* ---------------- SUMMARY COMPONENTS ---------------- */
-
-const Summary = ({
-  selectedBase,
-  selectedRibbon,
-  additions,
-  handleAdd,
-  handleRemove,
-  totalPrice,
-  finalizeBouquet,
-}: any) => (
-  <div className="glass-nav rounded-3xl p-8 shadow-xl">
-    <h2 className="font-serif text-2xl mb-8">Bouquet Summary</h2>
-
-    <SummaryContent
-      {...{
-        selectedBase,
-        selectedRibbon,
-        additions,
-        handleAdd,
-        handleRemove,
-      }}
-    />
-
-    <div className="border-t pt-6 mt-8">
-      <div className="flex justify-between mb-6">
-        <span>Subtotal</span>
-        <span className="font-serif text-xl">₹{totalPrice}</span>
-      </div>
-
-      <Button variant="primary" className="w-full" onClick={finalizeBouquet}>
-        <ShoppingBag size={16} />
-        Finalize & Add to Cart
-      </Button>
-    </div>
-  </div>
-);
+/* ---------------- SUMMARY CONTENT ---------------- */
 
 const SummaryContent = ({
   selectedBase,
@@ -324,35 +337,68 @@ const SummaryContent = ({
   additions,
   handleAdd,
   handleRemove,
+  clearBase,
+  clearRibbon,
 }: any) => (
-  <div className="space-y-6">
-    {selectedBase && (
-      <p className="text-sm">
-        <strong>Base:</strong> {selectedBase.name}
-      </p>
-    )}
-
-    {additions.map((a: any) => (
-      <div key={a.item.id} className="flex justify-between">
-        <span>
-          {a.item.name} × {a.qty}
+  <div className="space-y-4">
+    {selectedBase ? (
+      <div className="flex justify-between items-center text-[13px] md:text-sm font-medium text-gray-800 bg-[#FBFBFB] border border-gray-100 p-4 rounded-2xl">
+        <span className="flex items-center gap-2">
+          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-bold">Base</span> 
+          {selectedBase.name}
         </span>
-        <div className="flex gap-3">
-          <button onClick={() => handleRemove(a.item.id)}>
-            <Minus size={14} />
-          </button>
-          <span>₹{a.item.price * a.qty}</span>
-          <button onClick={() => handleAdd(a.item)}>
-            <Plus size={14} />
+        <div className="flex items-center gap-3">
+          <span className="font-bold">₹{selectedBase.price.toLocaleString()}</span>
+          <button onClick={clearBase} className="p-1.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
+            <Trash2 size={12} strokeWidth={2.5}/>
           </button>
         </div>
       </div>
-    ))}
+    ) : (
+      <p className="text-[11px] uppercase tracking-widest text-gray-400 font-bold mb-4 text-center">Select a base to start</p>
+    )}
+
+    {additions.length > 0 && (
+       <div className="space-y-3 bg-[#FBFBFB] border border-gray-100 p-4 rounded-2xl">
+         <span className="text-gray-400 text-[9px] uppercase tracking-widest font-bold block mb-2">Flowers & Sweets</span>
+         {additions.map((a: any) => (
+           <div key={a.item.id} className="flex justify-between items-center border-b border-gray-100/50 pb-3 last:border-0 last:pb-0">
+             <span className="text-xs font-medium text-gray-800">
+               {a.item.name}
+             </span>
+             <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-full px-1.5 py-1 shadow-sm">
+                <button
+                  onClick={() => handleRemove(a.item.id)}
+                  className="w-5 h-5 rounded-full hover:bg-gray-50 flex items-center justify-center text-gray-500">
+                  <Minus size={10} strokeWidth={2.5}/>
+                </button>
+                <span className="w-[18px] text-center font-bold text-[10px] text-gray-800">
+                  {a.qty}
+                </span>
+                <button
+                  onClick={() => handleAdd(a.item)}
+                  className="w-5 h-5 rounded-full hover:bg-gray-50 flex items-center justify-center text-gray-500">
+                  <Plus size={10} strokeWidth={2.5}/>
+                </button>
+              </div>
+           </div>
+         ))}
+       </div>
+    )}
 
     {selectedRibbon && (
-      <p className="text-sm border-t pt-4">
-        <strong>Ribbon:</strong> {selectedRibbon.name}
-      </p>
+      <div className="flex justify-between items-center text-[13px] md:text-sm font-medium text-gray-800 bg-[#FBFBFB] border border-gray-100 p-4 rounded-2xl">
+        <span className="flex items-center gap-2">
+          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-bold">Trim</span> 
+          {selectedRibbon.name}
+        </span>
+        <div className="flex items-center gap-3">
+          <span className="font-bold">₹{selectedRibbon.price.toLocaleString()}</span>
+          <button onClick={clearRibbon} className="p-1.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
+            <Trash2 size={12} strokeWidth={2.5}/>
+          </button>
+        </div>
+      </div>
     )}
   </div>
 );

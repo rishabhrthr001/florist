@@ -63,10 +63,10 @@ const Navbar: React.FC = () => {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        className={`glass-nav rounded-full px-6 py-4 flex items-center justify-between transition-all duration-500 ${
+        className={`glass-nav rounded-full px-6 py-4 md:px-8 flex items-center justify-between transition-all duration-500 border border-white/40 ${
           isScrolled
-            ? "shadow-2xl py-3 border border-[#F8BBD0]/30 bg-white/80 backdrop-blur-xl"
-            : "shadow-sm bg-white/60 backdrop-blur-lg"
+            ? "shadow-[0_4px_30px_rgba(0,0,0,0.06)] py-3 md:py-3.5 bg-white/85 backdrop-blur-2xl"
+            : "shadow-[0_2px_20px_rgba(0,0,0,0.02)] bg-white/40 backdrop-blur-lg"
         }`}
       >
         {/* ================= MOBILE LEFT ================= */}
@@ -143,8 +143,8 @@ const Navbar: React.FC = () => {
           {/* HOME */}
           <button
             onClick={() => handleNav("/")}
-            className={`text-xs uppercase tracking-widest font-semibold hover:text-[#F8BBD0] ${
-              location.pathname === "/" ? "text-[#F8BBD0]" : ""
+            className={`text-[11px] uppercase tracking-widest font-bold transition-colors ${
+              location.pathname === "/" ? "text-[#EE1C47]" : "text-gray-600 hover:text-black"
             }`}
           >
             Home
@@ -158,10 +158,12 @@ const Navbar: React.FC = () => {
           >
             <button
               onClick={() => handleNav("/explore")}
-              className="text-xs uppercase tracking-widest font-bold flex items-center gap-1 hover:text-[#F8BBD0]"
+              className={`text-[11px] uppercase tracking-widest font-bold flex items-center gap-1 transition-colors ${
+                location.pathname.includes("/explore") ? "text-[#EE1C47]" : "text-gray-600 hover:text-black"
+              }`}
             >
               Shop
-              <ChevronDown size={14} />
+              <ChevronDown size={14} className={`transition-transform duration-300 ${isShopOpen ? 'rotate-180' : ''}`} />
             </button>
 
             <AnimatePresence>
@@ -189,7 +191,9 @@ const Navbar: React.FC = () => {
           {/* MAKE YOUR OWN — FIXED HOVER */}
           <button
             onClick={() => handleNav("/make-your-own")}
-            className="text-xs uppercase tracking-widest font-semibold hover:text-[#F8BBD0]"
+            className={`text-[11px] uppercase tracking-widest font-bold transition-colors ${
+              location.pathname.includes("/make-your-own") ? "text-[#EE1C47]" : "text-gray-600 hover:text-black"
+            }`}
           >
             Make Your Own
           </button>
@@ -202,9 +206,9 @@ const Navbar: React.FC = () => {
           {!loading && !user && (
             <button
               onClick={() => navigate("/login")}
-              className="flex items-center gap-2 hover:text-[#F8BBD0]"
+              className="flex items-center gap-2 text-gray-800 hover:text-[#EE1C47] transition-colors"
             >
-              <User size={20} />
+              <User size={20} strokeWidth={1.5} />
             </button>
           )}
 
@@ -316,23 +320,21 @@ const Navbar: React.FC = () => {
             </div>
           )}
 
-          {/* WISHLIST */}
-          <button onClick={() => navigate("/wishlist")} className="relative">
-            <Heart size={20} />
+          <button onClick={() => navigate("/wishlist")} className="relative text-gray-800 hover:text-[#EE1C47] transition-colors">
+            <Heart size={20} strokeWidth={1.5} />
 
             {wishlistItems > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F8BBD0] rounded-full text-white text-[10px] flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-1.5 w-[18px] h-[18px] bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center shadow-md border border-white">
                 {wishlistItems}
               </span>
             )}
           </button>
 
-          {/* CART */}
-          <button onClick={() => navigate("/cart")} className="relative">
-            <ShoppingBag size={20} />
+          <button onClick={() => navigate("/cart")} className="relative text-gray-800 hover:text-[#EE1C47] transition-colors">
+            <ShoppingBag size={20} strokeWidth={1.5} />
 
             {totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F8BBD0] rounded-full text-white text-[10px] flex items-center justify-center">
+              <span className="absolute -top-1.5 -right-1.5 w-[18px] h-[18px] bg-black rounded-full text-white text-[9px] font-bold flex items-center justify-center shadow-md border border-white">
                 {totalItems}
               </span>
             )}

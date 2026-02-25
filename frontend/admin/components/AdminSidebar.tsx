@@ -13,6 +13,7 @@ import {
   Palette,
   Sparkles,
   Ticket,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -31,12 +32,6 @@ const sidebarLinks: SidebarLink[] = [
   { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
   { name: "Products", path: "/admin/products", icon: Package },
   { name: "Categories", path: "/admin/categories", icon: Layers },
-  { name: "Hot Picks", path: "/admin/hot-picks", icon: Flame },
-  {
-    name: "Seasonal Highlights",
-    path: "/admin/seasonal-highlights",
-    icon: Sparkles,
-  },
   { name: "Orders", path: "/admin/orders", icon: ShoppingCart },
   { name: "Atelier Items", path: "/admin/atelier", icon: Palette },
 

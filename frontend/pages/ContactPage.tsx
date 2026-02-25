@@ -117,7 +117,7 @@ const ContactPage: React.FC = () => {
                                     <p className="text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-1">
                                         Email
                                     </p>
-                                    <p className="font-semibold">hello@mangalam.com</p>
+                                    <p className="font-semibold">hello@mangalamflorist.com</p>
                                 </div>
                             </div>
                         </div>

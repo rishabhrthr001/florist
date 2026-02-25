@@ -7,7 +7,6 @@ const homeSectionSchema = new mongoose.Schema(
       required: true,
       unique: true,
       enum: [
-        "hot-picks",
         "seasonal",
         "for-him",
         "for-her",

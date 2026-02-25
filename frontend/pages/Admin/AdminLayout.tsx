@@ -9,11 +9,9 @@ import AdminSidebar from "@/admin/components/AdminSidebar";
 import Dashboard from "@/admin/components/Dashboard";
 import ProductPanel from "@/admin/components/ProductPanel";
 import CategoryPanel from "@/admin/components/CategoryPanel";
-import HotPicks from "@/admin/components/HotPicks";
 import OrdersPanel from "@/admin/components/OrdersPanel";
 import AtelierPanel from "@/admin/components/AtelierPanel";
 import CustomersPanel from "@/admin/components/CustomersPanel";
-import SeasonalHighlights from "@/admin/components/SeasonalHighlights";
 import TicketsPanel from "@/admin/components/TicketsPanel";
 
 import API from "@/config";
@@ -104,8 +102,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     "/admin": "Dashboard",
     "/admin/products": "Products",
     "/admin/categories": "Categories",
-    "/admin/seasonal-highlights": "Seasonal Highlights",
-    "/admin/hot-picks": "Hot Picks",
     "/admin/orders": "Orders",
     "/admin/atelier": "Atelier Items",
     "/admin/customers": "Customers",
@@ -156,8 +152,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
           <Route path="/" element={<Dashboard />} />
           <Route path="/products" element={<ProductPanel />} />
           <Route path="/categories" element={<CategoryPanel />} />
-          <Route path="/seasonal-highlights" element={<SeasonalHighlights />} />
-          <Route path="/hot-picks" element={<HotPicks />} />
 
           {/* 🔥 LIVE ORDERS */}
           <Route

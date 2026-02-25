@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --blush-pink: #fdf2f5;
+  --soft-white: #faf9f6;
+  --accent-pink: #f8bbd0;
+  --dark-charcoal: #1a1a1a;
+  --muted-gray: #4a4a4a;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--soft-white);
+  color: var(--dark-charcoal);
+  scroll-behavior: smooth;
+}
+
+.font-serif {
+  font-family: 'Playfair Display', serif;
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

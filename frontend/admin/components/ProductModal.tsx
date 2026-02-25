@@ -17,6 +17,7 @@ interface Product {
   description: string;
   categoryId: any;
   images: string[];
+  tags?: string[];
 }
 
 interface ModalProps {
@@ -39,7 +40,8 @@ const ProductModal = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [categories, setCategories] = useState<Category[]>([]);
-
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  
   const [selectedCategory, setSelectedCategory] = useState("");
 
   const [files, setFiles] = useState<File[]>([]);
@@ -49,26 +51,41 @@ const ProductModal = ({
     name: "",
     price: "",
     description: "",
+    tags: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tagsDropdownOpen, setTagsDropdownOpen] = useState(false);
 
   /* ----------------------------------
-        LOAD CATEGORIES
+        LOAD DROPDOWNS
   ---------------------------------- */
   useEffect(() => {
     if (!isOpen) return;
 
-    const fetchCategories = async () => {
+    const fetchDropdowns = async () => {
       try {
-        const { data } = await axios.get(`${API}/category`);
-        setCategories(data);
+        const [catRes, tagsRes] = await Promise.all([
+          axios.get(`${API}/category`),
+          axios.get(`${API}/product/tags`),
+        ]);
+        
+        setCategories(catRes.data);
+        
+        // Merge fetched tags with hardcoded front-end tags
+        const predefined = [
+          "wedding", "anniversary", "thinking-of-you", "sorry", "flowers",
+          "girlfriend", "boyfriend", "miss-you", "baby-shower", "retirement",
+          "new-born", "wellness", "thank-you", "best-wishes", "balloons", "housewarming"
+        ];
+        const uniqueTags = Array.from(new Set([...predefined, ...tagsRes.data]));
+        setAvailableTags(uniqueTags);
       } catch {
-        toast.error("Failed to load categories");
+        toast.error("Failed to load options");
       }
     };
 
-    fetchCategories();
+    fetchDropdowns();
   }, [isOpen]);
 
   /* ----------------------------------
@@ -82,6 +99,7 @@ const ProductModal = ({
         name: product.name,
         price: String(product.price),
         description: product.description || "",
+        tags: product.tags?.join(", ") || "",
       });
 
       setSelectedCategory(
@@ -99,6 +117,7 @@ const ProductModal = ({
         name: "",
         price: "",
         description: "",
+        tags: "",
       });
 
       setPreviews([]);
@@ -124,9 +143,9 @@ const ProductModal = ({
 
     const remaining = MAX_IMAGES - previews.length;
 
-    const incoming = Array.from(selected).slice(0, remaining);
+    const incoming = Array.from(selected as FileList).slice(0, remaining);
 
-    const incomingPreviews = incoming.map((f) => URL.createObjectURL(f));
+    const incomingPreviews = incoming.map((f: File) => URL.createObjectURL(f));
 
     setFiles((prev) => [...incoming, ...prev]);
 
@@ -168,6 +187,9 @@ const ProductModal = ({
       payload.append("price", form.price);
       payload.append("description", form.description);
       payload.append("categoryId", selectedCategory);
+
+      const parsedTags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
+      payload.append("tags", JSON.stringify(parsedTags));
 
       files.forEach((img) => payload.append("images", img));
 
@@ -270,6 +292,72 @@ const ProductModal = ({
                   })
                 }
               />
+
+              <div className="relative">
+                <p className="text-[10px] uppercase font-bold text-gray-400 mb-2">
+                  Tags (Quick Links)
+                </p>
+                <div 
+                  className="w-full min-h-[56px] p-2 border rounded-xl bg-white flex flex-wrap gap-2 items-center cursor-text"
+                  onClick={() => setTagsDropdownOpen(true)}
+                >
+                  {form.tags.split(",").map(t => t.trim()).filter(Boolean).map(tag => (
+                    <span key={tag} className="bg-pink-100 text-pink-800 text-xs px-3 py-1 rounded-full flex items-center gap-1 font-medium">
+                      {tag}
+                      <X 
+                        size={12} 
+                        className="cursor-pointer hover:text-pink-900" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newTags = form.tags.split(",").map(t => t.trim()).filter(t => t && t !== tag);
+                          setForm({ ...form, tags: newTags.join(", ") });
+                        }} 
+                      />
+                    </span>
+                  ))}
+                  <input
+                    placeholder={form.tags ? "" : "Select or type tags..."}
+                    className="flex-1 min-w-[120px] bg-transparent outline-none text-sm p-2"
+                    value="" // It only controls the active typing if needed, but we keep it simple for now
+                    readOnly
+                  />
+                </div>
+
+                <AnimatePresence>
+                  {tagsDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setTagsDropdownOpen(false)} />
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-20 top-full left-0 right-0 mt-2 bg-white border rounded-xl shadow-xl max-h-48 overflow-y-auto p-2 flex flex-wrap gap-2"
+                      >
+                        {availableTags.map(tag => {
+                          const currentTags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
+                          const isSelected = currentTags.includes(tag);
+                          return (
+                            <button
+                              key={tag}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (isSelected) {
+                                  setForm({ ...form, tags: currentTags.filter(t => t !== tag).join(", ") });
+                                } else {
+                                  setForm({ ...form, tags: [...currentTags, tag].join(", ") });
+                                }
+                              }}
+                              className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${isSelected ? 'bg-pink-500 text-white border-pink-500' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-200'}`}
+                            >
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* CATEGORY */}
               <select

@@ -44,60 +44,83 @@ const ScrollToTop = () => {
   return null;
 };
 
+const AnimatedRoutes = ({ setIsAdminMode }: { setIsAdminMode: (val: boolean) => void }) => {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* PUBLIC */}
+        <Route path="/" element={<Home />} />
+        <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/category/:slug" element={<CategoryPage />} />
+        <Route path="/product/:slug" element={<ProductDetail />} />
+        <Route path="/make-your-own" element={<MakeYourOwn />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="terms-of-service" element={<TermsOfService />} />
+
+        {/* AUTH */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/auth/action" element={<AuthAction />} />
+
+        {/* USER PROTECTED */}
+        <Route element={<PrivateRoute />}>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/orders" element={<MyOrders />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/support" element={<SupportTickets />} />
+        </Route>
+
+        {/* ADMIN PROTECTED */}
+        <Route element={<AdminRoute />}>
+          <Route
+            path="/admin/*"
+            element={
+              <AdminLayout
+                onEnterAdmin={() => setIsAdminMode(true)}
+                onExitAdmin={() => setIsAdminMode(false)}
+              />
+            }
+          />
+        </Route>
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
 const App: React.FC = () => {
   const [isAdminMode, setIsAdminMode] = useState(false);
 
   return (
     <>
-      <Toaster richColors position="top-right" />
+      <Toaster 
+        position="top-center" 
+        toastOptions={{
+          className: 'bg-white/95 backdrop-blur-md !rounded-[1.25rem] p-4 border border-gray-100 shadow-[0_15px_40px_rgba(0,0,0,0.08)] !font-sans md:px-6',
+          titleClassName: '!font-bold !text-gray-900 !text-[13px] md:!text-sm tracking-wide',
+          descriptionClassName: '!text-gray-500 !text-[11px] md:!text-xs mt-1',
+          success: {
+            className: '!bg-[#FDFBF9] !border-[#EE1C47]/20 !text-gray-900',
+            iconTheme: { primary: '#EE1C47', secondary: 'white' }
+          },
+          error: {
+            className: '!bg-[#FFF5F5] !border-red-100 !text-red-900',
+            iconTheme: { primary: '#EF4444', secondary: 'white' }
+          }
+        }}
+      />
       <Router>
         <ScrollToTop />
 
         {!isAdminMode && <Navbar />}
 
         <main className={isAdminMode ? "" : "pt-0"}>
-          <AnimatePresence mode="wait">
-            <Routes>
-              {/* PUBLIC */}
-              <Route path="/" element={<Home />} />
-              <Route path="/explore" element={<ExplorePage />} />
-              <Route path="/category/:slug" element={<CategoryPage />} />
-              <Route path="/product/:slug" element={<ProductDetail />} />
-              <Route path="/make-your-own" element={<MakeYourOwn />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/wishlist" element={<Wishlist />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="terms-of-service" element={<TermsOfService />} />
-
-              {/* AUTH */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/auth/action" element={<AuthAction />} />
-
-              {/* USER PROTECTED */}
-              <Route element={<PrivateRoute />}>
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/orders" element={<MyOrders />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/support" element={<SupportTickets />} />
-              </Route>
-
-              {/* ADMIN PROTECTED */}
-              <Route element={<AdminRoute />}>
-                <Route
-                  path="/admin/*"
-                  element={
-                    <AdminLayout
-                      onEnterAdmin={() => setIsAdminMode(true)}
-                      onExitAdmin={() => setIsAdminMode(false)}
-                    />
-                  }
-                />
-              </Route>
-            </Routes>
-          </AnimatePresence>
+          <AnimatedRoutes setIsAdminMode={setIsAdminMode} />
         </main>
 
         {!isAdminMode && <Footer />}

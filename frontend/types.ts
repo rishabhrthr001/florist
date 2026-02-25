@@ -7,7 +7,6 @@ export interface Product {
   description: string;
   category: string;
   images: string[];
-  isHotPick?: boolean;
   stock?: number;
   slug?: string;
 }

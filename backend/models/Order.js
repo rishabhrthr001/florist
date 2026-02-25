@@ -34,13 +34,26 @@ const orderSchema = new mongoose.Schema(
       country: String,
     },
 
-    deliverySlot: {
+    deliveryType: {
       type: String,
-      enum: ["day", "night"],
-      required: true,
+      enum: ["standard", "scheduled"],
+      default: "standard",
     },
 
-    deliveryDate: Date,
+    deliverySlot: {
+       type: String,
+       default: "day"
+    },
+
+    deliveryDate: {
+      type: String, // Storing as YYYY-MM-DD
+      default: null
+    },
+
+    deliveryTime: {
+      type: String, // String like 14:30 or "ASAP"
+      default: "ASAP"
+    },
 
     isGift: Boolean,
 

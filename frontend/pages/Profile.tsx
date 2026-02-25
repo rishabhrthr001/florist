@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -21,6 +21,27 @@ import { useAuth } from "@/context/AuthContext";
 import API from "../config";
 
 /* ---------------- TYPES ---------------- */
+
+interface OrderItem {
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+  custom?: {
+    base?: any;
+    ribbon?: any;
+    additions?: any[];
+    message?: string;
+  };
+}
+
+interface Order {
+  _id: string;
+  totalAmount: number;
+  orderStatus: "placed" | "confirmed" | "preparing" | "delivered" | "cancelled";
+  createdAt: string;
+  items: OrderItem[];
+}
 
 interface Address {
   _id?: string;
@@ -73,6 +94,38 @@ const Profile: React.FC = () => {
     state: "Delhi",
     postalCode: "",
   });
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalSpent, setTotalSpent] = useState(0);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+
+  useEffect(() => {
+    if (!token) return;
+
+    axios
+      .get(`${API}/orders/my`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const fetchedOrders = res.data;
+        const sorted = fetchedOrders.sort((a: any, b: any) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        
+        setOrders(sorted);
+        setTotalOrders(fetchedOrders.length);
+        
+        const spent = fetchedOrders.reduce((sum: number, order: any) => {
+           // only count if not cancelled
+           if (order.orderStatus !== 'cancelled') return sum + order.totalAmount;
+           return sum;
+        }, 0);
+        setTotalSpent(spent);
+      })
+      .catch((err) => console.error("Could not fetch orders", err))
+      .finally(() => setOrdersLoading(false));
+  }, [token]);
 
   if (!user) {
     return (
@@ -200,19 +253,19 @@ const Profile: React.FC = () => {
 
             <div className="mt-10 grid md:grid-cols-3 gap-6">
               <Stat
-                label="Orders"
-                value={user.totalOrders ?? 0}
+                label="Total Orders"
+                value={ordersLoading ? "..." : totalOrders}
                 icon={<Package />}
               />
               <Stat
-                label="Total Spent"
-                value={`₹${user.totalSpent ?? 0}`}
+                label="Amount Spent"
+                value={ordersLoading ? "..." : `₹${totalSpent.toLocaleString()}`}
                 icon={<CreditCard />}
               />
               <Stat
                 label="Member Since"
                 value={new Date(user.createdAt).toLocaleDateString()}
-                icon={<Package />}
+                icon={<Star />}
               />
             </div>
 
@@ -220,21 +273,69 @@ const Profile: React.FC = () => {
             <div className="mt-8 flex flex-wrap gap-4">
               <button
                 onClick={() => navigate("/orders")}
-                className="flex items-center gap-3 px-6 py-3 bg-[#FDF2F5] hover:bg-[#F8BBD0] hover:text-white rounded-2xl transition-all group"
+                className="flex items-center gap-3 px-6 py-3 bg-[#EE1C47] text-white hover:bg-black rounded-2xl transition-all group font-bold font-sans tracking-wide text-sm shadow-[0_4px_15px_rgba(238,28,71,0.2)] hover:shadow-lg"
               >
                 <Package size={18} />
-                <span className="text-sm font-medium">My Orders</span>
-                <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
+                <span>View All Orders</span>
               </button>
               <button
                 onClick={() => navigate("/support")}
-                className="flex items-center gap-3 px-6 py-3 bg-[#FDF2F5] hover:bg-[#F8BBD0] hover:text-white rounded-2xl transition-all group"
+                className="flex items-center gap-3 px-6 py-3 bg-[#FDFBF9] hover:bg-gray-100 text-gray-900 border border-gray-200 rounded-2xl transition-all group font-bold font-sans tracking-wide text-sm"
               >
                 <Headphones size={18} />
-                <span className="text-sm font-medium">Support Tickets</span>
-                <ChevronRight size={16} className="opacity-50 group-hover:translate-x-1 transition-transform" />
+                <span>Need Support?</span>
               </button>
             </div>
+            
+            {/* RECENT ORDERS MINI VIEW */}
+            {orders.length > 0 && (
+              <div className="mt-12 pt-10 border-t border-gray-100">
+                 <div className="flex justify-between items-end mb-6">
+                    <h3 className="font-serif italic text-2xl text-gray-900">Recent Orders</h3>
+                 </div>
+                 <div className="space-y-4">
+                    {orders.slice(0, 2).map((order) => (
+                       <div key={order._id} className="bg-[#FDFBF9] border border-gray-100 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:shadow-[0_10px_30px_rgba(0,0,0,0.03)] transition-all">
+                          <div className="flex items-center gap-4">
+                             <div className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden shadow-sm shrink-0 relative flex items-center justify-center p-2">
+                               {order.items[0]?.image ? (
+                                  <img src={order.items[0].image} className="w-full h-full object-cover rounded-lg" alt="" />
+                               ) : (
+                                  <Package className="text-gray-300" size={24} />
+                               )}
+                               {order.items.length > 1 && (
+                                  <div className="absolute top-1 right-1 w-5 h-5 bg-black text-white text-[9px] font-bold flex items-center justify-center rounded-full shadow-md">
+                                     +{order.items.length - 1}
+                                  </div>
+                               )}
+                             </div>
+                             <div>
+                                <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">
+                                  {new Date(order.createdAt).toLocaleDateString()} &middot; {order._id.substring(order._id.length - 6).toUpperCase()}
+                                </p>
+                                <p className="text-sm font-bold text-gray-900">
+                                   ₹{order.totalAmount.toLocaleString()}
+                                </p>
+                             </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between md:justify-end w-full md:w-auto mt-2 md:mt-0 pt-3 md:pt-0 border-t md:border-t-0 border-gray-100">
+                             <div className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-gray-100 text-gray-600 mr-4">
+                                {order.orderStatus}
+                             </div>
+                             <button
+                               onClick={() => navigate('/orders')} 
+                               className="text-[#EE1C47] text-xs font-bold uppercase tracking-widest hover:text-black transition-colors flex items-center gap-1"
+                             >
+                               Details <ChevronRight size={14} />
+                             </button>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </div>
+            )}
+
           </motion.div>
 
           {/* PERSONAL + ADDRESS */}

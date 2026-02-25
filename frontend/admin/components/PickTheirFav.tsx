@@ -26,7 +26,7 @@ interface Slot {
 
 /* ---------------- COMPONENT ---------------- */
 
-const SeasonalHighlights = () => {
+const PickTheirFav = () => {
   const [slots, setSlots] = useState<Slot[]>([
     { position: 1 },
     { position: 2 },
@@ -47,7 +47,7 @@ const SeasonalHighlights = () => {
   const fetchSeasonal = async () => {
     try {
       const { data } = await axios.get(
-        `${API}/home-section/seasonal-highlights`,
+        `${API}/home-section/pick-their-fav`,
       );
 
       if (data?.items?.length) {
@@ -63,7 +63,7 @@ const SeasonalHighlights = () => {
         setSlots(mapped);
       }
     } catch {
-      toast.error("Failed to load seasonal highlights");
+      toast.error("Failed to load pick their fav");
     }
   };
 
@@ -99,7 +99,7 @@ const SeasonalHighlights = () => {
     setIsPickerOpen(false);
     setActiveSlot(null);
 
-    toast.success("Seasonal product assigned");
+    toast.success("Pick their fav product assigned");
   };
 
   /* ---------------- FILTER ---------------- */
@@ -124,11 +124,11 @@ const SeasonalHighlights = () => {
         return;
       }
 
-      await axios.put(`${API}/home-section/seasonal-highlights`, {
+      await axios.put(`${API}/home-section/pick-their-fav`, {
         items: payload,
       });
 
-      toast.success("Seasonal highlights updated");
+      toast.success("Pick their fav updated");
       fetchSeasonal();
     } catch {
       toast.error("Save failed");
@@ -143,7 +143,7 @@ const SeasonalHighlights = () => {
       <div className="bg-white p-6 rounded-3xl border border-[#E5E5E5]">
         <div className="flex justify-between mb-6">
           <p className="text-sm text-gray-500">
-            Select 4 seasonal featured products.
+            Select 4 favorite flower products.
           </p>
 
           <button
@@ -215,7 +215,7 @@ const SeasonalHighlights = () => {
               </button>
 
               <h2 className="font-serif text-2xl mb-6">
-                Select Seasonal Product
+                Select Pick Their Fav Product
               </h2>
 
               {/* SEARCH */}
@@ -269,4 +269,4 @@ const SeasonalHighlights = () => {
   );
 };
 
-export default SeasonalHighlights;
+export default PickTheirFav;

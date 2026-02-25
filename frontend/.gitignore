@@ -19,7 +19,6 @@ dist-ssr
 error.log
 .env.example
 firebase-debug.log
-nginx.conf
 cloudbuild.yaml
 deploy_custom.sh
 DEPLOY_INSTRUCTIONS.md

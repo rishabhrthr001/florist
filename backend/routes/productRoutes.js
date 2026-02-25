@@ -5,6 +5,7 @@ import CustomBouquet from "../models/CustomBouquet.js";
 import mongoose from "mongoose";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { uploadThree } from "../middleware/upload.js";
+import cloudinary from "../config/cloudinary.js";
 
 const router = express.Router();
 
@@ -19,6 +20,34 @@ const makeSlug = (text) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)+/g, "");
 
+const extractPublicId = (url) => {
+  try {
+    const splitUrl = url.split("/upload/");
+    if (splitUrl.length < 2) return null;
+    let path = splitUrl[1].replace(/^v\d+\//, "");
+    const lastDotIndex = path.lastIndexOf(".");
+    if (lastDotIndex !== -1) {
+      path = path.substring(0, lastDotIndex);
+    }
+    return path;
+  } catch (err) {
+    return null;
+  }
+};
+
+/* ------------------------------------
+        GET UNIQUE TAGS
+------------------------------------ */
+router.get("/tags", async (req, res) => {
+  try {
+    const tags = await Product.distinct("tags");
+    res.json(tags.filter(Boolean));
+  } catch (err) {
+    console.error("TAGS FETCH ERROR:", err);
+    res.status(500).json({ msg: "Failed to fetch tags" });
+  }
+});
+
 /* ------------------------------------
         GET ALL PRODUCTS
         /product
@@ -31,7 +60,22 @@ router.get("/", async (req, res) => {
     const filter = {};
 
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
-      filter.categoryId = categoryId;
+      const category = await Category.findById(categoryId);
+      if (category) {
+        // Find if the categoryId matches, OR if the category slug matches a tag
+        filter.$or = [
+          { categoryId },
+          { tags: { $regex: new RegExp(`^${category.slug}$`, "i") } } // Case-insensitive exact match
+        ];
+      } else {
+        filter.categoryId = categoryId;
+      }
+    }
+
+    // Support direct tag querying too just in case
+    const { tag } = req.query;
+    if (tag) {
+      filter.tags = { $regex: new RegExp(tag, "i") };
     }
 
     const products = await Product.find(filter)
@@ -170,6 +214,10 @@ router.post(
   async (req, res) => {
     try {
       const { name, price, description, categoryId } = req.body;
+      let tags = [];
+      if (req.body.tags) {
+        tags = Array.isArray(req.body.tags) ? req.body.tags : JSON.parse(req.body.tags);
+      }
 
       if (!name || !price || !categoryId)
         return res.status(400).json({
@@ -198,6 +246,7 @@ router.post(
         price,
         description,
         categoryId,
+        tags,
         images,
       });
 
@@ -219,6 +268,12 @@ router.post(
 router.put("/:id", requireAuth, requireAdmin, uploadThree, async (req, res) => {
   try {
     const { name, price, description, categoryId } = req.body;
+    let tags = undefined;
+    if (req.body.tags !== undefined) {
+      try {
+        tags = Array.isArray(req.body.tags) ? req.body.tags : JSON.parse(req.body.tags);
+      } catch(e) { /* silent fail on parse */ }
+    }
 
     if (!mongoose.Types.ObjectId.isValid(req.params.id))
       return res.status(400).json({
@@ -249,6 +304,7 @@ router.put("/:id", requireAuth, requireAdmin, uploadThree, async (req, res) => {
 
     if (price) update.price = price;
     if (description) update.description = description;
+    if (tags !== undefined) update.tags = tags;
 
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
       update.categoryId = categoryId;
@@ -297,6 +353,20 @@ router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
     await CustomBouquet.deleteMany({
       product: req.params.id,
     });
+
+    // 🔥 delete images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      for (const imgUrl of product.images) {
+        const publicId = extractPublicId(imgUrl);
+        if (publicId) {
+          try {
+            await cloudinary.uploader.destroy(publicId);
+          } catch (cloudErr) {
+            console.error("Cloudinary delete error:", cloudErr);
+          }
+        }
+      }
+    }
 
     res.json({
       msg: "Product deleted",

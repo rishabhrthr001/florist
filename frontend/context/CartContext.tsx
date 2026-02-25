@@ -55,32 +55,79 @@ interface CartContextType {
   specialRequest: string;
   setSpecialRequest: React.Dispatch<React.SetStateAction<string>>;
 
+  // ✅ DELIVERY PREFERENCES
+  deliveryOption: "standard" | "scheduled";
+  setDeliveryOption: React.Dispatch<React.SetStateAction<"standard" | "scheduled">>;
+  deliveryDate: string;
+  setDeliveryDate: React.Dispatch<React.SetStateAction<string>>;
+  deliveryTime: string;
+  setDeliveryTime: React.Dispatch<React.SetStateAction<string>>;
+
   totalItems: number;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [specialRequest, setSpecialRequest] = useState("");
-
-  /* ---------------- LOAD ---------------- */
-
-  useEffect(() => {
-    const stored = localStorage.getItem("cart");
-
-    if (stored) {
-      const parsed = JSON.parse(stored);
-
-      // backward compatible if cart was saved as array before
-      if (Array.isArray(parsed)) {
-        setItems(parsed);
-      } else {
-        setItems(parsed.items || []);
-        setSpecialRequest(parsed.specialRequest || "");
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      const stored = localStorage.getItem("cart");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+        return parsed.items || [];
       }
+    } catch (e) {
+      console.error(e);
     }
-  }, []);
+    return [];
+  });
+
+  const [specialRequest, setSpecialRequest] = useState(() => {
+    try {
+      const stored = localStorage.getItem("cart");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (!Array.isArray(parsed)) return parsed.specialRequest || "";
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return "";
+  });
+
+  const [deliveryOption, setDeliveryOption] = useState<"standard" | "scheduled">(() => {
+    try {
+      const stored = localStorage.getItem("cart");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.deliveryOption || "standard";
+      }
+    } catch (e) {}
+    return "standard";
+  });
+
+  const [deliveryDate, setDeliveryDate] = useState<string>(() => {
+    try {
+      const stored = localStorage.getItem("cart");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.deliveryDate || "";
+      }
+    } catch (e) {}
+    return "";
+  });
+
+  const [deliveryTime, setDeliveryTime] = useState<string>(() => {
+    try {
+      const stored = localStorage.getItem("cart");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.deliveryTime || "10:00 AM - 11:00 AM";
+      }
+    } catch (e) {}
+    return "10:00 AM - 11:00 AM";
+  });
 
   /* ---------------- SAVE ---------------- */
 
@@ -90,15 +137,21 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
       JSON.stringify({
         items,
         specialRequest,
+        deliveryOption,
+        deliveryDate,
+        deliveryTime,
       }),
     );
-  }, [items, specialRequest]);
+  }, [items, specialRequest, deliveryOption, deliveryDate, deliveryTime]);
 
   /* ---------------- CLEAR CART ---------------- */
 
   const clearCart = () => {
     setItems([]);
     setSpecialRequest("");
+    setDeliveryOption("standard");
+    setDeliveryDate("");
+    setDeliveryTime("10:00 AM - 11:00 AM");
     localStorage.removeItem("cart");
   };
 
@@ -233,6 +286,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         items,
         specialRequest,
         setSpecialRequest,
+        deliveryOption,
+        setDeliveryOption,
+        deliveryDate,
+        setDeliveryDate,
+        deliveryTime,
+        setDeliveryTime,
         addToCart,
         removeFromCart,
         updateQty,

@@ -78,6 +78,9 @@ export interface Order {
   paymentStatus: string;
 
   createdAt: string;
+  deliveryType?: "standard" | "scheduled";
+  deliveryDate?: string;
+  deliveryTime?: string;
 }
 
 /* ---------------- COMPONENT ---------------- */
@@ -157,6 +160,7 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                   <th className="px-6 py-4">Phone</th>
                   <th className="px-6 py-4">Address</th>
                   <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Delivery</th>
                   <th className="px-6 py-4">Total</th>
                   <th className="px-6 py-4 text-right">Manage</th>
                 </tr>
@@ -202,6 +206,19 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
 
                     <td className="px-6 py-4 font-bold">
                       ₹{order.totalAmount}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md w-fit ${order.deliveryType === 'scheduled' ? 'bg-purple-50 text-purple-600 border border-purple-100' : 'bg-gray-50 text-gray-500 border border-gray-100'}`}>
+                          {order.deliveryType || 'Standard'}
+                        </span>
+                        {order.deliveryType === 'scheduled' && (
+                          <p className="text-[10px] text-gray-400 font-medium">
+                            {order.deliveryDate} @ {order.deliveryTime}
+                          </p>
+                        )}
+                      </div>
                     </td>
 
                     <td className="px-6 py-4 text-right">
@@ -272,7 +289,7 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
               {/* Body */}
               <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
                 {/* Customer */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-6 pb-6 border-b border-gray-50">
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-gray-400">
                       Customer
@@ -287,14 +304,29 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
 
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-gray-400">
-                      Address
+                      Delivery
                     </p>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      {selectedOrder.address?.line1},{" "}
-                      {selectedOrder.address?.city},{" "}
-                      {selectedOrder.address?.state}
+                    <p className="text-sm font-semibold text-gray-900">
+                      {selectedOrder.deliveryType === 'scheduled' ? 'Scheduled' : 'Standard Delivery'}
                     </p>
+                    {selectedOrder.deliveryType === 'scheduled' && (
+                      <p className="text-xs text-purple-600 font-bold mt-0.5">
+                        {selectedOrder.deliveryDate} — {selectedOrder.deliveryTime}
+                      </p>
+                    )}
                   </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-400">
+                    Address
+                  </p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {selectedOrder.address?.line1},{" "}
+                    {selectedOrder.address?.city},{" "}
+                    {selectedOrder.address?.state}
+                  </p>
                 </div>
 
                 {/* ✅ SPECIAL REQUEST */}

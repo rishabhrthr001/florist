@@ -60,6 +60,10 @@ router.post("/", requireAuth, async (req, res) => {
       deliveryCharge,
       paymentMethod,
 
+      // ✅ DELIVERY PREFERENCES
+      deliveryType,
+      deliveryTime,
+
       // ✅ SPECIAL REQUEST
       specialRequest,
     } = req.body;
@@ -122,7 +126,9 @@ router.post("/", requireAuth, async (req, res) => {
       phone,
       address,
       deliverySlot,
+      deliveryType,
       deliveryDate,
+      deliveryTime,
 
       isGift,
       gift,
@@ -150,6 +156,18 @@ router.post("/", requireAuth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Failed to create order" });
+  }
+});
+
+/* ---------------- USER: MY ORDERS ---------------- */
+
+router.get("/my", requireAuth, async (req, res) => {
+  try {
+    const orders = await Order.find({ userId: req.user._id }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Failed to fetch orders" });
   }
 });
 

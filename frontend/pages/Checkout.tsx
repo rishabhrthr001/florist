@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import confetti from "canvas-confetti";
-import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
+import { MapPin, Sun, Moon, Gift, MessageSquare, CheckCircle2, ShieldCheck, ArrowRight } from "lucide-react";
 import API from "../config";
+import { DELIVERY_SLOTS } from "../constants";
 
 /* ---------------- TYPES ---------------- */
 
@@ -29,15 +32,22 @@ type Address = {
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
 
-  const { items, clearCart, specialRequest, setSpecialRequest } = useCart();
-  const { user, token } = useAuth();
+  const { 
+    items, 
+    clearCart, 
+    specialRequest, 
+    setSpecialRequest,
+    deliveryOption,
+    deliveryDate,
+    deliveryTime 
+  } = useCart();
+  const { user, token, login } = useAuth();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
     null,
   );
 
-  const [deliveryTime, setDeliveryTime] = useState<"day" | "night">("day");
 
   const [isGift, setIsGift] = useState(false);
 
@@ -47,8 +57,63 @@ const Checkout: React.FC = () => {
   const [giftFrom, setGiftFrom] = useState("");
 
   const [loading, setLoading] = useState(false);
-
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null);
+
+  /* ---------------- INLINE ADDRESS FORM ---------------- */
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addingAddress, setAddingAddress] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    label: "",
+    name: "",
+    phone: "",
+    addressLine1: "",
+    addressLine2: "",
+    landmark: "",
+    city: "Delhi",
+    state: "Delhi",
+    postalCode: "",
+  });
+
+  const handleAddAddress = async () => {
+    const required = [
+      newAddress.label, newAddress.name, newAddress.phone, 
+      newAddress.addressLine1, newAddress.landmark, newAddress.postalCode
+    ];
+    if (required.some((v) => !v.trim())) {
+      toast.error("All required address fields must be filled.");
+      return;
+    }
+    if (!/^1100\d{2}$/.test(newAddress.postalCode)) {
+      toast.error("We only deliver inside Delhi 📍");
+      return;
+    }
+
+    try {
+      setAddingAddress(true);
+      const { data } = await axios.post(`${API}/user/addresses`, newAddress, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      login(token!, data); // Update user context with new addresses
+      
+      const updatedList = data.addresses || [];
+      setAddresses(updatedList);
+      
+      if (updatedList.length > 0) {
+        setSelectedAddressId(updatedList[updatedList.length - 1]._id);
+      }
+      
+      toast.success("Address added and selected 📍");
+      setShowAddressForm(false);
+      setNewAddress({
+        label: "", name: "", phone: "", addressLine1: "", addressLine2: "",
+        landmark: "", city: "Delhi", state: "Delhi", postalCode: "",
+      });
+    } catch (error) {
+       toast.error("Failed to add address.");
+    } finally {
+      setAddingAddress(false);
+    }
+  };
 
   /* ---------------- FETCH ADDRESSES ---------------- */
 
@@ -78,9 +143,12 @@ const Checkout: React.FC = () => {
   );
 
   const deliveryCharge = useMemo(() => {
-    if (subtotal >= 2500) return 0;
-    return deliveryTime === "day" ? 150 : 300;
-  }, [subtotal, deliveryTime]);
+    if (items.length === 0 || subtotal >= 2500) return 0;
+    if (deliveryOption === "standard") return 150;
+
+    const slot = DELIVERY_SLOTS.find((s) => s.label === deliveryTime);
+    return slot?.premium ? 300 : 150;
+  }, [items.length, subtotal, deliveryOption, deliveryTime]);
 
   const totalAmount = subtotal + deliveryCharge;
 
@@ -88,17 +156,19 @@ const Checkout: React.FC = () => {
 
   const fireConfetti = () => {
     confetti({
-      particleCount: 120,
+      particleCount: 150,
       angle: 60,
-      spread: 70,
+      spread: 80,
       origin: { x: 0 },
+      colors: ['#EE1C47', '#000000', '#F8BBD0']
     });
 
     confetti({
-      particleCount: 120,
+      particleCount: 150,
       angle: 120,
-      spread: 70,
+      spread: 80,
       origin: { x: 1 },
+      colors: ['#EEEEEE', '#EE1C47', '#F8BBD0']
     });
   };
 
@@ -108,12 +178,12 @@ const Checkout: React.FC = () => {
     if (!user) return;
 
     if (!isGift && !selectedAddress) {
-      toast.error("Select delivery address");
+      toast.error("Please select a delivery address.");
       return;
     }
 
     if (isGift && (!giftName || !giftPhone || !giftAddress)) {
-      toast.error("Fill recipient details for gift 🎁");
+      toast.error("Please fill all recipient details to send as gift.");
       return;
     }
 
@@ -147,7 +217,9 @@ const Checkout: React.FC = () => {
         phone: finalPhone,
         address: finalAddress,
 
-        deliverySlot: deliveryTime,
+        deliveryType: deliveryOption, // standard or scheduled
+        deliveryDate: deliveryOption === 'scheduled' ? deliveryDate : null,
+        deliveryTime: deliveryOption === 'scheduled' ? deliveryTime : 'ASAP',
 
         isGift,
 
@@ -194,10 +266,10 @@ const Checkout: React.FC = () => {
 
       setTimeout(() => {
         navigate("/explore");
-      }, 2800);
+      }, 5000); // Increased wait time to appreciate the success screen
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.response?.data?.msg || "Failed to place order");
+      toast.error(err?.response?.data?.msg || "Failed to place order.");
     } finally {
       setLoading(false);
     }
@@ -206,190 +278,372 @@ const Checkout: React.FC = () => {
   /* ---------------- UI ---------------- */
 
   return (
-    <>
-      <div className="bg-[#FAF9F6] min-h-screen py-32">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-[1.4fr_0.6fr] gap-14">
-          {/* LEFT */}
-          <div className="space-y-12">
-            {/* ADDRESS */}
-            {!isGift && (
-              <section className="bg-white rounded-[2.8rem] shadow-xl p-10">
-                <h2 className="font-serif text-2xl mb-8">Delivery Address</h2>
+    <div className="bg-[#FAF9F6] min-h-screen pt-32 pb-20 px-4 md:px-6">
+      
+      {/* HEADER / BREADCRUMBS */}
+      <div className="max-w-[120rem] mx-auto mb-10 overflow-hidden px-2 lg:px-8">
+        <nav className="flex text-[10px] sm:text-[11px] text-gray-400 border-b border-gray-200/50 pb-4 font-bold uppercase tracking-widest">
+          <Link to="/" className="hover:text-black transition-colors shrink-0">Home</Link>
+          <span className="mx-2 shrink-0">/</span>
+          <Link to="/cart" className="hover:text-black transition-colors shrink-0">Shopping Cart</Link>
+          <span className="mx-2 shrink-0">/</span>
+          <span className="text-gray-900 truncate">Secure Checkout</span>
+        </nav>
+      </div>
 
-                {addresses.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-3xl">
-                    <p className="text-gray-400 mb-4">
-                      No saved addresses found
-                    </p>
-                    <button
-                      onClick={() => navigate("/profile")}
-                      className="bg-[#F8BBD0] text-white px-6 py-3 rounded-full hover:bg-[#f797b9] transition text-sm font-semibold"
-                    >
-                      Add Address in Profile
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {addresses.map((addr) => (
-                      <button
-                        key={addr._id}
-                        onClick={() => setSelectedAddressId(addr._id)}
-                        className={`text-left rounded-3xl border-2 p-6 transition-all ${
-                          selectedAddressId === addr._id
-                            ? "border-pink-400 bg-pink-50 shadow-lg"
-                            : "hover:border-pink-200 hover:bg-[#FFF7FA]"
-                        }`}
-                      >
-                        <p className="font-semibold text-sm">{addr.name}</p>
+      <div className="max-w-[120rem] mx-auto px-2 lg:px-8 flex flex-col xl:grid xl:grid-cols-[1.5fr_1fr] gap-10 xl:gap-16">
+        
+        {/* ================= SUMMARY (TOP ON MOBILE) ================= */}
+        <div className="xl:order-2">
+          <div
+            className="bg-white rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-gray-100 lg:sticky lg:top-32 flex flex-col overflow-hidden"
+          >
+             <div className="bg-[#FAF9F6] border-b border-gray-100 p-8 text-center relative">
+                <ShieldCheck size={40} className="mx-auto text-green-500 bg-white rounded-full shadow-sm mb-4" strokeWidth={1.5}/>
+                <h2 className="font-serif italic text-2xl md:text-3xl text-gray-900 tracking-tight">
+                   Order Summary
+                </h2>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-gray-400 mt-2">Final Review</p>
+             </div>
 
-                        <p className="text-xs text-gray-500">{addr.phone}</p>
+             <div className="p-8 space-y-6">
+                
+                {/* ITEMS LIST */}
+                <div className="space-y-4 text-sm font-medium border-b border-gray-100 pb-6 max-h-[30vh] overflow-y-auto scrollbar-hide pr-2">
+                   {items.map((i) => (
+                     <div key={i._id} className="flex justify-between items-start text-gray-600 gap-4">
+                       <span className="leading-snug">{i.name} <span className="text-gray-400 font-bold ml-1">× {i.quantity}</span></span>
+                       <span className="font-bold text-gray-900 shrink-0">₹{(i.price * i.quantity).toLocaleString()}</span>
+                     </div>
+                   ))}
+                </div>
 
-                        <p className="mt-2 text-sm text-gray-600">
-                          {addr.addressLine1}
-                          {addr.addressLine2 && `, ${addr.addressLine2}`}
-                          <br />
-                          {addr.landmark}, {addr.city}, {addr.state} —{" "}
-                          {addr.postalCode}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </section>
-            )}
+                {/* PRICING BREAKDOWN */}
+                <div className="space-y-3 text-[13px] font-medium border-b border-gray-100 pb-6">
+                   <div className="flex justify-between items-center text-gray-500">
+                     <span>Subtotal</span>
+                     <span className="text-gray-900 font-bold">₹{subtotal.toLocaleString()}</span>
+                   </div>
 
-            {/* DELIVERY SLOT */}
-            <section className="bg-white rounded-[2.8rem] shadow-xl p-10">
-              <h2 className="font-serif text-2xl mb-8">Delivery Slot</h2>
+                   <div className="flex justify-between items-center text-gray-500">
+                     <span>Taxes (Included)</span>
+                     <span className="text-gray-900 font-bold">₹0</span>
+                   </div>
 
-              <div className="flex gap-6 flex-wrap">
-                {["day", "night"].map((slot) => (
-                  <button
-                    key={slot}
-                    onClick={() => setDeliveryTime(slot as any)}
-                    className={`px-10 py-4 rounded-full border text-sm ${
-                      deliveryTime === slot
-                        ? "bg-black text-white"
-                        : "hover:border-black"
-                    }`}
-                  >
-                    {slot === "day"
-                      ? "Day Delivery · ₹150"
-                      : "Night Delivery · ₹300"}
-                  </button>
-                ))}
+                   <div className="flex justify-between items-center text-gray-500">
+                     <span>Delivery ({deliveryOption === 'standard' ? 'Standard' : (deliveryTime || 'Scheduled')})</span>
+                     <span className="text-gray-900 font-bold">{deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge.toLocaleString()}`}</span>
+                   </div>
+                   
+                   {subtotal >= 2500 && (
+                     <div className="flex justify-between items-center text-green-600 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100">
+                       <span className="text-[11px] uppercase tracking-widest">Free Delivery Applied</span>
+                       <span>-₹150</span>
+                     </div>
+                   )}
+                </div>
+
+                {/* FINAL TOTAL */}
+                <div className="flex justify-between items-end pt-2">
+                   <span className="text-xs uppercase tracking-widest font-bold text-gray-400 mb-1">Total to Pay</span>
+                   <span className="font-sans font-bold text-4xl lg:text-[2.5rem] text-gray-900 tracking-tight">₹{totalAmount.toLocaleString()}</span>
+                </div>
+
+                <button
+                  onClick={handlePay}
+                  disabled={loading || items.length === 0}
+                  className="mt-6 w-full py-4 md:py-5 bg-black text-white rounded-[1.25rem] md:rounded-[1.5rem] uppercase tracking-widest text-[11px] md:text-xs font-bold hover:bg-gray-800 transition-all shadow-xl hover:shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:-translate-y-1 hidden md:flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:translate-y-0"
+                >
+                  {loading ? (
+                     "Processing Security..."
+                  ) : (
+                     <>Confirm Order <ArrowRight size={16} strokeWidth={2.5}/></>
+                  )}
+                </button>
+                
+                <p className="text-center text-[10px] uppercase font-bold tracking-widest text-gray-400 mt-4 flex items-center justify-center gap-1.5">
+                   <ShieldCheck size={12}/> Guaranteed freshness
+                </p>
+
+             </div>
+
+          </div>
+        </div>
+
+        {/* ================= LEFT / FORMs (BOTTOM ON MOBILE) ================= */}
+        <div className="space-y-8 md:space-y-12 xl:order-1">
+          
+          <div className="flex items-end justify-between mb-4">
+             <h1 className="font-serif italic text-4xl md:text-5xl lg:text-[4rem] tracking-tight text-gray-900 leading-[1.1]">
+               Checkout
+             </h1>
+          </div>
+
+          {/* 1. ADDRESS */}
+          {!isGift && (
+            <section className="bg-white rounded-[2rem] shadow-[0_4px_30px_rgba(0,0,0,0.02)] border border-gray-100 p-6 md:p-10 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-[#EE1C47]" />
+              
+              <div className="flex items-center justify-between gap-3 mb-8">
+                 <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-pink-50 rounded-full flex items-center justify-center text-[#EE1C47]">
+                      <MapPin size={20} strokeWidth={2}/>
+                    </div>
+                    <h2 className="font-serif italic text-2xl md:text-3xl text-gray-900">Delivery Address</h2>
+                 </div>
+                 <div className="hidden md:flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Swipe for more</span>
+                 </div>
               </div>
-            </section>
 
-            {/* GIFT */}
-            <section className="bg-gradient-to-br from-[#FFF5F9] to-white rounded-[2.8rem] shadow-xl p-10 border">
-              <label className="flex items-center gap-4 mb-8">
-                <input
-                  type="checkbox"
-                  checked={isGift}
-                  onChange={(e) => setIsGift(e.target.checked)}
-                />
-                <span className="font-serif text-2xl">Send as a Gift</span>
-              </label>
+              {addresses.length === 0 || showAddressForm ? (
+                <div className="bg-[#FBFBFB] border border-gray-200 rounded-[1.5rem] p-6 md:p-8 relative">
+                   {addresses.length > 0 && (
+                     <button onClick={() => setShowAddressForm(false)} className="absolute top-6 right-6 text-gray-400 hover:text-black text-xs font-bold uppercase tracking-widest">Cancel</button>
+                   )}
+                   <h3 className="font-serif italic text-2xl text-gray-900 mb-6">{addresses.length === 0 ? "Add Delivery Address" : "New Address"}</h3>
+                   <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mb-1">Label (e.g. Home)</label>
+                        <input value={newAddress.label} onChange={(e) => setNewAddress({...newAddress, label: e.target.value})} className="w-full h-11 border border-gray-200 rounded-xl px-4 text-sm bg-white" placeholder="Home, Office..." />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mb-1">Recipient Name</label>
+                        <input value={newAddress.name} onChange={(e) => setNewAddress({...newAddress, name: e.target.value})} className="w-full h-11 border border-gray-200 rounded-xl px-4 text-sm bg-white" placeholder="John Doe" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mb-1">Phone</label>
+                        <input value={newAddress.phone} onChange={(e) => setNewAddress({...newAddress, phone: e.target.value.replace(/\D/g, "")})} inputMode="numeric" className="w-full h-11 border border-gray-200 rounded-xl px-4 text-sm bg-white" placeholder="10-digit number" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mb-1">Address Line 1</label>
+                        <input value={newAddress.addressLine1} onChange={(e) => setNewAddress({...newAddress, addressLine1: e.target.value})} className="w-full h-11 border border-gray-200 rounded-xl px-4 text-sm bg-white" placeholder="House/Flat No., Building Name" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mb-1">Address Line 2 (Optional)</label>
+                        <input value={newAddress.addressLine2} onChange={(e) => setNewAddress({...newAddress, addressLine2: e.target.value})} className="w-full h-11 border border-gray-200 rounded-xl px-4 text-sm bg-white" placeholder="Street, Sector, Area" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mb-1">Landmark</label>
+                        <input value={newAddress.landmark} onChange={(e) => setNewAddress({...newAddress, landmark: e.target.value})} className="w-full h-11 border border-gray-200 rounded-xl px-4 text-sm bg-white" placeholder="Near Apollo Hospital" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mb-1">Pincode (Delhi Only)</label>
+                        <input value={newAddress.postalCode} onChange={(e) => setNewAddress({...newAddress, postalCode: e.target.value.replace(/\D/g, "")})} inputMode="numeric" className="w-full h-11 border border-gray-200 rounded-xl px-4 text-sm bg-white" placeholder="1100xx" />
+                      </div>
+                   </div>
+                   <div className="mt-8 flex justify-end">
+                      <button 
+                        onClick={handleAddAddress}
+                        disabled={addingAddress}
+                        className="bg-black text-white px-8 py-3.5 rounded-full hover:bg-gray-800 transition-all shadow-md text-[11px] uppercase tracking-widest font-bold disabled:opacity-50"
+                      >
+                         {addingAddress ? "Saving..." : "Save Address"}
+                      </button>
+                   </div>
+                </div>
+              ) : (
+                <div className="flex md:grid md:grid-cols-2 gap-4 overflow-x-auto pb-4 md:pb-0 no-scrollbar snap-x snap-mandatory">
+                  {addresses.map((addr) => (
+                    <button
+                      key={addr._id}
+                      onClick={() => setSelectedAddressId(addr._id)}
+                      className={`text-left rounded-3xl border p-6 transition-all relative overflow-hidden group min-w-[280px] md:min-w-0 snap-center ${
+                        selectedAddressId === addr._id
+                          ? "border-[#EE1C47] bg-white ring-4 ring-pink-50 shadow-md"
+                          : "border-gray-200 bg-[#FBFBFB] hover:border-gray-300 hover:bg-white"
+                      }`}
+                    >
+                      {selectedAddressId === addr._id && (
+                         <div className="absolute top-4 right-4 text-[#EE1C47]">
+                           <CheckCircle2 size={24} fill="#FFF0F3" strokeWidth={1.5}/>
+                         </div>
+                      )}
 
-              {isGift && (
-                <div className="grid md:grid-cols-2 gap-6">
-                  <input
-                    placeholder="Recipient Name"
-                    value={giftName}
-                    onChange={(e) => setGiftName(e.target.value)}
-                    className="border rounded-2xl p-4"
-                  />
-
-                  <input
-                    placeholder="Recipient Phone"
-                    value={giftPhone}
-                    onChange={(e) => setGiftPhone(e.target.value)}
-                    className="border rounded-2xl p-4"
-                  />
-
-                  <textarea
-                    placeholder="Recipient Address"
-                    value={giftAddress}
-                    onChange={(e) => setGiftAddress(e.target.value)}
-                    className="border rounded-2xl p-4 md:col-span-2"
-                  />
-
-                  <input
-                    placeholder="Gift From (optional)"
-                    value={giftFrom}
-                    onChange={(e) => setGiftFrom(e.target.value)}
-                    className="border rounded-2xl p-4 md:col-span-2"
-                  />
+                      <p className="font-sans font-bold text-gray-900 text-lg mb-1">{addr.name}</p>
+                      <p className="text-xs font-bold tracking-wider text-gray-400 uppercase mb-4">{addr.phone}</p>
+                      
+                      <div className="text-sm font-medium text-gray-600 leading-relaxed max-w-[90%]">
+                        <p>{addr.addressLine1}</p>
+                        {addr.addressLine2 && <p>{addr.addressLine2}</p>}
+                        <p className="text-gray-400 mt-1 italic text-xs">Landmark: {addr.landmark}</p>
+                        <p className="mt-2 font-bold text-gray-800">{addr.city}, {addr.state} — {addr.postalCode}</p>
+                      </div>
+                    </button>
+                  ))}
+                  
+                  {/* ADD NEW BTN */}
+                  <button 
+                    onClick={() => setShowAddressForm(true)}
+                    className="text-left rounded-3xl border border-dashed border-gray-300 p-6 transition-all bg-[#FBFBFB] hover:border-gray-400 hover:bg-white flex flex-col items-center justify-center min-h-[160px] min-w-[200px] md:min-w-0 group snap-center"
+                  >
+                     <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-black group-hover:text-white transition-colors mb-3">
+                        <span className="text-xl">+</span>
+                     </div>
+                     <span className="font-sans font-bold text-gray-600 text-sm">Add New Address</span>
+                  </button>
                 </div>
               )}
             </section>
+          )}
 
-            {/* SPECIAL REQUEST */}
-            <section className="bg-white rounded-[2.8rem] shadow-xl p-10">
-              <h2 className="font-serif text-2xl mb-6">Special Request 💌</h2>
+          {/* 1. OR GIFT */}
+          <section className="bg-white rounded-[2rem] shadow-[0_4px_30px_rgba(0,0,0,0.02)] border border-gray-100 p-6 md:p-10 relative overflow-hidden overflow-hidden">
+            <div className={`absolute top-0 left-0 w-full h-1.5 transition-colors duration-500 ${isGift ? 'bg-purple-500' : 'bg-gray-100'}`} />
+            
+            <label className="flex items-center gap-4 cursor-pointer group">
+              <div className="relative flex items-center justify-center">
+                 <input
+                   type="checkbox"
+                   className="sr-only"
+                   checked={isGift}
+                   onChange={(e) => setIsGift(e.target.checked)}
+                 />
+                 <div className={`w-14 h-8 rounded-full transition-colors flex items-center px-1 shadow-inner ${isGift ? 'bg-purple-500' : 'bg-gray-200'}`}>
+                    <div className={`w-6 h-6 bg-white rounded-full transition-transform shadow-md ${isGift ? 'translate-x-6' : 'translate-x-0'}`} />
+                 </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isGift ? 'bg-purple-50 text-purple-600' : 'bg-gray-50 text-gray-400'}`}>
+                   <Gift size={20} strokeWidth={2}/>
+                 </div>
+                 <div>
+                    <span className="font-serif italic text-2xl md:text-3xl text-gray-900 block group-hover:text-purple-600 transition-colors">Surprise Someone</span>
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-gray-400 block mt-1">Send this order directly as a gift</span>
+                 </div>
+              </div>
+            </label>
 
-              <textarea
-                rows={4}
-                placeholder="Any special instructions for us? (delivery notes, flower preference, etc.)"
-                value={specialRequest}
-                onChange={(e) => setSpecialRequest(e.target.value)}
-                className="w-full border rounded-2xl p-4 resize-none focus:outline-none focus:border-pink-400"
-              />
-
-              <p className="mt-3 text-xs text-gray-400 italic">
-                This will be sent to the florist with your order.
-              </p>
-            </section>
-          </div>
-
-          {/* RIGHT */}
-          <div className="bg-white rounded-[3rem] shadow-2xl border p-10 h-fit sticky top-32">
-            <h2 className="font-serif text-2xl mb-8">Order Summary</h2>
-
-            <div className="space-y-4 text-sm">
-              {items.map((i) => (
-                <div key={i._id} className="flex justify-between">
-                  <p>
-                    {i.name} × {i.quantity}
-                  </p>
-                  <span>₹{i.price * i.quantity}</span>
+            {isGift && (
+              <motion.div 
+               initial={{ opacity: 0, height: 0 }}
+               animate={{ opacity: 1, height: 'auto' }}
+               style={{ transformOrigin: 'top' }}
+               className="mt-8 grid md:grid-cols-2 gap-4 origin-top overflow-hidden"
+              >
+                <div className="space-y-1.5">
+                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-2">Recipient Name</label>
+                   <input
+                     placeholder="E.g. Priya Sharma"
+                     value={giftName}
+                     onChange={(e) => setGiftName(e.target.value)}
+                     className="w-full bg-[#FBFBFB] border border-gray-200 rounded-xl p-3 md:p-4 text-sm font-medium focus:outline-none focus:border-purple-300 focus:bg-white transition-all shadow-sm"
+                   />
                 </div>
-              ))}
+
+                <div className="space-y-1.5">
+                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-2">Recipient Phone</label>
+                   <input
+                     placeholder="+91"
+                     value={giftPhone}
+                     onChange={(e) => setGiftPhone(e.target.value)}
+                     className="w-full bg-[#FBFBFB] border border-gray-200 rounded-xl p-3 md:p-4 text-sm font-medium focus:outline-none focus:border-purple-300 focus:bg-white transition-all shadow-sm"
+                   />
+                </div>
+
+                <div className="space-y-1.5 md:col-span-2">
+                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-2">Complete Delivery Address</label>
+                   <textarea
+                     rows={2}
+                     placeholder="House number, Street, Landmark, Area (Delhi Only)"
+                     value={giftAddress}
+                     onChange={(e) => setGiftAddress(e.target.value)}
+                     className="w-full bg-[#FBFBFB] border border-gray-200 rounded-xl p-3 md:p-4 text-sm font-medium resize-none focus:outline-none focus:border-purple-300 focus:bg-white transition-all shadow-sm"
+                   />
+                </div>
+
+                <div className="space-y-1.5 md:col-span-2">
+                   <label className="text-[10px] font-bold uppercase tracking-widest text-gray-500 ml-2">From (Optional)</label>
+                   <input
+                     placeholder="E.g. Secret Admirer, or Your Name"
+                     value={giftFrom}
+                     onChange={(e) => setGiftFrom(e.target.value)}
+                     className="w-full bg-[#FBFBFB] border border-gray-200 rounded-xl p-3 md:p-4 text-sm font-medium focus:outline-none focus:border-purple-300 focus:bg-white transition-all shadow-sm"
+                   />
+                </div>
+              </motion.div>
+            )}
+          </section>
+
+
+
+          {/* 3. SPECIAL REQUEST */}
+          <section className="bg-white rounded-[2rem] shadow-[0_4px_30px_rgba(0,0,0,0.02)] border border-gray-100 p-6 md:p-10 relative overflow-hidden">
+            
+            <div className="flex items-center gap-3 mb-6">
+               <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-500">
+                 <MessageSquare size={20} strokeWidth={2}/>
+               </div>
+               <h2 className="font-serif italic text-2xl md:text-3xl text-gray-900">Special Notes</h2>
             </div>
 
-            <button
-              onClick={handlePay}
-              disabled={loading || items.length === 0}
-              className="mt-10 w-full bg-black text-white py-5 rounded-2xl font-semibold disabled:opacity-60"
-            >
-              {loading ? "Placing Order…" : `Pay ₹${totalAmount}`}
-            </button>
-          </div>
+            <textarea
+              rows={3}
+              placeholder="Any special instructions for the artisan? (e.g., leave at front door, avoid lilies, call upon arrival...)"
+              value={specialRequest}
+              onChange={(e) => setSpecialRequest(e.target.value)}
+              className="w-full bg-[#FBFBFB] border border-gray-200 rounded-2xl p-5 text-sm font-medium resize-none focus:outline-none focus:border-blue-300 focus:bg-white transition-all shadow-sm"
+            />
+          </section>
+
         </div>
+
+
       </div>
 
-      {/* ---------------- SUCCESS MODAL ---------------- */}
+      {/* ---------------- SUCCESS MODAL (ULTRA PREMIUM) ---------------- */}
 
       {successOrderId && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[999] flex items-center justify-center">
-          <div className="bg-white rounded-[3rem] p-14 shadow-2xl text-center max-w-md w-full">
-            <h2 className="font-serif text-4xl mb-4">Order Placed 🎉</h2>
+        <div className="fixed inset-0 bg-white/70 backdrop-blur-3xl z-[999] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ type: "spring", bounce: 0.4, duration: 0.8 }}
+            className="bg-white rounded-[3rem] p-10 md:p-16 shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-gray-100 text-center max-w-lg w-full relative overflow-hidden"
+          >
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#EE1C47] to-[#F8BBD0]" />
+            
+            <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center text-green-500 mx-auto mb-8 border-[6px] border-green-100">
+               <CheckCircle2 size={40} strokeWidth={2}/>
+            </div>
+            
+            <h2 className="font-serif italic text-4xl md:text-5xl mb-4 text-gray-900 tracking-tight">Order Placed</h2>
 
-            <p className="text-gray-500 mb-6">Your flowers are on the way.</p>
-
-            <p className="text-sm">
-              Order ID:
-              <span className="font-bold ml-2">{successOrderId}</span>
+            <p className="font-sans text-lg font-medium text-gray-500 mb-8 max-w-[80%] mx-auto leading-relaxed">
+              Your stunning floral arrangement is being prepared by our artisans.
             </p>
 
-            <p className="mt-6 text-xs text-gray-400">
-              Redirecting you to shop…
-            </p>
-          </div>
+            <div className="bg-[#FAF9F6] border border-gray-100 rounded-[1.5rem] p-6 mb-8">
+              <p className="text-[10px] uppercase font-bold tracking-widest text-gray-400 mb-2">Order Reference</p>
+              <p className="font-mono text-xl md:text-2xl font-bold tracking-widest text-[#EE1C47]">{successOrderId}</p>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400">
+              <div className="w-4 h-4 rounded-full border-2 border-gray-300 border-t-gray-500 animate-spin" />
+              Redirecting you magically...
+            </div>
+          </motion.div>
         </div>
       )}
-    </>
+
+      {/* MOBILE STICKY PLACE ORDER */}
+      {!successOrderId && items.length > 0 && (
+        <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-6">
+           <div className="flex flex-col justify-center">
+              <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest leading-tight mb-0.5">Payable</p>
+              <p className="font-sans font-bold text-xl text-gray-900 leading-tight">₹{totalAmount.toLocaleString()}</p>
+           </div>
+           <button 
+             onClick={handlePay}
+             disabled={loading}
+             className="flex-1 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gray-800 shadow-lg transition-colors h-14 flex items-center justify-center gap-2"
+           >
+              {loading ? "Processing..." : <>Confirm Order <ArrowRight size={16} strokeWidth={2.5}/></>}
+           </button>
+        </div>
+      )}
+    </div>
   );
 };
 

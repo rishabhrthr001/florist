@@ -60,72 +60,75 @@ const ProductCard: React.FC<ProductCardProps> = ({
       transition={{ duration: 0.5 }}
       className="group h-full flex flex-col"
     >
-      {/* IMAGE */}
       <Link
         to={`/product/${product.slug}`}
-        className="block relative overflow-hidden rounded-xl bg-[#F5F5F5] aspect-[4/5]"
+        className="block relative overflow-hidden rounded-[1.25rem] bg-[#F9F9F9] aspect-[4/5] mb-4"
       >
         <motion.img
-          whileHover={{ scale: 1.04 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           src={product.images[0]}
           alt={product.name}
           className="w-full h-full object-cover"
         />
 
-        <div className="absolute top-3 right-3 z-10">
+        {/* Subtle overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/[0.03] transition-colors duration-300" />
+
+        <div className="absolute top-3 right-3 z-10 lg:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button
             onClick={toggleWishlist}
-            className={`backdrop-blur-sm p-1.5 rounded-full transition-all shadow-sm ${inWishlist
-              ? "bg-[#F8BBD0] text-white"
-              : "bg-white/90 text-[#4A4A4A] hover:bg-[#F8BBD0] hover:text-white"
+            className={`backdrop-blur-md p-2 rounded-full transition-all shadow-[0_2px_10px_rgba(0,0,0,0.05)] ${inWishlist
+              ? "bg-white/90 text-[#EE1C47] hover:bg-pink-50"
+              : "bg-white/80 text-gray-400 hover:bg-white hover:text-[#EE1C47]"
               }`}
           >
-            <Heart size={14} fill={inWishlist ? "currentColor" : "none"} />
+            <Heart size={16} fill={inWishlist ? "currentColor" : "none"} strokeWidth={inWishlist ? 1 : 1.5} />
           </button>
         </div>
-
-        {product.isHotPick && (
-          <div className="absolute top-3 left-3 bg-[#F8BBD0] text-white px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest shadow-sm">
-            Hot Pick
-          </div>
-        )}
       </Link>
 
       {/* INFO */}
-      <div className="mt-3 px-1 min-h-[70px] flex flex-col justify-between">
-        <div className="flex justify-between items-start">
-          <div className="max-w-[70%] flex-1 overflow-hidden">
-            <h3 className="font-serif text-sm leading-tight mb-0.5 truncate">
-              {product.name}
-            </h3>
-
-            <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">
-              {product.categoryId?.name}
-            </p>
+      <div className="flex flex-col flex-1 px-1">
+        <Link to={`/product/${product.slug}`} className="w-full">
+          <h3 className="font-sans text-[13px] md:text-[15px] font-medium text-gray-900 group-hover:text-pink-600 transition-colors leading-[1.3] mb-1.5 line-clamp-2">
+            {product.name}
+          </h3>
+        </Link>
+        
+        {/* RATING MOCK (Elegant) */}
+        <div className="flex items-center gap-1.5 mb-2.5">
+          <div className="flex items-center gap-1 bg-[#FBFBFB] px-1.5 py-0.5 rounded border border-gray-100">
+             <span className="text-yellow-500 text-[10px] md:text-[11px] font-bold">★</span>
+             <span className="text-gray-700 text-[10px] md:text-[11px] font-bold">4.8</span>
           </div>
+          <span className="text-gray-300 text-[10px] md:text-[11px]">|</span>
+          <span className="text-gray-400 text-[10px] md:text-[11px] hover:underline cursor-pointer">420 reviews</span>
+        </div>
 
-          <p className="font-bold text-xs ml-2">
+        <div className="flex items-center gap-2 mt-auto">
+          <p className="font-sans font-bold text-[14px] md:text-[16px] text-gray-900 tracking-tight">
             ₹{product.price.toLocaleString()}
+          </p>
+          <p className="text-[11px] md:text-[12px] text-gray-400 line-through font-light">
+            ₹{(product.price * 1.4).toFixed(0).toLocaleString()}
           </p>
         </div>
 
         {/* ADD CONTROLS */}
         {showControls && (
-          <div className="mt-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <div className="flex items-center bg-gray-50 rounded-full border border-gray-200/60 p-1">
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="w-7 h-7 rounded-full border flex items-center justify-center hover:bg-gray-50"
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white hover:shadow-sm transition-all text-gray-500"
               >
                 <Minus size={12} />
               </button>
-
-              <span className="text-xs w-4 text-center">{qty}</span>
-
+              <span className="text-[11px] md:text-sm w-5 text-center font-medium text-gray-700">{qty}</span>
               <button
                 onClick={() => setQty((q) => q + 1)}
-                className="w-7 h-7 rounded-full border flex items-center justify-center hover:bg-gray-50"
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white hover:shadow-sm transition-all text-gray-500"
               >
                 <Plus size={12} />
               </button>
@@ -133,7 +136,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
             <button
               onClick={handleAdd}
-              className="text-[9px] uppercase tracking-widest font-bold px-4 py-2 rounded-full bg-[#F8BBD0] text-white hover:bg-[#f797b9] transition"
+              className="flex-1 text-[10px] md:text-[11px] uppercase tracking-widest font-bold py-2.5 rounded-full bg-black text-white hover:bg-gray-800 transition-all duration-300 shadow-sm"
             >
               Add
             </button>

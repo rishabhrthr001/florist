@@ -7,8 +7,8 @@
 # =============================================
 
 # Configuration
-export PROJECT_ID="project-a583e1ab-ec6e-41d6-b3e"
-export REGION="us-central1"
+export PROJECT_ID="mangalam-486305"
+export REGION="asia-south1"
 export REPO_NAME="mangalam-repo"
 export BACKEND_SERVICE="mangalam-backend"
 export FRONTEND_SERVICE="mangalam-frontend"

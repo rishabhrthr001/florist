@@ -11,7 +11,7 @@ const TermsOfService: React.FC = () => {
 
       <section className="space-y-6 text-sm leading-relaxed text-gray-700">
         <p>
-          By accessing or using Mangalam Flowers, you agree to comply with and
+          By accessing or using Mangalam Florist, you agree to comply with and
           be bound by these Terms of Service.
         </p>
 
@@ -46,7 +46,7 @@ const TermsOfService: React.FC = () => {
         </h2>
 
         <p>
-          All content, designs, logos, and images are owned by Mangalam Flowers
+          All content, designs, logos, and images are owned by Mangalam Florist
           and may not be used without written permission.
         </p>
 
@@ -55,7 +55,7 @@ const TermsOfService: React.FC = () => {
         </h2>
 
         <p>
-          Mangalam Flowers shall not be liable for any indirect or consequential
+          Mangalam Florist shall not be liable for any indirect or consequential
           damages arising from the use of our services.
         </p>
 
@@ -68,7 +68,7 @@ const TermsOfService: React.FC = () => {
         <p>
           Questions regarding these terms can be sent to:
           <br />
-          <strong>Email:</strong> support@mangalamflowers.com
+          <strong>Email:</strong> support@mangalamflorist.com
         </p>
       </section>
     </div>

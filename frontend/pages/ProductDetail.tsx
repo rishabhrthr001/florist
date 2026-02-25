@@ -5,6 +5,7 @@ import axios from "axios";
 import { toast } from "sonner";
 
 import Button from "../components/Button";
+import ProductCard from "../components/ProductCard";
 import {
   ShoppingBag,
   Star,
@@ -62,6 +63,7 @@ const ProductDetail: React.FC = () => {
   const { user, token } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [crossSells, setCrossSells] = useState<Product[]>([]);
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -81,10 +83,19 @@ const ProductDetail: React.FC = () => {
       try {
         const { data } = await axios.get(`${API}/product/slug/${slug}`);
         setProduct(data);
+        
+        // Fetch cross-sell
+        if (data && data._id) {
+           const crossRes = await axios.get(`${API}/product`);
+           const others = crossRes.data.filter((p: any) => p._id !== data._id).slice(0, 4);
+           setCrossSells(others);
+        }
       } finally {
         setLoading(false);
       }
     };
+
+    window.scrollTo(0, 0);
 
     fetchProduct();
   }, [slug]);
@@ -179,7 +190,7 @@ const ProductDetail: React.FC = () => {
       quantity: qty,
     });
 
-    toast.success("Added to cart 🛒");
+    toast.success(`Handcrafted ${product.name} added to cart 🛒`);
   };
 
   /* ---------------- WISHLIST ---------------- */
@@ -192,7 +203,7 @@ const ProductDetail: React.FC = () => {
       toast.success("Removed from wishlist 💔");
     } else {
       addToWishlist({
-        productId: product._id,
+        _id: product._id,
         name: product.name,
         price: product.price,
         image: product.images[0],
@@ -216,170 +227,314 @@ const ProductDetail: React.FC = () => {
 
   return (
     <motion.div className="bg-[#FAF9F6] min-h-screen">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 pt-28">
-        {/* GRID */}
-        <div className="flex flex-col lg:grid lg:grid-cols-[1fr_1.1fr] gap-12">
-          {/* IMAGE */}
-          <div className="lg:sticky lg:top-32">
-            <div className="rounded-[36px] overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 pt-28">
+        
+        {/* BREADCRUMBS */}
+        <nav className="flex text-[10px] sm:text-[11px] text-gray-400 mb-6 md:mb-10 border-b border-gray-200/50 pb-4 font-bold uppercase tracking-widest max-w-[120rem] mx-auto overflow-hidden">
+          <Link to="/" className="hover:text-black transition-colors shrink-0">Home</Link>
+          <span className="mx-2 shrink-0">/</span>
+          <Link to="/explore" className="hover:text-black transition-colors shrink-0">Products</Link>
+          <span className="mx-2 shrink-0">/</span>
+          <span className="text-gray-900 truncate">{product.name}</span>
+        </nav>
+
+        {/* PRODUCT SECTION */}
+        <div className="flex flex-col lg:grid lg:grid-cols-[1.2fr_1fr] gap-10 lg:gap-16 max-w-[120rem] mx-auto">
+          
+          {/* LEFT: IMAGE GALLERY (STICKY) */}
+          <div className="flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-32 h-max lg:self-start lg:max-h-[calc(100vh-8rem)]">
+            
+            {/* THUMBNAILS */}
+            {product.images.length > 1 && (
+              <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-visible pb-2 md:pb-0 scrollbar-hide w-full md:w-auto shrink-0" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {product.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImg(idx)}
+                    className={`shrink-0 w-16 sm:w-20 md:w-24 aspect-[4/5] rounded-[1rem] md:rounded-[1.25rem] overflow-hidden border-2 transition-all duration-300 ${
+                      idx === activeImg ? "border-pink-300 shadow-md scale-[1.02]" : "border-transparent opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    <img src={img} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover bg-white" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* MAIN IMAGE */}
+            <div className="w-full rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-white border border-gray-100 relative group aspect-[4/5] md:aspect-[3/4] lg:min-h-[650px] shadow-sm">
               <img
                 src={product.images[activeImg]}
-                className="w-full h-[48vh] sm:h-[55vh] md:h-[420px] lg:h-[520px] object-contain"
+                alt={product.name}
+                className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.15] cursor-zoom-in"
               />
+              
+              <div className="absolute top-4 right-4 z-10">
+                <button
+                  onClick={handleWishlist}
+                  className={`backdrop-blur-md p-3 rounded-full transition-all shadow-[0_4px_15px_rgba(0,0,0,0.05)] ${
+                    inWishlist
+                      ? "bg-white text-[#EE1C47]"
+                      : "bg-white/80 text-gray-400 hover:text-[#EE1C47] hover:bg-white"
+                  }`}
+                >
+                  <Heart size={20} fill={inWishlist ? "currentColor" : "none"} strokeWidth={1.5} />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* INFO */}
-          <div className="bg-white rounded-3xl p-6 md:p-8 border">
-            <h1 className="text-3xl font-serif mb-2">{product.name}</h1>
-            <p className="text-xl mb-6">₹{product.price}</p>
-
-            {/* ACTIONS */}
-            <div className="space-y-3">
-              {/* Qty + Wishlist */}
-              <div className="flex gap-3">
-                <div className="flex items-center border h-8 w-24 rounded-full">
-                  <button onClick={() => setQty((q) => Math.max(1, q - 1))}>
-                    <Minus size={12} />
-                  </button>
-                  <span className="flex-1 text-center text-xs">{qty}</span>
-                  <button onClick={() => setQty((q) => q + 1)}>
-                    <Plus size={12} />
-                  </button>
+          {/* RIGHT: DETAILS (SCROLLABLE) */}
+          <div className="relative">
+            <div className="flex flex-col gap-6">
+              
+              <div className="border-b border-gray-100 pb-6 md:pb-8">
+                <h1 className="text-3xl sm:text-4xl lg:text-[2.5rem] font-serif tracking-tight text-gray-900 mb-4 leading-[1.15]">
+                  {product.name}
+                </h1>
+                
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="flex items-center gap-1.5 bg-[#FBFBFB] px-2.5 py-1 rounded-md border border-gray-200/60 shadow-sm">
+                     <span className="text-yellow-500 text-sm font-bold">★ 4.8</span>
+                  </div>
+                  <span className="text-gray-400 text-sm hover:underline cursor-pointer font-medium">Read {reviews.length > 0 ? reviews.length : 120} Reviews</span>
                 </div>
 
+                <div className="flex flex-wrap items-end gap-3 mb-1">
+                  <span className="font-sans font-bold text-3xl md:text-4xl text-gray-900 tracking-tight">₹{product.price.toLocaleString()}</span>
+                  <span className="text-sm md:text-base text-gray-400 line-through mb-1 font-light">₹{(product.price * 1.4).toFixed(0).toLocaleString()}</span>
+                  <span className="text-[10px] md:text-xs text-green-700 font-bold mb-1.5 ml-1 bg-green-50 px-2 py-1 rounded border border-green-100 uppercase tracking-wide">28% OFF</span>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-bold">Inclusive of all taxes</p>
+              </div>
+
+              {/* PREMIUM DELIVERY BLOCKS */}
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div className="bg-white border text-center p-3 sm:p-5 rounded-2xl flex flex-col items-center justify-center gap-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-transform hover:-translate-y-0.5 border-pink-100/50">
+                  <span className="text-2xl mb-1">🛵</span>
+                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#EE1C47]">Express Delivery</span>
+                  <span className="text-[9px] sm:text-[10px] text-gray-500 tracking-wide font-medium">Delhi NCR Only</span>
+                </div>
+                <div className="bg-white border border-gray-100 text-center p-3 sm:p-5 rounded-2xl flex flex-col items-center justify-center gap-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-transform hover:-translate-y-0.5">
+                  <span className="text-2xl mb-1">🎀</span>
+                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-800">Premium Wrap</span>
+                  <span className="text-[9px] sm:text-[10px] text-gray-500">Complimentary</span>
+                </div>
+              </div>
+
+              {/* ACTIONS - Hidden on mobile, sticky bar used instead */}
+              <div className="hidden md:flex gap-4 mt-2">
+                <div className="flex items-center justify-between bg-white rounded-full border border-gray-200/60 p-1.5 w-[120px] sm:w-36 h-[3.5rem] shadow-sm shrink-0">
+                  <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all text-gray-600 border border-transparent hover:border-gray-200">
+                    <Minus size={16} strokeWidth={2}/>
+                  </button>
+                  <span className="font-bold text-gray-800 text-sm">{qty}</span>
+                  <button onClick={() => setQty((q) => q + 1)} className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all text-gray-600 border border-transparent hover:border-gray-200">
+                    <Plus size={16} strokeWidth={2} />
+                  </button>
+                </div>
+                
                 <button
-                  onClick={handleWishlist}
-                  className={`h-8 w-10 border rounded-full grid place-items-center ${
-                    inWishlist
-                      ? "bg-pink-100 border-pink-300 text-pink-600"
-                      : ""
-                  }`}
+                  onClick={handleAddToCart}
+                  className="flex-1 flex items-center justify-center gap-2 h-[3.5rem] bg-black text-white rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest hover:bg-gray-800 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                 >
-                  <Heart
-                    size={14}
-                    fill={inWishlist ? "currentColor" : "none"}
-                  />
+                  <ShoppingBag size={18} /> Add to Cart
                 </button>
               </div>
 
-              {/* Cart + Buy */}
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleAddToCart}
-                  className="flex-1 h-8 text-xs bg-black text-white rounded-full"
+              {/* ACCORDION DESC */}
+              <div className="mt-4 border border-gray-100 bg-white rounded-[1.5rem] overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <div 
+                  className="p-5 md:p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setIsDescExpanded(!isDescExpanded)}
                 >
-                  <ShoppingBag size={14} /> Add
-                </Button>
+                  <span className="font-bold text-xs md:text-sm tracking-widest text-gray-800 uppercase">Product Details</span>
+                  <ChevronDown size={18} className={`transition-transform duration-300 text-gray-400 ${isDescExpanded ? 'rotate-180' : ''}`} />
+                </div>
+                
+                <motion.div
+                  initial={false}
+                  animate={{ height: isDescExpanded ? "auto" : 0, opacity: isDescExpanded ? 1 : 0 }}
+                  className="overflow-hidden bg-[#FBFBFB]"
+                >
+                  <div className="p-6 pt-2 text-[#4A4A4A] text-[13px] md:text-[14px] leading-[1.8] whitespace-pre-line border-t border-gray-100 font-medium">
+                    {product.description}
+                  </div>
+                </motion.div>
               </div>
-            </div>
+              
+              {/* TRUST BADGES */}
+              <div className="mt-4 text-center text-[10px] md:text-[11px] text-gray-400 flex flex-wrap justify-center gap-4 md:gap-6 font-bold uppercase tracking-wide">
+                <span className="flex items-center gap-1.5"><span className="text-[#EE1C47]">✓</span> 100% Freshness</span>
+                <span className="flex items-center gap-1.5"><span className="text-[#EE1C47]">✓</span> Secure Checkout</span>
+                <span className="flex items-center gap-1.5"><span className="text-[#EE1C47]">✓</span> Easy Returns</span>
+              </div>
 
-            {/* DESCRIPTION */}
-            <div className="mt-8 border-t pt-6">
-              <p className={`${!isDescExpanded ? "line-clamp-3" : ""}`}>
-                {product.description}
-              </p>
-
-              <button
-                onClick={() => setIsDescExpanded(!isDescExpanded)}
-                className="text-[#F8BBD0] text-sm mt-2 flex gap-1"
-              >
-                {isDescExpanded ? "Read Less" : "Read More"}
-                <ChevronDown size={12} />
-              </button>
             </div>
           </div>
         </div>
 
-        {/* REVIEWS */}
-        <div className="mt-20 max-w-4xl mx-auto">
-          <h2 className="text-2xl font-serif mb-6">Reviews</h2>
+        {/* CROSS-SELLING */}
+        {crossSells.length > 0 && (
+          <div className="mt-24 max-w-[120rem] mx-auto">
+             <div className="flex items-end justify-between mb-8 border-b border-gray-100 pb-4">
+               <h2 className="font-serif italic font-semibold text-3xl md:text-4xl text-gray-900 tracking-tight">You Might Also Like</h2>
+               <span className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-black transition-colors block pb-1 md:hidden" onClick={() => navigate('/explore')}>Discover More →</span>
+             </div>
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+               {crossSells.map((p) => (
+                 <ProductCard key={p._id} product={p} />
+               ))}
+             </div>
+          </div>
+        )}
 
-          {/* WRITE */}
-          {user && (
-            <div className="bg-white p-6 rounded-2xl border mb-10">
-              <textarea
-                rows={3}
-                placeholder="Write your review"
-                className="w-full resize-none"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-              />
-
-              <Button className="mt-3 text-sm" onClick={submitReview}>
-                Post Review
-              </Button>
+        {/* REVIEWS SECTION */}
+        <div className="mt-28 max-w-[120rem] mx-auto border-t border-gray-200/50 pt-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-serif italic mb-2 tracking-tight">Customer Reviews</h2>
+              <p className="text-gray-400 text-xs md:text-sm font-medium uppercase tracking-widest">Real experiences from our customers.</p>
             </div>
-          )}
+            <div className="flex bg-white shadow-sm items-center gap-2 px-5 py-2.5 border border-gray-100 rounded-full shrink-0">
+              <Star size={18} fill="#EAB308" className="text-yellow-500" />
+              <span className="font-bold text-gray-800 text-lg">4.8</span>
+              <span className="text-gray-400 text-xs font-bold tracking-wide uppercase">(Based on {reviews.length > 0 ? reviews.length : 120} reviews)</span>
+            </div>
+          </div>
 
-          {/* LIST */}
-          <div className="space-y-6">
-            {reviews.map((rev) => (
-              <div key={rev._id} className="bg-white p-5 rounded-2xl border">
-                <div className="flex justify-between">
-                  <p className="font-semibold">{rev.user.name}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-10">
+            {/* WRITE */}
+            <div className="w-full">
+              {user ? (
+                <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] lg:sticky lg:top-32">
+                  <h3 className="font-bold font-serif text-2xl mb-4 italic">Write a Review</h3>
+                  <textarea
+                    rows={4}
+                    placeholder="Tell us what you loved about this product..."
+                    className="w-full resize-none p-5 bg-gray-50/50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-pink-300 focus:bg-white transition-colors mb-4 font-medium"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                  />
 
-                  {rev.user._id === user?._id && (
-                    <Trash2
-                      size={16}
-                      className="cursor-pointer text-red-400"
-                      onClick={() => deleteReview(rev._id)}
-                    />
-                  )}
+                  <button 
+                    className="w-full bg-black text-white text-[11px] uppercase tracking-widest font-bold py-4 rounded-full hover:bg-gray-800 transition-all shadow-md"
+                    onClick={submitReview}
+                  >
+                    Post Review
+                  </button>
                 </div>
+              ) : (
+                <div className="bg-[#FBFBFB] p-8 rounded-[2rem] border border-gray-100 text-center flex flex-col items-center justify-center min-h-[250px] lg:sticky lg:top-32">
+                  <h3 className="font-bold font-serif italic text-2xl mb-2">Join the Conversation</h3>
+                  <p className="text-gray-500 text-sm mb-6 font-medium">You must be logged in to leave a review.</p>
+                  <Button onClick={() => navigate('/auth?mode=login')} className="px-8 py-3.5 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors">Login Here</Button>
+                </div>
+              )}
+            </div>
 
-                <p className="mt-2 text-gray-600">{rev.comment}</p>
-
-                {/* REPLIES */}
-                <div className="ml-6 mt-4 space-y-3">
-                  {rev.replies?.map((r) => (
-                    <div
-                      key={r._id}
-                      className="bg-gray-50 p-3 rounded-xl flex justify-between"
-                    >
-                      <div>
-                        <p className="text-sm font-medium">{r.user.name}</p>
-                        <p className="text-sm">{r.comment}</p>
+            {/* LIST */}
+            <div className="space-y-6">
+              {reviews.length === 0 ? (
+                 <div className="bg-white p-12 rounded-[2rem] border border-gray-100 text-center flex flex-col items-center justify-center h-full min-h-[250px] shadow-[0_2px_15px_rgba(0,0,0,0.01)]">
+                    <p className="text-gray-400 font-serif italic text-2xl mb-2">No reviews yet...</p>
+                    <p className="text-gray-400 text-sm font-medium tracking-wide">Be the first to share your thoughts!</p>
+                 </div>
+              ) : (
+                reviews.map((rev) => (
+                  <div key={rev._id} className="bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.015)]">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gray-50 border border-gray-200 rounded-full flex items-center justify-center text-gray-800 font-bold font-serif text-lg">
+                          {rev.user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900 leading-tight tracking-wide">{rev.user.name}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                             {[...Array(5)].map((_, i) => (
+                               <Star key={i} size={11} fill={i < rev.rating ? "#EAB308" : "#E5E7EB"} className={i < rev.rating ? "text-yellow-500" : "text-gray-200"} />
+                             ))}
+                          </div>
+                        </div>
                       </div>
 
-                      {r.user._id === user?._id && (
-                        <Trash2
-                          size={14}
-                          className="cursor-pointer text-red-400"
-                          onClick={() => deleteReply(rev._id, r._id)}
-                        />
+                      {rev.user._id === user?._id && (
+                        <button onClick={() => deleteReview(rev._id)} className="p-2.5 bg-red-50 hover:bg-red-100 text-red-500 rounded-full transition-colors shrink-0">
+                          <Trash2 size={16} />
+                        </button>
                       )}
                     </div>
-                  ))}
-                </div>
 
-                {/* REPLY BOX */}
-                {user && (
-                  <div className="mt-3 ml-6">
-                    <input
-                      value={replyBox[rev._id] || ""}
-                      onChange={(e) =>
-                        setReplyBox((p) => ({
-                          ...p,
-                          [rev._id]: e.target.value,
-                        }))
-                      }
-                      placeholder="Reply..."
-                      className="border rounded-lg px-3 py-1 text-sm w-full"
-                    />
+                    <p className="mt-2 text-[#4A4A4A] text-sm md:text-[15px] leading-relaxed mb-4 font-medium">{rev.comment}</p>
 
-                    <Button
-                      className="mt-2 text-xs"
-                      onClick={() => submitReply(rev._id)}
-                    >
-                      Reply
-                    </Button>
+                    {/* REPLIES */}
+                    {rev.replies && rev.replies.length > 0 && (
+                      <div className="ml-6 md:ml-12 mt-6 space-y-3 pl-4 border-l-2 border-gray-100">
+                        {rev.replies.map((r) => (
+                          <div
+                            key={r._id}
+                            className="bg-[#FBFBFB] border border-gray-100 p-4 md:p-5 rounded-2xl flex justify-between group transition-colors hover:bg-white"
+                          >
+                            <div>
+                              <p className="text-xs font-bold text-gray-900 mb-1.5">{r.user.name} <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[8px] uppercase font-bold ml-1 tracking-wider inline-block border border-blue-100">Author</span></p> 
+                              <p className="text-[13px] md:text-sm text-gray-600 font-medium leading-relaxed">{r.comment}</p>
+                            </div>
+
+                            {r.user._id === user?._id && (
+                              <button onClick={() => deleteReply(rev._id, r._id)} className="p-2 opacity-0 group-hover:opacity-100 bg-red-50 hover:bg-red-100 text-red-500 rounded-full transition-all self-start">
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* REPLY BOX */}
+                    {user && (
+                      <div className="mt-6 ml-6 md:ml-12 flex gap-2 w-full lg:w-3/4">
+                        <input
+                          value={replyBox[rev._id] || ""}
+                          onChange={(e) =>
+                            setReplyBox((p) => ({
+                              ...p,
+                              [rev._id]: e.target.value,
+                            }))
+                          }
+                          placeholder="Write a reply..."
+                          className="flex-1 bg-gray-50 border border-gray-100 focus:border-pink-200 focus:bg-white rounded-full px-5 py-2.5 text-sm outline-none transition-colors font-medium"
+                        />
+
+                        <button
+                          className="bg-gray-900 text-white rounded-full px-5 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-black transition-all shadow-sm shrink-0"
+                          onClick={() => submitReply(rev._id)}
+                        >
+                          Reply
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+                ))
+              )}
+            </div>
           </div>
         </div>
+      </div>
+      
+      {/* MOBILE STICKY ADD TO CART */}
+      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-6">
+         <div className="flex items-center justify-between bg-white rounded-full border border-gray-200/60 p-1 w-[120px] shrink-0 h-14">
+            <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all text-gray-400">
+               <Minus size={16} />
+            </button>
+            <span className="font-bold text-gray-800 text-sm">{qty}</span>
+            <button onClick={() => setQty((q) => q + 1)} className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all text-gray-400">
+               <Plus size={16} />
+            </button>
+         </div>
+         <button onClick={handleAddToCart} className="flex-1 bg-black text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg h-14 flex items-center justify-center gap-2">
+            Add • ₹{(product.price * qty).toLocaleString()}
+         </button>
       </div>
     </motion.div>
   );

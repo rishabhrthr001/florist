@@ -39,14 +39,9 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
-    isHotPick: {
-      type: Boolean,
-      default: false,
-    },
-
-    hotPickOrder: {
-      type: Number,
-      default: 0,
+    tags: {
+      type: [String],
+      default: [],
     },
 
     isActive: {

@@ -11,7 +11,7 @@ const PrivacyPolicy: React.FC = () => {
 
       <section className="space-y-6 text-sm leading-relaxed text-gray-700">
         <p>
-          Mangalam Flowers respects your privacy and is committed to protecting
+          Mangalam Florist respects your privacy and is committed to protecting
           your personal information. This policy explains how we collect, use,
           and safeguard your data when you visit or make purchases from our
           website.
@@ -70,7 +70,7 @@ const PrivacyPolicy: React.FC = () => {
         <p>
           For privacy-related inquiries, please contact us at:
           <br />
-          <strong>Email:</strong> support@mangalamflowers.com
+          <strong>Email:</strong> support@mangalamflorist.com
         </p>
       </section>
     </div>
