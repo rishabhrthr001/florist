@@ -105,12 +105,15 @@ const Home: React.FC = () => {
           axios.get(`${API}/category`),
         ]);
 
-        const allProducts = Array.isArray(productRes.data) ? productRes.data : [];
+        // Safe check for the products list
+        const rawProducts = Array.isArray(productRes.data) 
+          ? productRes.data 
+          : (productRes.data?.products || productRes.data?.items || []);
 
         // Randomly pull 8 products but prioritize those with real images over placeholders
-        const shuffled = [...allProducts].sort((a, b) => {
-          const aValid = (a.images?.[0] && !a.images[0].includes("placeholder")) ? 1 : 0;
-          const bValid = (b.images?.[0] && !b.images[0].includes("placeholder")) ? 1 : 0;
+        const shuffled = [...rawProducts].sort((a, b) => {
+          const aValid = (a.images?.[0] && !a.images[0].includes("placeholder") && !a.images[0].includes("default")) ? 1 : 0;
+          const bValid = (b.images?.[0] && !b.images[0].includes("placeholder") && !b.images[0].includes("default")) ? 1 : 0;
           if (aValid !== bValid) return bValid - aValid;
           return 0.5 - Math.random();
         });
