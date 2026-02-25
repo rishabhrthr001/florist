@@ -283,19 +283,19 @@ const Home: React.FC = () => {
 
       {/* ---------------- CELEBRATE LOVE SECTION ---------------- */}
       <section className="py-12 md:py-20 max-w-[120rem] mx-auto px-4 md:px-8">
-        <div className="flex flex-col md:flex-row gap-8 lg:gap-12 items-stretch bg-white rounded-[2.5rem] p-4 lg:p-8 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-pink-50">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-center bg-white rounded-[2.5rem] p-4 lg:p-8 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-pink-50">
           
           {/* LEFT PROMO BANNER */}
-          <div className="md:w-[38%] flex-shrink-0 relative rounded-[2rem] overflow-hidden group cursor-pointer flex flex-col min-h-[300px] md:min-h-full" onClick={() => navigate('/explore')}>
+          <div className="w-full lg:w-[42%] flex-shrink-0 rounded-[2rem] overflow-hidden group cursor-pointer" onClick={() => navigate('/explore')}>
             <img 
               src="/banners/celebrate_love_banner.png" 
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              className="w-full h-auto block transform scale-100 group-hover:scale-[1.03] transition-transform duration-1000 ease-out"
               alt="Celebrate Love - Perfect gifts for every story"
             />
           </div>
 
           {/* RIGHT GRID MAP */}
-          <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-10 items-center content-center py-4">
+          <div className="flex-1 grid grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-8 lg:gap-y-12 items-center content-center py-6 lg:py-4 w-full">
             {celebrateLoveCategories.map((item, idx) => {
               const heartMask = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E\")";
 
@@ -310,7 +310,7 @@ const Home: React.FC = () => {
                   className="flex flex-col items-center cursor-pointer group"
                 >
                   {/* Heart container */}
-                  <div className="w-full max-w-[120px] xs:max-w-[150px] sm:max-w-[180px] aspect-square mb-4 relative transition-all duration-500 group-hover:-translate-y-2 group-hover:drop-shadow-[0_15px_15px_rgba(238,28,71,0.2)] flex justify-center items-center p-[6px]">
+                  <div className="w-full max-w-[80px] xs:max-w-[100px] sm:max-w-[140px] lg:max-w-[160px] aspect-square mb-3 sm:mb-4 relative transition-all duration-500 group-hover:-translate-y-2 group-hover:drop-shadow-[0_15px_15px_rgba(238,28,71,0.2)] flex justify-center items-center p-[4px] sm:p-[6px]">
                     
                     {/* The Background Red Heart (acts as a border) */}
                     <div 
@@ -337,7 +337,7 @@ const Home: React.FC = () => {
                     </div>
                   </div>
 
-                  <h3 className="font-sans font-bold text-xs md:text-sm text-gray-800 text-center tracking-wide leading-tight group-hover:text-[#EE1C47] transition-colors">
+                  <h3 className="font-sans font-bold text-[10px] sm:text-xs md:text-sm text-gray-800 text-center tracking-wide leading-tight group-hover:text-[#EE1C47] transition-colors">
                     {item.name}
                   </h3>
                 </motion.div>
@@ -350,19 +350,19 @@ const Home: React.FC = () => {
 
       {/* ---------------- CHERISHED CELEBRATIONS SECTION ---------------- */}
       <section className="py-12 md:py-20 max-w-[120rem] mx-auto px-4 md:px-8">
-        <div className="flex flex-col md:flex-row gap-8 lg:gap-12 items-stretch bg-white rounded-[2.5rem] p-4 lg:p-8 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-yellow-50">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-center bg-white rounded-[2.5rem] p-4 lg:p-8 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-yellow-50">
           
           {/* LEFT PROMO BANNER */}
-          <div className="md:w-[38%] flex-shrink-0 relative rounded-[2rem] overflow-hidden group cursor-pointer flex flex-col min-h-[300px] md:min-h-full" onClick={() => navigate('/explore')}>
+          <div className="w-full lg:w-[42%] flex-shrink-0 rounded-[2rem] overflow-hidden group cursor-pointer" onClick={() => navigate('/explore')}>
             <img 
               src="/banners/cherished_celebrations_banner.png" 
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              className="w-full h-auto block transform scale-100 group-hover:scale-[1.03] transition-transform duration-1000 ease-out"
               alt="Gifts for Cheers, Congrats & Cherished Celebrations"
             />
           </div>
 
           {/* RIGHT GRID MAP */}
-          <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-10 items-center content-center py-4">
+          <div className="flex-1 grid grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-8 lg:gap-y-12 items-center content-center py-6 lg:py-4 w-full">
             {cherishedCelebrationsCategories.map((item, idx) => (
               <motion.div
                 key={item.name}
@@ -374,7 +374,7 @@ const Home: React.FC = () => {
                 className="flex flex-col items-center cursor-pointer group"
               >
                   {/* Square soft shape container */}
-                <div className="w-full max-w-[120px] xs:max-w-[150px] sm:max-w-[180px] aspect-square mb-4 relative transition-all duration-500 group-hover:-translate-y-2 group-hover:drop-shadow-[0_15px_15px_rgba(241,200,101,0.3)]">
+                <div className="w-full max-w-[80px] xs:max-w-[100px] sm:max-w-[140px] lg:max-w-[160px] aspect-square mb-3 sm:mb-4 relative transition-all duration-500 group-hover:-translate-y-2 group-hover:drop-shadow-[0_15px_15px_rgba(241,200,101,0.3)]">
                   
                   {/* The Background Yellow Rounded Box & Masked Image */}
                   <div 
@@ -388,7 +388,7 @@ const Home: React.FC = () => {
                   </div>
                 </div>
 
-                <h3 className="font-sans font-bold text-xs md:text-sm text-gray-800 text-center tracking-wide leading-tight group-hover:text-[#B27012] transition-colors mt-6">
+                <h3 className="font-sans font-bold text-[10px] sm:text-xs md:text-sm text-gray-800 text-center tracking-wide leading-tight group-hover:text-[#B27012] transition-colors mt-2 sm:mt-4">
                   {item.name}
                 </h3>
               </motion.div>
