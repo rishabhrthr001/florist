@@ -19,6 +19,14 @@ const categorySchema = new mongoose.Schema(
       type: String, // Cloudinary URL
       required: true,
     },
+    section: {
+      type: String, // 'shop-by-category', 'celebrate-love', 'cherished-celebrations', etc.
+      default: 'general',
+    },
+    featured: {
+      type: Boolean,
+      default: false,
+    },
     description: {
       type: String,
     },

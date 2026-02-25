@@ -37,7 +37,7 @@ router.post(
   uploadSingle,
   async (req, res) => {
     try {
-      const { name } = req.body;
+      const { name, section } = req.body;
 
       if (!name) return res.status(400).json({ msg: "Category name required" });
 
@@ -70,6 +70,7 @@ router.post(
         name,
         slug,
         image: req.file?.path,
+        section: section || 'general',
       });
 
       res.status(201).json(category);
@@ -93,7 +94,7 @@ router.put(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { name } = req.body;
+      const { name, section } = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ msg: "Invalid category ID" });
@@ -122,6 +123,11 @@ router.put(
 
         category.name = name;
         category.slug = slug;
+      }
+
+      /* Update section */
+      if (section) {
+        category.section = section;
       }
 
       /* Update image if new uploaded */

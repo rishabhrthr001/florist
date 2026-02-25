@@ -7,7 +7,15 @@ let io;
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:3000",
+      origin: [
+        process.env.FRONTEND_URL,
+        "https://mangalamflorist.com",
+        "https://www.mangalamflorist.com",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:5173"
+      ].filter(Boolean),
       credentials: true,
     },
   });

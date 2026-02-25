@@ -18,6 +18,7 @@ interface Category {
   name: string;
   slug: string;
   image?: string;
+  section?: string;
 }
 
 interface Banner {
@@ -37,6 +38,49 @@ interface Product {
   images: string[];
   categoryId: Category;
 }
+
+/* ---------------- FALLBACK DATA ---------------- */
+
+const FALLBACK_SHOP_CATEGORIES = [
+  { name: "Birthdays", image: "https://images.unsplash.com/photo-1512909006721-3d6018887383?w=300&q=80", slug: 'birthday' },
+  { name: "Anniversary", image: "/categories-new/anniversary.png", slug: 'anniversary' },
+  { name: "Chocolates", image: "/categories-new/chocolates.png", slug: 'chocolates' },
+  { name: "Cakes", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&q=80", slug: 'cakes' },
+  { name: "Balloon Decor", image: "/categories-new/balloons.png", slug: 'decorations' },
+  { name: "Plants", image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=300&q=80", slug: 'plants' },
+  { name: "Big Bunches", image: "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?w=300&q=80", slug: 'big-bunches' },
+];
+
+const FALLBACK_CELEBRATE_LOVE = [
+  { name: "Wedding", image: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=300&q=80", slug: 'wedding' },
+  { name: "Anniversary", image: "/categories-new/anniversary.png", slug: 'anniversary' },
+  { name: "Thinking Of You", image: "/categories-new/thinking.png", slug: 'thinking-of-you' },
+  { name: "I Am Sorry", image: "/categories-new/sorry.png", slug: 'sorry' },
+  { name: "Romantic Flowers", image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=300&q=80", slug: 'flowers' },
+  { name: "For Girlfriend", image: "https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=300&q=80", slug: 'girlfriend' },
+  { name: "For Boyfriend", image: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=300&q=80", slug: 'boyfriend' },
+  { name: "Miss You", image: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=300&q=80", slug: 'miss-you' },
+];
+
+const FALLBACK_CHERISHED = [
+  { name: "Baby Shower", image: "/banners/icon_baby_shower.png", slug: 'baby-shower' },
+  { name: "Retirement", image: "/banners/icon_retirement.png", slug: 'retirement' },
+  { name: "New Born", image: "/categories-new/newborn.png", slug: 'new-born' },
+  { name: "Wellness & Care", image: "/categories-new/wellness.png", slug: 'wellness' },
+  { name: "Thank You", image: "/categories-new/thankyou.png", slug: 'thank-you' },
+  { name: "Best Wishes", image: "/categories-new/bestwishes.png", slug: 'best-wishes' },
+  { name: "Balloons", image: "/categories-new/balloons.png", slug: 'decorations' },
+  { name: "Housewarming", image: "/categories-new/housewarming.png", slug: 'housewarming' },
+];
+
+const FALLBACK_FLOWERS = [
+  { name: "Classic Roses", slug: "roses", image: "/bouquets/bouquet_roses_1771938143113.png" },
+  { name: "White Lilies", slug: "lilies", image: "/bouquets/bouquet_lilies_1771939456508.png" },
+  { name: "Bright Sunflowers", slug: "sunflowers", image: "/bouquets/bouquet_sunflowers_1771938400635.png" },
+  { name: "Purple Orchids", slug: "orchids", image: "/bouquets/bouquet_orchids_1771938645237.png" },
+  { name: "Soft Carnations", slug: "carnations", image: "/bouquets/bouquet_carnations_1771938818246.png" },
+  { name: "Mixed Blooms", slug: "mixed", image: "/bouquets/bouquet_mixed_1771939118931.png" },
+];
 
 /* ---------------- COMPONENT ---------------- */
 
@@ -91,61 +135,26 @@ const Home: React.FC = () => {
   /* ---------------- DESKTOP & DEFAULT BANNERS ---------------- */
 
   const defaultBanners: Banner[] = [
-    { _id: 'b1', title: 'Birthdays', description: 'Make their day unforgettable with our premium arrangements.', category: 'Birthday', link: '/explore', imageUrl: '/banners/birthday.png' },
-    { _id: 'b2', title: 'Anniversary', description: 'Celebrate your love with timeless romance and fresh blooms.', category: 'Anniversary', link: '/explore', imageUrl: '/banners/anniversary.png' },
-    { _id: 'b3', title: 'Wedding', description: 'Elegant gifts for their perfect beginning together.', category: 'Wedding', link: '/explore', imageUrl: '/banners/wedding.png' },
-    { _id: 'b4', title: 'For Her', description: 'Chic, delicate curations designed beautifully for her.', category: 'For Her', link: '/explore', imageUrl: '/banners/for_her.png' },
-    { _id: 'b5', title: 'For Him', description: 'Sophisticated and sleek luxury gifts for the modern man.', category: 'For Him', link: '/explore', imageUrl: '/banners/for_him.png' },
+    { _id: 'b1', title: 'Birthdays', description: 'Curated blooms and luxury gifts for their special day.', category: 'Birthday', link: '/explore', imageUrl: '/banners/birthday.png' },
+    { _id: 'b2', title: 'Anniversary', description: 'Timeless arrangements for your beautiful journey.', category: 'Anniversary', link: '/explore', imageUrl: '/banners/anniversary.png' },
+    { _id: 'b3', title: 'Wedding', description: 'Elegant designs for their perfect beginning.', category: 'Wedding', link: '/explore', imageUrl: '/banners/wedding.png' },
+    { _id: 'b4', title: 'For Her', description: 'Chic, delicate curations designed for her grace.', category: 'For Her', link: '/explore', imageUrl: '/banners/for_her.png' },
+    { _id: 'b5', title: 'For Him', description: 'Sophisticated luxury for the modern gentleman.', category: 'For Him', link: '/explore', imageUrl: '/banners/for_him.png' },
   ];
 
   const displayBanners = defaultBanners;
 
-  /* ---------------- SHOP CATEGORIES ---------------- */
+  // Show EVERYTHING in Shop by Category as requested
+  const shopCategories = categories.length > 0 ? categories : FALLBACK_SHOP_CATEGORIES;
 
-  const shopCategories = [
-    { name: "Birthdays", image: "https://images.unsplash.com/photo-1512909006721-3d6018887383?w=300&q=80", link: "/explore?category=birthday" },
-    { name: "Anniversary", image: "/categories-new/anniversary.png", link: "/explore?category=anniversary" },
-    { name: "Chocolates", image: "/categories-new/chocolates.png", link: "/explore?category=chocolates" },
-    { name: "Cakes", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&q=80", link: "/explore?category=cakes" },
-    { name: "Balloon Decor", image: "/categories-new/balloons.png", link: "/explore?category=decorations" },
-    { name: "Plants", image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=300&q=80", link: "/explore?category=plants" },
-    { name: "Big Bunches", image: "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?w=300&q=80", link: "/explore?category=big-bunches" },
-  ];
+  const backendLoveCats = categories.filter(c => c.section === 'celebrate-love');
+  const celebrateLoveCategories = backendLoveCats.length > 0 ? backendLoveCats : FALLBACK_CELEBRATE_LOVE;
 
-  /* ---------------- CELEBRATE LOVE ---------------- */
+  const backendCherishedCats = categories.filter(c => c.section === 'cherished-celebrations');
+  const cherishedCelebrationsCategories = backendCherishedCats.length > 0 ? backendCherishedCats : FALLBACK_CHERISHED;
 
-  const celebrateLoveCategories = [
-    { name: "Wedding", image: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=300&q=80", link: "/explore?category=wedding" },
-    { name: "Anniversary", image: "/categories-new/anniversary.png", link: "/explore?category=anniversary" },
-    { name: "Thinking Of You", image: "/categories-new/thinking.png", link: "/explore?category=thinking-of-you" },
-    { name: "I Am Sorry", image: "/categories-new/sorry.png", link: "/explore?category=sorry" },
-    { name: "Romantic Flowers", image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=300&q=80", link: "/explore?category=flowers" },
-    { name: "For Girlfriend", image: "https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=300&q=80", link: "/explore?category=girlfriend" },
-    { name: "For Boyfriend", image: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=300&q=80", link: "/explore?category=boyfriend" },
-    { name: "Miss You", image: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=300&q=80", link: "/explore?category=miss-you" },
-  ];
-
-  /* ---------------- CHERISHED CELEBRATIONS ---------------- */
-
-  const favouriteFlowers = [
-    { name: "Classic Roses", slug: "roses", image: "/bouquets/bouquet_roses_1771938143113.png" },
-    { name: "White Lilies", slug: "lilies", image: "/bouquets/bouquet_lilies_1771939456508.png" },
-    { name: "Bright Sunflowers", slug: "sunflowers", image: "/bouquets/bouquet_sunflowers_1771938400635.png" },
-    { name: "Purple Orchids", slug: "orchids", image: "/bouquets/bouquet_orchids_1771938645237.png" },
-    { name: "Soft Carnations", slug: "carnations", image: "/bouquets/bouquet_carnations_1771938818246.png" },
-    { name: "Mixed Blooms", slug: "mixed", image: "/bouquets/bouquet_mixed_1771939118931.png" },
-  ];
-
-  const cherishedCelebrationsCategories = [
-    { name: "Baby Shower", image: "/banners/icon_baby_shower.png", link: "/explore?category=baby-shower" },
-    { name: "Retirement", image: "/banners/icon_retirement.png", link: "/explore?category=retirement" },
-    { name: "New Born", image: "/categories-new/newborn.png", link: "/explore?category=new-born" },
-    { name: "Wellness & Care", image: "/categories-new/wellness.png", link: "/explore?category=wellness" },
-    { name: "Thank You", image: "/categories-new/thankyou.png", link: "/explore?category=thank-you" },
-    { name: "Best Wishes", image: "/categories-new/bestwishes.png", link: "/explore?category=best-wishes" },
-    { name: "Balloons", image: "/categories-new/balloons.png", link: "/explore?category=decorations" },
-    { name: "Housewarming", image: "/categories-new/housewarming.png", link: "/explore?category=housewarming" },
-  ];
+  const backendFlowerCats = categories.filter(c => c.section === 'favourite-flowers');
+  const favouriteFlowers = backendFlowerCats.length > 0 ? backendFlowerCats : FALLBACK_FLOWERS;
 
   /* ---------------- UI ---------------- */
 
@@ -154,75 +163,100 @@ const Home: React.FC = () => {
       
       {/* ---------------- BANNERS SECTION ---------------- */}
       <section className="mb-20 max-w-[120rem] mx-auto px-4 md:px-8">
-        <div className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex gap-4 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {displayBanners.map((banner, idx) => (
             <motion.div
               key={banner._id}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.1, duration: 0.8 }}
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.1, duration: 1, ease: [0.16, 1, 0.3, 1] }}
               onClick={() => navigate(banner.link || '/explore')}
-              className="min-w-[88vw] md:min-w-[900px] aspect-[16/9] md:aspect-[21/9] relative rounded-[2.5rem] overflow-hidden cursor-pointer group snap-center shadow-md border border-gray-200/50 flex-shrink-0"
+              className="min-w-[88vw] md:min-w-[900px] aspect-[16/9] md:aspect-[21/9] relative rounded-[3rem] overflow-hidden cursor-pointer group snap-center shadow-[0_20px_60px_rgba(0,0,0,0.05)] border border-gray-100 flex-shrink-0"
             >
               <img
                 src={banner.imageUrl}
                 alt={banner.title}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.08] transition-transform duration-[2500ms] ease-out-quint"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-              <div className="absolute inset-0 p-8 md:p-12 flex flex-col justify-center">
-                <span className="text-pink-200 text-xs md:text-[13px] font-bold tracking-[0.2em] uppercase mb-3">
-                  {banner.category}
-                </span>
-                <h3 className="text-white font-serif italic text-3xl md:text-5xl lg:text-6xl mb-3 md:mb-4 lg:w-2/3 leading-tight tracking-tight drop-shadow-sm">
-                  {banner.title}
-                </h3>
-                {banner.description && (
-                  <p className="text-white/80 text-sm md:text-lg font-medium max-w-[85%] md:max-w-[50%] mb-6 leading-relaxed line-clamp-2">
-                    {banner.description}
-                  </p>
-                )}
-                <div className="mt-auto md:mt-4">
-                  <span className="inline-flex items-center text-[10px] md:text-xs text-black bg-white/95 font-bold tracking-widest uppercase rounded-full px-6 py-3 md:px-8 md:py-3.5 hover:bg-black hover:text-white transition-colors duration-300 shadow-[0_4px_15px_rgba(0,0,0,0.1)]">
-                    Explore Collection
-                  </span>
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/pinstriped-dark.png')] opacity-[0.03] pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/20 to-transparent transition-opacity duration-700 group-hover:opacity-90" />
+              
+              <div className="absolute inset-0 p-10 md:p-16 flex flex-col justify-start">
+                <div className="overflow-hidden mb-5">
+                  <motion.span 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + idx * 0.1, duration: 0.6 }}
+                    className="text-pink-300 text-[10px] md:text-xs font-black tracking-[0.5em] uppercase block"
+                  >
+                    {banner.category}
+                  </motion.span>
                 </div>
+                {banner.description && (
+                  <div className="overflow-hidden">
+                    <motion.p 
+                      initial={{ opacity: 0, y: 40 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 + idx * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                      className="text-white font-serif italic text-lg md:text-2xl lg:text-3xl lg:w-2/3 leading-tight tracking-tight drop-shadow-sm transition-all duration-700 group-hover:translate-x-2"
+                    >
+                      {banner.description}
+                    </motion.p>
+                  </div>
+                )}
+                
+                <motion.div 
+                  initial={{ width: 0 }}
+                  whileInView={{ width: "60px" }}
+                  transition={{ delay: 0.8 + idx * 0.1, duration: 1 }}
+                  className="h-[1px] bg-pink-300/50 mt-8"
+                />
               </div>
             </motion.div>
           ))}
         </div>
       </section>
 
-
-
       {/* ---------------- BROWSE BY CATEGORY ---------------- */}
-      <section className="mb-16 md:mb-20 max-w-[120rem] mx-auto px-4 md:px-8">
-        <div className="flex items-center justify-between mb-8 px-2 border-b border-gray-100 pb-4">
-          <h2 className="font-serif italic font-semibold text-3xl md:text-4xl text-gray-900 tracking-tight">Shop by Category</h2>
+      <section className="mb-20 md:mb-28 max-w-[120rem] mx-auto px-4 md:px-8 relative overflow-hidden">
+        {/* Decorative background element */}
+        <div className="absolute -right-20 -top-20 text-[20rem] font-serif italic text-pink-50/40 select-none pointer-events-none -z-10">
+          M
+        </div>
+        
+        <div className="flex items-center justify-between mb-12 px-2 border-b border-gray-100 pb-6 relative">
+          <h2 className="font-serif italic font-medium text-3xl md:text-4xl text-gray-900 tracking-tight">Shop by Category</h2>
+          <div className="absolute bottom-0 left-0 w-24 h-[1px] bg-pink-300" />
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-4 sm:gap-6 lg:gap-8 justify-items-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 sm:gap-8 lg:gap-12 justify-items-center">
           {shopCategories.map((cat, idx) => (
               <motion.div
-                key={cat.name}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                key={cat._id || cat.slug || idx}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.05, duration: 0.5 }}
-                onClick={() => navigate(cat.link)}
+                transition={{ delay: idx * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                onClick={() => navigate(`/explore?category=${cat.slug}`)}
                 className="flex flex-col items-center cursor-pointer group w-full"
               >
-                <div className="w-full aspect-square max-w-[110px] sm:max-w-[150px] md:max-w-[170px] lg:max-w-[200px] rounded-full overflow-hidden mb-4 sm:mb-6 border-[2px] border-gray-100 group-hover:border-[#EE1C47]/30 transition-all duration-500 shadow-[0_2px_10px_rgba(0,0,0,0.02)] group-hover:shadow-[0_15px_30px_rgba(238,28,71,0.1)] bg-white relative p-[4px] md:p-[6px] group-hover:scale-105">
-                  <div className="w-full h-full rounded-full overflow-hidden relative">
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500 z-10" />
-                    <img
-                      src={cat.image}
-                      className="w-full h-full rounded-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      alt={cat.name}
-                    />
+                <div className="w-full aspect-square max-w-[120px] sm:max-w-[170px] rounded-full mb-5 sm:mb-8 transition-all duration-1000 relative">
+                  {/* Decorative outer ring */}
+                  <div className="absolute inset-[-8px] rounded-full border border-pink-50 opacity-0 group-hover:opacity-100 group-hover:inset-[-12px] transition-all duration-700 pointer-events-none" />
+                  
+                  <div className="w-full h-full rounded-full overflow-hidden border-[1.5px] border-gray-100 group-hover:border-[#EE1C47]/20 shadow-[0_8px_30px_rgba(0,0,0,0.02)] group-hover:shadow-[0_25px_50px_rgba(238,28,71,0.12)] bg-white p-[5px] sm:p-[7px] transition-all duration-700">
+                    <div className="w-full h-full rounded-full overflow-hidden relative">
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-1000 z-10" />
+                      <img
+                        src={cat.image}
+                        className="w-full h-full rounded-full object-cover group-hover:scale-[1.12] transition-transform duration-[1500ms] cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+                        alt={cat.name}
+                      />
+                    </div>
                   </div>
                 </div>
-                <h3 className="font-sans text-[11px] sm:text-[13px] md:text-sm lg:text-[15px] font-bold text-center text-gray-800 leading-tight group-hover:text-[#EE1C47] transition-colors tracking-wide">
+                <h3 className="font-sans text-[12px] sm:text-[14px] font-bold text-center text-gray-800 leading-tight group-hover:text-[#EE1C47] transition-all duration-300 tracking-wide inline-block relative after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[1.5px] after:bg-[#EE1C47]/40 after:transition-all after:duration-500 group-hover:after:w-full">
                   {cat.name}
                 </h3>
               </motion.div>
@@ -250,7 +284,7 @@ const Home: React.FC = () => {
              <motion.div 
                key={flower.name} 
                variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1 } }}
-               onClick={() => navigate(`/explore`)}
+               onClick={() => navigate(`/explore?category=${flower.slug}`)}
                className="group cursor-pointer flex flex-col items-center"
              >
                <div className="w-full aspect-[4/5] rounded-[2rem] overflow-hidden mb-4 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] group-hover:shadow-[0_10px_30px_rgba(238,28,71,0.08)] bg-[#FDFBF9] transition-all duration-500 relative">
@@ -306,7 +340,7 @@ const Home: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.05, duration: 0.5 }}
-                  onClick={() => navigate(item.link)}
+                  onClick={() => navigate(`/explore?category=${item.slug}`)}
                   className="flex flex-col items-center cursor-pointer group"
                 >
                   {/* Heart container */}
@@ -370,7 +404,7 @@ const Home: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.05, duration: 0.5 }}
-                onClick={() => navigate(item.link)}
+                onClick={() => navigate(`/explore?category=${item.slug}`)}
                 className="flex flex-col items-center cursor-pointer group"
               >
                   {/* Square soft shape container */}
