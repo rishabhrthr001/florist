@@ -102,13 +102,21 @@ router.post("/", requireAuth, async (req, res) => {
 
         if (!product) return res.status(400).json({ msg: "Invalid product" });
 
-        if (product.price !== item.price) {
+        // Calculate expected price based on premium wrapping
+        // If product has premiumWrapping: true -> price is same
+        // If product has premiumWrapping: false AND item.hasPremiumWrapping: true -> price + 300
+        let expectedPrice = product.price;
+        if (!product.premiumWrapping && item.hasPremiumWrapping) {
+          expectedPrice += 300;
+        }
+
+        if (expectedPrice !== item.price) {
           return res.status(400).json({
-            msg: "Product price mismatch",
+            msg: `Product price mismatch for ${product.name}. Expected ${expectedPrice}, got ${item.price}`,
           });
         }
 
-        serverSubtotal += product.price * item.quantity;
+        serverSubtotal += expectedPrice * item.quantity;
 
         verifiedItems.push(item);
       }

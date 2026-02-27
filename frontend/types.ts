@@ -9,6 +9,7 @@ export interface Product {
   images: string[];
   stock?: number;
   slug?: string;
+  premiumWrapping?: boolean;
 }
 
 export interface Category {

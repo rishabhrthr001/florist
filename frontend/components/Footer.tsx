@@ -37,7 +37,7 @@ const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="font-serif text-xl mb-6">Collections</h4>
+            <h4 className="font-sans font-bold text-xl mb-6">Collections</h4>
             <ul className="space-y-4 text-gray-400 text-sm">
               <li>
                 <Link
@@ -75,7 +75,7 @@ const Footer: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="font-serif text-xl mb-6">Support</h4>
+            <h4 className="font-sans font-bold text-xl mb-6">Support</h4>
             <ul className="space-y-4 text-gray-400 text-sm">
               <li>
                 <Link to="#" className="hover:text-[#F8BBD0] transition-colors">

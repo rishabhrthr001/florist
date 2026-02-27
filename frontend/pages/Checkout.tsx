@@ -55,6 +55,8 @@ const Checkout: React.FC = () => {
   const [giftPhone, setGiftPhone] = useState("");
   const [giftAddress, setGiftAddress] = useState("");
   const [giftFrom, setGiftFrom] = useState("");
+  const [includeGiftCard, setIncludeGiftCard] = useState(false);
+  const [giftMessage, setGiftMessage] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null);
@@ -226,13 +228,15 @@ const Checkout: React.FC = () => {
         specialRequest,
 
         gift: isGift
-          ? {
-              name: giftName,
-              phone: giftPhone,
-              address: giftAddress,
-              from: giftFrom || null,
-            }
-          : null,
+              ? {
+                  name: giftName,
+                  phone: giftPhone,
+                  address: giftAddress,
+                  from: giftFrom || null,
+                  includeGiftCard,
+                  giftMessage: includeGiftCard ? giftMessage : null,
+                }
+              : null,
 
         items: items.map((i) => ({
           productId: i.custom ? null : i._id,
@@ -242,6 +246,7 @@ const Checkout: React.FC = () => {
           price: i.price,
           quantity: i.quantity,
           image: i.image,
+          hasPremiumWrapping: i.hasPremiumWrapping || false,
 
           custom: i.custom || null,
         })),
@@ -561,6 +566,49 @@ const Checkout: React.FC = () => {
                      onChange={(e) => setGiftFrom(e.target.value)}
                      className="w-full bg-[#FBFBFB] border border-gray-200 rounded-xl p-3 md:p-4 text-sm font-medium focus:outline-none focus:border-purple-300 focus:bg-white transition-all shadow-sm"
                    />
+                </div>
+
+                <div className="md:col-span-2 mt-4 pt-4 border-t border-purple-100">
+                   <label className="flex items-center gap-3 cursor-pointer group">
+                     <div className="relative flex items-center justify-center">
+                       <input
+                         type="checkbox"
+                         className="sr-only"
+                         checked={includeGiftCard}
+                         onChange={(e) => setIncludeGiftCard(e.target.checked)}
+                       />
+                       <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-0.5 ${includeGiftCard ? 'bg-purple-500' : 'bg-gray-200'}`}>
+                          <div className={`w-5 h-5 bg-white rounded-full transition-transform shadow-sm ${includeGiftCard ? 'translate-x-4' : 'translate-x-0'}`} />
+                       </div>
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-800">Add Handwritten Gift Card</span>
+                        <span className="bg-purple-50 text-purple-600 text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-tighter">Complimentary</span>
+                     </div>
+                   </label>
+
+                   <AnimatePresence>
+                     {includeGiftCard && (
+                       <motion.div
+                         initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                         animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                         exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                         className="overflow-hidden"
+                       >
+                         <textarea
+                           rows={3}
+                           placeholder="Write your beautiful message here... (Max 200 characters)"
+                           maxLength={200}
+                           value={giftMessage}
+                           onChange={(e) => setGiftMessage(e.target.value)}
+                           className="w-full bg-purple-50/30 border border-purple-100 rounded-xl p-4 text-sm font-medium italic resize-none focus:outline-none focus:border-purple-300 focus:bg-white transition-all shadow-sm"
+                         />
+                         <p className="text-[9px] text-gray-400 mt-1 ml-1 uppercase font-bold tracking-widest text-right">
+                           {giftMessage.length}/200
+                         </p>
+                       </motion.div>
+                     )}
+                   </AnimatePresence>
                 </div>
               </motion.div>
             )}

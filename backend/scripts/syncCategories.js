@@ -41,7 +41,6 @@ const CATEGORIES_DATA = [
   { name: "Anniversary", slug: "anniversary", localImage: "../../frontend/public/categories-new/anniversary.png", section: "shop-by-category" },
   { name: "Chocolates", slug: "chocolates", localImage: "../../frontend/public/categories-new/chocolates.png", section: "shop-by-category" },
   { name: "Cakes", slug: "cakes", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=80", section: "shop-by-category" },
-  { name: "Balloon Decor", slug: "decorations", localImage: "../../frontend/public/categories-new/balloons.png", section: "shop-by-category" },
   { name: "Plants", slug: "plants", image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=800&q=80", section: "shop-by-category" },
   { name: "Big Bunches", slug: "big-bunches", image: "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?w=800&q=80", section: "shop-by-category" },
 

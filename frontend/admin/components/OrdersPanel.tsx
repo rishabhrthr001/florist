@@ -47,6 +47,7 @@ export interface OrderItem {
   image?: string;
 
   isCustom?: boolean;
+  hasPremiumWrapping?: boolean;
   custom?: CustomBouquet;
 }
 
@@ -64,6 +65,15 @@ export interface Order {
     state: string;
     zip: string;
     country: string;
+  };
+
+  gift?: {
+    name: string;
+    phone: string;
+    address: string;
+    from?: string | null;
+    includeGiftCard?: boolean;
+    giftMessage?: string;
   };
 
   // ✅ SPECIAL REQUEST
@@ -169,8 +179,15 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
               <tbody className="divide-y">
                 {filteredOrders.map((order) => (
                   <tr key={order._id}>
-                    <td className="px-6 py-4 font-mono text-xs">
-                      {order.orderId}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-mono text-xs">{order.orderId}</span>
+                        {order.items?.some(i => i.hasPremiumWrapping) && (
+                          <span className="bg-pink-100 text-pink-600 text-[8px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-tighter w-fit border border-pink-200">
+                             Premium Wrap
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="px-6 py-4">
@@ -317,6 +334,38 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                   </div>
                 </div>
 
+                {/* ✅ GIFT INFO */}
+                {selectedOrder.gift && (
+                  <div className="bg-purple-50 border border-purple-100 rounded-xl p-6">
+                    <p className="text-[10px] uppercase tracking-widest text-purple-400 mb-2">
+                       Gift Details
+                    </p>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                       <div>
+                          <p className="text-[10px] text-gray-400 uppercase font-bold">Recipient</p>
+                          <p className="text-sm font-bold text-gray-900">{selectedOrder.gift.name}</p>
+                       </div>
+                       {selectedOrder.gift.from && (
+                         <div>
+                            <p className="text-[10px] text-gray-400 uppercase font-bold">From</p>
+                            <p className="text-sm font-bold text-gray-900">{selectedOrder.gift.from}</p>
+                         </div>
+                       )}
+                    </div>
+                    
+                    {selectedOrder.gift.includeGiftCard && (
+                      <div className="bg-white/60 p-4 rounded-lg border border-purple-200">
+                         <p className="text-[10px] text-purple-600 uppercase font-bold mb-1 flex items-center gap-1.5">
+                           📩 Handwritten Card
+                         </p>
+                         <p className="text-sm text-gray-700 font-medium italic">
+                           “{selectedOrder.gift.giftMessage}”
+                         </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Address */}
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-gray-400">
@@ -366,6 +415,13 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                             ₹{i.price * i.quantity}
                           </p>
                         </div>
+
+                        {i.hasPremiumWrapping && (
+                          <div className="mt-2 flex items-center gap-1.5 text-pink-500 bg-pink-50 w-fit px-2 py-0.5 rounded-full border border-pink-100">
+                             <div className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
+                             <span className="text-[9px] font-bold uppercase tracking-widest">Premium Wrapping Applied</span>
+                          </div>
+                        )}
 
                         {i.isCustom && i.custom && (
                           <div className="mt-3 bg-white border rounded-lg p-3 text-xs space-y-1">

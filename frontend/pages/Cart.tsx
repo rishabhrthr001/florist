@@ -136,9 +136,17 @@ const Cart: React.FC = () => {
                        </p>
                     </div>
                     
-                    <p className="text-gray-400 text-[9px] md:text-[10px] font-bold tracking-widest uppercase mb-3">
-                       ₹{item.price.toLocaleString()} Each
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <p className="text-gray-400 text-[9px] md:text-[10px] font-bold tracking-widest uppercase">
+                         ₹{item.price.toLocaleString()} Each
+                      </p>
+                      
+                      {item.hasPremiumWrapping && (
+                        <span className="text-[8px] md:text-[9px] bg-pink-50 text-pink-500 px-2 py-0.5 rounded-full font-black uppercase tracking-widest border border-pink-100 flex items-center gap-1 shrink-0">
+                           <span className="w-1 h-1 rounded-full bg-pink-500"></span> Premium Wrap
+                        </span>
+                      )}
+                    </div>
 
                     {/* CUSTOM COMPOSITION BREAKDOWN */}
                     {item.custom && (

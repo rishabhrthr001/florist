@@ -7,7 +7,7 @@ import Button from "../components/Button";
 import ProductCard from "../components/ProductCard";
 import ProductSkeleton from "../components/ProductSkeleton";
 
-import { Heart, Gift, Users, User as UserIcon, Clock, Sparkles, ShieldCheck } from "lucide-react";
+
 
 import API from "../config";
 
@@ -46,7 +46,6 @@ const FALLBACK_SHOP_CATEGORIES = [
   { name: "Anniversary", image: "/categories-new/anniversary.png", slug: 'anniversary' },
   { name: "Chocolates", image: "/categories-new/chocolates.png", slug: 'chocolates' },
   { name: "Cakes", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&q=80", slug: 'cakes' },
-  { name: "Balloon Decor", image: "/categories-new/balloons.png", slug: 'decorations' },
   { name: "Plants", image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=300&q=80", slug: 'plants' },
   { name: "Big Bunches", image: "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?w=300&q=80", slug: 'big-bunches' },
 ];
@@ -54,8 +53,6 @@ const FALLBACK_SHOP_CATEGORIES = [
 const FALLBACK_CELEBRATE_LOVE = [
   { name: "Wedding", image: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=300&q=80", slug: 'wedding' },
   { name: "Anniversary", image: "/categories-new/anniversary.png", slug: 'anniversary' },
-  { name: "Thinking Of You", image: "/categories-new/thinking.png", slug: 'thinking-of-you' },
-  { name: "I Am Sorry", image: "/categories-new/sorry.png", slug: 'sorry' },
   { name: "Romantic Flowers", image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=300&q=80", slug: 'flowers' },
   { name: "For Girlfriend", image: "https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=300&q=80", slug: 'girlfriend' },
   { name: "For Boyfriend", image: "https://images.unsplash.com/photo-1513201099705-a9746e1e201f?w=300&q=80", slug: 'boyfriend' },
@@ -63,14 +60,13 @@ const FALLBACK_CELEBRATE_LOVE = [
 ];
 
 const FALLBACK_CHERISHED = [
-  { name: "Baby Shower", image: "/banners/icon_baby_shower.png", slug: 'baby-shower' },
-  { name: "Retirement", image: "/banners/icon_retirement.png", slug: 'retirement' },
-  { name: "New Born", image: "/categories-new/newborn.png", slug: 'new-born' },
-  { name: "Wellness & Care", image: "/categories-new/wellness.png", slug: 'wellness' },
-  { name: "Thank You", image: "/categories-new/thankyou.png", slug: 'thank-you' },
-  { name: "Best Wishes", image: "/categories-new/bestwishes.png", slug: 'best-wishes' },
-  { name: "Balloons", image: "/categories-new/balloons.png", slug: 'decorations' },
-  { name: "Housewarming", image: "/categories-new/housewarming.png", slug: 'housewarming' },
+  { name: "Teddy Bouquet", image: "/icons-new/teddy_new.png", slug: 'teddy-bouquet' },
+  { name: "Chocolate Bouquet", image: "/icons-new/chocolate_new.png", slug: 'chocolate-bouquet' },
+  { name: "Death Anniversary", image: "/icons-new/memorial.png", slug: 'memorial' },
+  { name: "Fruit Basket", image: "/icons-new/fruit.png", slug: 'fruit-basket' },
+  { name: "Plants", image: "/icons-new/plants.png", slug: 'plants' },
+  { name: "Exotic Flowers", image: "/icons-new/exotic.png", slug: 'exotic' },
+  { name: "Jaimala", image: "/icons-new/jaimala.png", slug: 'jaimala' },
 ];
 
 const FALLBACK_FLOWERS = [
@@ -150,7 +146,7 @@ const Home: React.FC = () => {
   // Show EVERYTHING in Shop by Category as requested
   const shopCategories = categories.length > 0 ? categories : FALLBACK_SHOP_CATEGORIES;
 
-  const backendLoveCats = categories.filter(c => c.section === 'celebrate-love');
+  const backendLoveCats = categories.filter(c => c.section === 'celebrate-love' && !['thinking-of-you', 'sorry'].includes(c.slug));
   const celebrateLoveCategories = backendLoveCats.length > 0 ? backendLoveCats : FALLBACK_CELEBRATE_LOVE;
 
   const backendCherishedCats = categories.filter(c => c.section === 'cherished-celebrations');
@@ -224,12 +220,12 @@ const Home: React.FC = () => {
       {/* ---------------- BROWSE BY CATEGORY ---------------- */}
       <section className="mb-20 md:mb-28 max-w-[120rem] mx-auto px-4 md:px-8 relative overflow-hidden">
         {/* Decorative background element */}
-        <div className="absolute -right-20 -top-20 text-[20rem] font-serif italic text-pink-50/40 select-none pointer-events-none -z-10">
+        <div className="absolute -right-20 -top-20 text-[20rem] font-sans font-black text-pink-50/40 select-none pointer-events-none -z-10">
           M
         </div>
         
         <div className="flex items-center justify-between mb-12 px-2 border-b border-gray-100 pb-6 relative">
-          <h2 className="font-serif italic font-medium text-3xl md:text-4xl text-gray-900 tracking-tight">Shop by Category</h2>
+          <h2 className="font-sans font-bold text-3xl md:text-4xl text-gray-900 tracking-tight text-center sm:text-left">Shop by Category</h2>
           <div className="absolute bottom-0 left-0 w-24 h-[1px] bg-pink-300" />
         </div>
 
@@ -270,7 +266,7 @@ const Home: React.FC = () => {
       {/* ---------------- PICK THEIR FAVOURITE FLOWERS ---------------- */}
       <section className="mb-20 max-w-[120rem] mx-auto px-4 md:px-8">
         <div className="flex items-end justify-between mb-8 px-2 border-b border-gray-100 pb-4">
-          <h2 className="font-serif italic font-semibold text-3xl md:text-4xl text-gray-900 tracking-tight">Pick Their Favourite Flowers</h2>
+          <h2 className="font-sans font-bold text-3xl md:text-4xl text-gray-900 tracking-tight">Pick Their Favourite Flowers</h2>
           <span className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-black transition-colors block pb-1 md:hidden" onClick={() => navigate('/explore')}>Discover More →</span>
         </div>
 
@@ -303,7 +299,7 @@ const Home: React.FC = () => {
       {/* ---------------- BEST SELLER OF TODAY ---------------- */}
       <section className="mb-20 max-w-[120rem] mx-auto px-2 md:px-8">
         <div className="flex items-end justify-between mb-8 px-2 border-b border-gray-100 pb-4">
-          <h2 className="font-serif italic font-semibold text-3xl md:text-4xl text-gray-900 tracking-tight">Best Seller</h2>
+          <h2 className="font-sans font-bold text-3xl md:text-4xl text-gray-900 tracking-tight">Best Seller</h2>
           <span className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-black transition-colors block pb-1 md:hidden" onClick={() => navigate('/explore')}>Discover More →</span>
         </div>
 
@@ -332,7 +328,7 @@ const Home: React.FC = () => {
           </div>
 
           {/* RIGHT GRID MAP */}
-          <div className="flex-1 grid grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-8 lg:gap-y-12 items-center content-center py-6 lg:py-4 w-full">
+          <div className="flex-1 grid grid-cols-3 gap-x-2 sm:gap-x-10 gap-y-10 lg:gap-y-14 items-center content-center py-6 lg:py-4 w-full">
             {celebrateLoveCategories.map((item, idx) => {
               const heartMask = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E\")";
 
@@ -387,7 +383,7 @@ const Home: React.FC = () => {
 
       {/* ---------------- CHERISHED CELEBRATIONS SECTION ---------------- */}
       <section className="py-12 md:py-20 max-w-[120rem] mx-auto px-4 md:px-8">
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-center bg-white rounded-[2.5rem] p-4 lg:p-8 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-yellow-50">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-center bg-white rounded-[2.5rem] p-4 lg:p-8 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-[#C5A059]/30">
           
           {/* LEFT PROMO BANNER */}
           <div className="w-full lg:w-[42%] flex-shrink-0 rounded-[2rem] overflow-hidden group cursor-pointer" onClick={() => navigate('/explore')}>
@@ -399,7 +395,7 @@ const Home: React.FC = () => {
           </div>
 
           {/* RIGHT GRID MAP */}
-          <div className="flex-1 grid grid-cols-4 gap-x-2 sm:gap-x-4 gap-y-8 lg:gap-y-12 items-center content-center py-6 lg:py-4 w-full">
+          <div className="flex-1 grid grid-cols-4 gap-x-3 sm:gap-x-10 gap-y-12 lg:gap-y-16 items-start content-center py-6 lg:py-4 w-full">
             {cherishedCelebrationsCategories.map((item, idx) => (
               <motion.div
                 key={item.name}
@@ -411,11 +407,11 @@ const Home: React.FC = () => {
                 className="flex flex-col items-center cursor-pointer group"
               >
                   {/* Square soft shape container */}
-                <div className="w-full max-w-[80px] xs:max-w-[100px] sm:max-w-[140px] lg:max-w-[160px] aspect-square mb-3 sm:mb-4 relative transition-all duration-500 group-hover:-translate-y-2 group-hover:drop-shadow-[0_15px_15px_rgba(241,200,101,0.3)]">
+                <div className="w-full max-w-[80px] xs:max-w-[100px] sm:max-w-[140px] lg:max-w-[160px] aspect-square mb-3 sm:mb-4 relative transition-all duration-500 group-hover:-translate-y-2 group-hover:drop-shadow-[0_15px_15px_rgba(0,0,0,0.05)]">
                   
-                  {/* The Background Yellow Rounded Box & Masked Image */}
+                  {/* The Background Neutral Rounded Box & Masked Image */}
                   <div 
-                    className="absolute inset-0 bg-[#FCE8A1] rounded-[1.5rem] md:rounded-[2rem] shadow-sm transform group-hover:bg-[#F3D573] transition-colors duration-500 overflow-hidden flex justify-center items-center"
+                    className="absolute inset-0 bg-white rounded-xl border-[1.5px] border-[#C5A059] shadow-sm transform group-hover:bg-[#FAF9F6] group-hover:shadow-[0_10px_20px_rgba(197,160,89,0.15)] transition-all duration-500 overflow-hidden flex justify-center items-center"
                   >
                     <img 
                       src={item.image} 
@@ -425,7 +421,7 @@ const Home: React.FC = () => {
                   </div>
                 </div>
 
-                <h3 className="font-sans font-bold text-[10px] sm:text-xs md:text-sm text-gray-800 text-center tracking-wide leading-tight group-hover:text-[#B27012] transition-colors mt-2 sm:mt-4">
+                <h3 className="font-sans font-bold text-[10px] sm:text-xs md:text-sm text-gray-800 text-center tracking-wide leading-tight group-hover:text-black transition-colors mt-4 min-h-[2.5em] flex items-start justify-center">
                   {item.name}
                 </h3>
               </motion.div>
@@ -435,49 +431,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* ---------------- ABOUT & USPS ---------------- */}
-      <section className="mb-20 max-w-[120rem] mx-auto px-4 md:px-8 mt-12 md:mt-24">
-        <div className="bg-[#FAF9F6] border-t border-gray-200/50 pt-16 md:pt-24 pb-8 text-center max-w-4xl mx-auto">
-          <h2 className="font-serif italic text-3xl md:text-5xl lg:text-[3.5rem] tracking-tight text-[#EE1C47] mb-6 drop-shadow-sm">
-            The Mangalam Florist Promise
-          </h2>
-          <p className="font-sans text-gray-500 text-sm md:text-base leading-relaxed mb-16 px-4">
-            At Mangalam Florist, we believe in crafting more than just arrangements; we create unforgettable memories. For decades, our boutique has sourced the finest, freshest, and most luxurious blooms globally to ensure unparalleled elegance in every handcrafted bouquet.
-          </p>
-
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 px-1 lg:px-4">
-            {/* USP 1 */}
-            <div className="flex flex-col items-center text-center group cursor-pointer">
-              <div className="w-10 h-10 md:w-16 md:h-16 rounded-full bg-white border border-gray-100 shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex items-center justify-center mb-3 md:mb-6 overflow-hidden relative group-hover:shadow-[0_10px_25px_rgba(238,28,71,0.1)] transition-all duration-500 group-hover:-translate-y-1">
-                 <div className="absolute inset-0 bg-[#EE1C47] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out" />
-                 <Sparkles className="text-gray-900 relative z-10 group-hover:text-white transition-colors duration-500 scale-[0.8] md:scale-100" size={24} strokeWidth={1.5} />
-              </div>
-              <h3 className="font-sans font-bold text-[11px] xs:text-xs md:text-base text-gray-900 mb-1 md:mb-2 leading-tight">Artisan Handcrafted</h3>
-              <p className="hidden md:block text-gray-500 text-xs md:text-[13px] leading-relaxed max-w-[200px]">Exquisitely styled and tied by our master florists perfectly for you.</p>
-            </div>
-
-            {/* USP 2 */}
-            <div className="flex flex-col items-center text-center group cursor-pointer">
-              <div className="w-10 h-10 md:w-16 md:h-16 rounded-full bg-white border border-gray-100 shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex items-center justify-center mb-3 md:mb-6 overflow-hidden relative group-hover:shadow-[0_10px_25px_rgba(238,28,71,0.1)] transition-all duration-500 group-hover:-translate-y-1">
-                 <div className="absolute inset-0 bg-[#EE1C47] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out" />
-                 <Clock className="text-gray-900 relative z-10 group-hover:text-white transition-colors duration-500 scale-[0.8] md:scale-100" size={24} strokeWidth={1.5} />
-              </div>
-              <h3 className="font-sans font-bold text-[11px] xs:text-xs md:text-base text-gray-900 mb-1 md:mb-2 leading-tight">Express Delivery</h3>
-              <p className="hidden md:block text-gray-500 text-xs md:text-[13px] leading-relaxed max-w-[200px]">Pristine freshness delivered straight to their door with care and speed.</p>
-            </div>
-
-            {/* USP 3 */}
-            <div className="flex flex-col items-center text-center group cursor-pointer">
-              <div className="w-10 h-10 md:w-16 md:h-16 rounded-full bg-white border border-gray-100 shadow-[0_4px_15px_rgba(0,0,0,0.03)] flex items-center justify-center mb-3 md:mb-6 overflow-hidden relative group-hover:shadow-[0_10px_25px_rgba(238,28,71,0.1)] transition-all duration-500 group-hover:-translate-y-1">
-                 <div className="absolute inset-0 bg-[#EE1C47] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out" />
-                 <ShieldCheck className="text-gray-900 relative z-10 group-hover:text-white transition-colors duration-500 scale-[0.8] md:scale-100" size={24} strokeWidth={1.5} />
-              </div>
-              <h3 className="font-sans font-bold text-[11px] xs:text-xs md:text-base text-gray-900 mb-1 md:mb-2 leading-tight">Guaranteed Premiere</h3>
-              <p className="hidden md:block text-gray-500 text-xs md:text-[13px] leading-relaxed max-w-[200px]">Sourced directly from the top farms globally for ultimate luxury.</p>
-            </div>
-          </div>
-        </div>
-      </section>
 
     </div>
   );

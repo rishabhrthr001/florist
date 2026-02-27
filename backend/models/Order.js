@@ -61,6 +61,11 @@ const orderSchema = new mongoose.Schema(
       name: String,
       phone: String,
       address: String,
+      includeGiftCard: {
+        type: Boolean,
+        default: false,
+      },
+      giftMessage: String,
     },
 
     /* ---------------- ITEMS ---------------- */
@@ -94,6 +99,10 @@ const orderSchema = new mongoose.Schema(
         },
 
         image: String,
+        hasPremiumWrapping: {
+          type: Boolean,
+          default: false,
+        },
 
         /* -------- CUSTOM BOUQUET SNAPSHOT -------- */
 

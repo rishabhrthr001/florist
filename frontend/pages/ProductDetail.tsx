@@ -49,6 +49,7 @@ interface Product {
   description: string;
   images: string[];
   price: number;
+  premiumWrapping?: boolean;
 }
 
 /* ---------------- COMPONENT ---------------- */
@@ -73,6 +74,8 @@ const ProductDetail: React.FC = () => {
   const [newComment, setNewComment] = useState("");
   const [rating, setRating] = useState(5);
   const [replyBox, setReplyBox] = useState<Record<string, string>>({});
+
+  const [hasPremiumWrapping, setHasPremiumWrapping] = useState(false);
 
   const inWishlist = product ? isInWishlist(product._id) : false;
 
@@ -185,9 +188,10 @@ const ProductDetail: React.FC = () => {
     addToCart({
       _id: product._id,
       name: product.name,
-      price: product.price,
+      price: product.price + (product.premiumWrapping ? 0 : (hasPremiumWrapping ? 300 : 0)),
       image: product.images[0],
       quantity: qty,
+      hasPremiumWrapping: product.premiumWrapping || hasPremiumWrapping,
     });
 
     toast.success(`Handcrafted ${product.name} added to cart 🛒`);
@@ -308,18 +312,35 @@ const ProductDetail: React.FC = () => {
                 <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-bold">Inclusive of all taxes</p>
               </div>
 
-              {/* PREMIUM DELIVERY BLOCKS */}
-              <div className="grid grid-cols-2 gap-3 mb-2">
+              {/* PREMIUM WRAPPING BLOCKS */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
                 <div className="bg-white border text-center p-3 sm:p-5 rounded-2xl flex flex-col items-center justify-center gap-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-transform hover:-translate-y-0.5 border-pink-100/50">
                   <span className="text-2xl mb-1">🛵</span>
                   <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#EE1C47]">Express Delivery</span>
-                  <span className="text-[9px] sm:text-[10px] text-gray-500 tracking-wide font-medium">Delhi NCR Only</span>
+                  <span className="text-[9px] sm:text-[10px] text-gray-400 tracking-wide font-medium">Delhi NCR Only</span>
                 </div>
-                <div className="bg-white border border-gray-100 text-center p-3 sm:p-5 rounded-2xl flex flex-col items-center justify-center gap-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-transform hover:-translate-y-0.5">
-                  <span className="text-2xl mb-1">🎀</span>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-800">Premium Wrap</span>
-                  <span className="text-[9px] sm:text-[10px] text-gray-500">Complimentary</span>
-                </div>
+                
+                {product.premiumWrapping ? (
+                  <div className="bg-white border-2 border-pink-500 text-center p-3 sm:p-5 rounded-2xl flex flex-col items-center justify-center gap-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden transition-transform animate-pulse-subtle">
+                    <div className="absolute top-0 right-0 bg-pink-500 text-white text-[8px] font-bold px-2 py-0.5 uppercase tracking-tighter">Complimentary</div>
+                    <span className="text-2xl mb-1">🎀</span>
+                    <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-pink-600">Premium Wrapping</span>
+                    <span className="text-[9px] sm:text-[10px] text-gray-500 font-bold uppercase tracking-widest">Included</span>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setHasPremiumWrapping(!hasPremiumWrapping)}
+                    className={`text-center p-3 sm:p-5 rounded-2xl flex flex-col items-center justify-center gap-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all border-2 ${hasPremiumWrapping ? 'border-pink-500 bg-pink-50/10 scale-[1.02]' : 'border-gray-100 bg-white hover:border-pink-200'}`}
+                  >
+                    <span className="text-2xl mb-1">🎀</span>
+                    <div className="flex flex-col items-center">
+                      <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-widest ${hasPremiumWrapping ? 'text-pink-600' : 'text-gray-800'}`}>Premium Wrapping</span>
+                      <span className={`text-[9px] sm:text-[10px] font-bold ${hasPremiumWrapping ? 'text-pink-500' : 'text-gray-400'}`}>
+                        {hasPremiumWrapping ? 'ADDED ✓' : 'Add + ₹300'}
+                      </span>
+                    </div>
+                  </button>
+                )}
               </div>
 
               {/* ACTIONS - Hidden on mobile, sticky bar used instead */}
@@ -533,7 +554,7 @@ const ProductDetail: React.FC = () => {
             </button>
          </div>
          <button onClick={handleAddToCart} className="flex-1 bg-black text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg h-14 flex items-center justify-center gap-2">
-            Add • ₹{(product.price * qty).toLocaleString()}
+            Add • ₹{((product.price + (product.premiumWrapping ? 0 : (hasPremiumWrapping ? 300 : 0))) * qty).toLocaleString()}
          </button>
       </div>
     </motion.div>

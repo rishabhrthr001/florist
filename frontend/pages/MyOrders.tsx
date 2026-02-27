@@ -50,6 +50,7 @@ interface OrderItem {
   image?: string;
 
   isCustom?: boolean;
+  hasPremiumWrapping?: boolean;
   custom?: CustomBouquet;
 }
 
@@ -69,13 +70,19 @@ interface Order {
     country: string;
   };
 
-  items: OrderItem[];
-
-  totalAmount: number;
-
-  orderStatus: "placed" | "confirmed" | "preparing" | "delivered" | "cancelled";
+  gift?: {
+    name: string;
+    phone: string;
+    address: string;
+    from?: string | null;
+    includeGiftCard?: boolean;
+    giftMessage?: string;
+  };
 
   createdAt: string;
+  items: OrderItem[];
+  totalAmount: number;
+  orderStatus: "placed" | "confirmed" | "preparing" | "delivered" | "cancelled";
 }
 
 /* ---------------- COMPONENT ---------------- */
@@ -204,6 +211,12 @@ const MyOrders: React.FC = () => {
                   >
                     {order.orderStatus}
                   </span>
+
+                  {order.items?.some(i => i.hasPremiumWrapping) && (
+                    <span className="bg-pink-50 text-pink-500 text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border border-pink-100 flex items-center gap-1 shrink-0 w-fit">
+                       🎀 Wrap
+                    </span>
+                  )}
                 </div>
 
                 <ChevronDown
@@ -265,6 +278,27 @@ const MyOrders: React.FC = () => {
                         </p>
                       </div>
 
+                      {/* Gift Info */}
+                      {order.gift && (
+                         <div className="bg-purple-50/50 p-4 rounded-2xl border border-purple-100/50">
+                            <p className="text-[9px] uppercase tracking-widest text-purple-400 mb-2 font-bold flex items-center gap-1.5">
+                              <span className="w-1 h-1 rounded-full bg-purple-400"></span> Gift Shipment
+                            </p>
+                            <p className="text-xs font-bold text-gray-800">For {order.gift.name}</p>
+                            
+                            {order.gift.includeGiftCard && (
+                               <div className="mt-3 bg-white/80 p-3 rounded-xl border border-purple-100">
+                                  <p className="text-[10px] text-purple-600 uppercase font-black mb-1 flex items-center gap-1">
+                                    📩 Handwritten Note
+                                  </p>
+                                  <p className="text-xs text-gray-600 italic font-medium">
+                                    “{order.gift.giftMessage}”
+                                  </p>
+                               </div>
+                            )}
+                         </div>
+                      )}
+
                       {/* Items */}
                       <div>
                         <p className="text-[9px] uppercase tracking-widest text-gray-400 mb-3">
@@ -297,9 +331,15 @@ const MyOrders: React.FC = () => {
                                       ₹{(i.price * i.quantity).toLocaleString()}
                                     </p>
                                  </div>
-                                 <p className="text-gray-400 text-[9px] md:text-[10px] font-bold tracking-widest uppercase mb-3">
+                                 <p className="text-gray-400 text-[9px] md:text-[10px] font-bold tracking-widest uppercase mb-3 text-left">
                                     ₹{i.price.toLocaleString()} Each <span className="text-gray-300 mx-1">|</span> Qty: {i.quantity}
                                  </p>
+
+                                 {i.hasPremiumWrapping && (
+                                   <div className="mt-[-8px] mb-3 flex items-center gap-1.5 text-pink-500 bg-pink-50 w-fit px-2 py-0.5 rounded-full border border-pink-100">
+                                      <span className="text-[8px] font-bold uppercase tracking-widest">Premium Wrapped 🎀</span>
+                                   </div>
+                                 )}
 
                               {/* CUSTOM */}
                               {i.isCustom && i.custom && (

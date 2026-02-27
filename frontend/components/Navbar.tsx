@@ -65,8 +65,8 @@ const Navbar: React.FC = () => {
         transition={{ duration: 0.6 }}
         className={`glass-nav rounded-full px-6 py-4 md:px-8 flex items-center justify-between transition-all duration-500 border border-white/40 ${
           isScrolled
-            ? "shadow-[0_4px_30px_rgba(0,0,0,0.06)] py-3 md:py-3.5 bg-white/85 backdrop-blur-2xl"
-            : "shadow-[0_2px_20px_rgba(0,0,0,0.02)] bg-white/40 backdrop-blur-lg"
+            ? "glass-nav-scrolled py-3 md:py-3.5"
+            : ""
         }`}
       >
         {/* ================= MOBILE LEFT ================= */}

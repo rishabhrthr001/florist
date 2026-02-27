@@ -213,7 +213,7 @@ router.post(
   uploadThree,
   async (req, res) => {
     try {
-      const { name, price, description, categoryId } = req.body;
+      const { name, price, description, categoryId, premiumWrapping } = req.body;
       let tags = [];
       if (req.body.tags) {
         tags = Array.isArray(req.body.tags) ? req.body.tags : JSON.parse(req.body.tags);
@@ -248,6 +248,7 @@ router.post(
         categoryId,
         tags,
         images,
+        premiumWrapping: premiumWrapping === "true" || premiumWrapping === true,
       });
 
       const populated = await product.populate("categoryId");
@@ -267,7 +268,7 @@ router.post(
 ------------------------------------ */
 router.put("/:id", requireAuth, requireAdmin, uploadThree, async (req, res) => {
   try {
-    const { name, price, description, categoryId } = req.body;
+    const { name, price, description, categoryId, premiumWrapping } = req.body;
     let tags = undefined;
     if (req.body.tags !== undefined) {
       try {
@@ -312,6 +313,10 @@ router.put("/:id", requireAuth, requireAdmin, uploadThree, async (req, res) => {
 
     if (req.files?.length) {
       update.images = req.files.map((f) => f.path);
+    }
+
+    if (premiumWrapping !== undefined) {
+      update.premiumWrapping = premiumWrapping === "true" || premiumWrapping === true;
     }
 
     const product = await Product.findByIdAndUpdate(req.params.id, update, {

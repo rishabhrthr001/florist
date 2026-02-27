@@ -48,6 +48,11 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    premiumWrapping: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

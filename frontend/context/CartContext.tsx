@@ -34,6 +34,7 @@ interface CartItem {
   image: string;
   quantity: number;
   custom?: CustomBouquet;
+  hasPremiumWrapping?: boolean;
 }
 
 interface CartContextType {

@@ -18,6 +18,7 @@ interface Product {
   categoryId: any;
   images: string[];
   tags?: string[];
+  premiumWrapping?: boolean;
 }
 
 interface ModalProps {
@@ -52,6 +53,7 @@ const ProductModal = ({
     price: "",
     description: "",
     tags: "",
+    premiumWrapping: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -100,6 +102,7 @@ const ProductModal = ({
         price: String(product.price),
         description: product.description || "",
         tags: product.tags?.join(", ") || "",
+        premiumWrapping: product.premiumWrapping || false,
       });
 
       setSelectedCategory(
@@ -118,6 +121,7 @@ const ProductModal = ({
         price: "",
         description: "",
         tags: "",
+        premiumWrapping: false,
       });
 
       setPreviews([]);
@@ -190,6 +194,7 @@ const ProductModal = ({
 
       const parsedTags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
       payload.append("tags", JSON.stringify(parsedTags));
+      payload.append("premiumWrapping", String(form.premiumWrapping));
 
       files.forEach((img) => payload.append("images", img));
 
@@ -371,6 +376,23 @@ const ProductModal = ({
                   </option>
                 ))}
               </select>
+
+              {/* PREMIUM WRAPPING TOGGLE */}
+              <div className="flex items-center justify-between p-4 border rounded-xl bg-gray-50/50">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Premium Wrapping</p>
+                  <p className="text-[10px] text-gray-500 uppercase font-medium mt-0.5">Complementary Gift Packaging</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, premiumWrapping: !form.premiumWrapping })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.premiumWrapping ? 'bg-[#EE1C47]' : 'bg-gray-200'}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.premiumWrapping ? 'translate-x-6' : 'translate-x-1'}`}
+                  />
+                </button>
+              </div>
 
               {/* IMAGE UPLOADER */}
               <div>
