@@ -4,6 +4,7 @@ import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
+import { HelmetProvider } from "react-helmet-async";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -13,12 +14,14 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <WishlistProvider>
-      <CartProvider>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </CartProvider>
-    </WishlistProvider>
+    <HelmetProvider>
+      <WishlistProvider>
+        <CartProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </CartProvider>
+      </WishlistProvider>
+    </HelmetProvider>
   </React.StrictMode>,
 );

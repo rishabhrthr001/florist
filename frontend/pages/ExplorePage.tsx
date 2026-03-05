@@ -5,6 +5,7 @@ import axios from "axios";
 import { Search, X, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import API from "../config";
+import { Helmet } from "react-helmet-async";
 
 import ProductCard from "../components/ProductCard";
 import ProductSkeleton from "../components/ProductSkeleton";
@@ -146,6 +147,11 @@ const ExplorePage: React.FC = () => {
       exit={{ opacity: 0 }}
       className="max-w-[120rem] mx-auto px-4 sm:px-6 lg:px-12 py-8 pt-32 min-h-screen"
     >
+      <Helmet>
+        <title>{selectedSlug !== 'all' && categories.find(c => c.slug === selectedSlug)?.name ? `${categories.find(c => c.slug === selectedSlug)?.name} | Mangalam Florist` : "Explore Gifts & Flowers | Mangalam Florist"}</title>
+        <meta name="description" content="Explore our luxurious collection of flowers, bouquets, and premium gifts for all occasions. Custom and premium wrapping available." />
+        <link rel="canonical" href="https://mangalamflorist.com/explore" />
+      </Helmet>
       <div className="flex gap-10">
         {/* ---------------- SIDEBAR ---------------- */}
         <aside className="w-64 shrink-0 hidden lg:block">

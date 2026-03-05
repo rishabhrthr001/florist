@@ -20,6 +20,7 @@ import API from "../config";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useAuth } from "../context/AuthContext";
+import { Helmet } from "react-helmet-async";
 
 /* ---------------- TYPES ---------------- */
 
@@ -231,6 +232,14 @@ const ProductDetail: React.FC = () => {
 
   return (
     <motion.div className="bg-[#FAF9F6] min-h-screen">
+      <Helmet>
+        <title>{product.name} | Mangalam Florist</title>
+        <meta name="description" content={product.description.substring(0, 150) + "..."} />
+        <meta property="og:title" content={`${product.name} | Mangalam Florist`} />
+        <meta property="og:description" content={product.description.substring(0, 150) + "..."} />
+        <meta property="og:image" content={product.images[0]} />
+        <link rel="canonical" href={`https://mangalamflorist.com/product/${product.slug}`} />
+      </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 pt-28">
         
         {/* BREADCRUMBS */}

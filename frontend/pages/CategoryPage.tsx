@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { PRODUCTS, CATEGORIES } from "../constants";
 import ProductCard from "../components/ProductCard";
+import { Helmet } from "react-helmet-async";
 
 const CategoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,11 @@ const CategoryPage: React.FC = () => {
       exit={{ opacity: 0 }}
       className="max-w-7xl mx-auto px-6 py-12 pt-32"
     >
+      <Helmet>
+        <title>{category.name} | Mangalam Florist</title>
+        <meta name="description" content={`Shop premium ${category.name} at Mangalam Florist. Perfect for every occasion.`} />
+        <link rel="canonical" href={`https://mangalamflorist.com/category/${category.id}`} />
+      </Helmet>
       <header className="mb-16 border-b border-gray-100 pb-12">
         <motion.div
           initial={{ y: 20, opacity: 0 }}

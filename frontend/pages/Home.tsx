@@ -11,6 +11,7 @@ import ProductSkeleton from "../components/ProductSkeleton";
 
 
 import API from "../config";
+import { Helmet } from "react-helmet-async";
 
 /* ---------------- TYPES ---------------- */
 
@@ -161,6 +162,10 @@ const Home: React.FC = () => {
 
   return (
     <div className="bg-[#FAF9F6] min-h-screen pt-32 pb-10">
+      <Helmet>
+        <title>Mangalam Florist | Luxury Flower Delivery</title>
+        <meta name="description" content="Send fresh, luxury flowers and premium floral gifts with Mangalam Florist." />
+      </Helmet>
       
       <section className="mb-20 max-w-[120rem] mx-auto px-4 md:px-8">
         <div className="flex gap-4 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -252,6 +257,7 @@ const Home: React.FC = () => {
                         src={cat.image}
                         className="w-full h-full rounded-full object-cover group-hover:scale-[1.12] transition-transform duration-[1500ms] cubic-bezier(0.25, 0.46, 0.45, 0.94)"
                         alt={cat.name}
+                        loading="lazy" // Added loading="lazy"
                       />
                     </div>
                   </div>
