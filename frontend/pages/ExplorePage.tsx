@@ -37,7 +37,7 @@ const ExplorePage: React.FC = () => {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -63,6 +63,11 @@ const ExplorePage: React.FC = () => {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    const s = searchParams.get("search");
+    if (s !== null) setSearch(s);
+  }, [searchParams]);
+
   /* ---------------- FETCH PRODUCTS ---------------- */
 
   useEffect(() => {
@@ -77,11 +82,13 @@ const ExplorePage: React.FC = () => {
           return;
         }
 
-        // 👉 slug -> id
+        // 👉 Backend slug -> id
         const category = categories.find((c) => c.slug === selectedSlug);
 
         if (!category) {
-          setProducts([]);
+          // Fallback check if it's a direct tag search
+          const { data } = await axios.get(`${API}/product?tag=${selectedSlug}`);
+          setProducts(data);
           return;
         }
 
@@ -217,7 +224,7 @@ const ExplorePage: React.FC = () => {
                 {selectedSlug === "all"
                   ? "All Products"
                   : categories.find((c) => c.slug === selectedSlug)?.name ||
-                    "Collection"}
+                    (selectedSlug.charAt(0).toUpperCase() + selectedSlug.slice(1))}
               </span>
 
               <ChevronDown
@@ -300,7 +307,7 @@ const ExplorePage: React.FC = () => {
                 {selectedSlug === "all"
                   ? "All Collections"
                   : categories.find((c) => c.slug === selectedSlug)?.name ||
-                    "Collection"}
+                    (selectedSlug.charAt(0).toUpperCase() + selectedSlug.slice(1))}
               </h1>
 
               <p className="text-gray-400 text-xs md:text-sm font-bold uppercase tracking-widest">
@@ -355,7 +362,7 @@ const ExplorePage: React.FC = () => {
           {/* ---------------- PRODUCTS GRID ---------------- */}
 
           {loadingProducts && (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6 mb-8">
               {Array.from({ length: 8 }).map((_, i) => (
                 <ProductSkeleton key={i} />
               ))}
@@ -365,7 +372,7 @@ const ExplorePage: React.FC = () => {
           <motion.div
             layout
             transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
+            className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"
           >
             <AnimatePresence mode="sync">
               {!loadingProducts &&

@@ -28,3 +28,8 @@ const productUpload = multer({ storage: productStorage });
 
 export const uploadSingle = categoryUpload.single("image");
 export const uploadThree = productUpload.array("images", 3);
+export const uploadFields = productUpload.fields([
+  { name: "image0", maxCount: 1 },
+  { name: "image1", maxCount: 1 },
+  { name: "image2", maxCount: 1 },
+]);

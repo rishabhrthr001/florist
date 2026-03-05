@@ -44,6 +44,7 @@ const sidebarLinks: SidebarLink[] = [
 
   { name: "Support Tickets", path: "/admin/tickets", icon: Ticket },
   { name: "Customers", path: "/admin/customers", icon: Users },
+  { name: "Tags Management", path: "/admin/tags", icon: Sparkles },
 ];
 
 export default function AdminSidebar({ isOpen, setIsOpen }: AdminSidebarProps) {

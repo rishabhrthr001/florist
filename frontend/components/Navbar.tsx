@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, ChevronDown, User, Heart } from "lucide-react";
+import { ShoppingBag, ChevronDown, User, Heart, Search, X } from "lucide-react";
 import axios from "axios";
 
 import { useAuth } from "@/context/AuthContext";
@@ -14,6 +14,8 @@ const Navbar: React.FC = () => {
 
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [isUserOpen, setIsUserOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [categories, setCategories] = useState<any[]>([]);
 
@@ -128,7 +130,7 @@ const Navbar: React.FC = () => {
         <div
           onClick={scrollToTop}
           // onClick={() => handleNav("/")}
-          className="cursor-pointer hidden md:block"
+          className="cursor-pointer hidden lg:block"
         >
           <img
             src="/newLogo.png"
@@ -201,7 +203,51 @@ const Navbar: React.FC = () => {
 
         {/* ================= RIGHT SIDE ================= */}
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4 md:gap-6 ml-4">
+          {/* SEARCH BAR — EXPANDABLE */}
+          <div className="relative flex items-center group">
+            <AnimatePresence>
+              {isSearchOpen && (
+                <motion.div
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: window.innerWidth < 1024 ? 150 : 220, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  className="mr-2"
+                >
+                  <input
+                    autoFocus
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchQuery) {
+                        navigate(`/explore?search=${encodeURIComponent(searchQuery)}`);
+                        setIsSearchOpen(false);
+                        setSearchQuery("");
+                      }
+                    }}
+                    placeholder="Search..."
+                    className="w-full h-10 px-4 rounded-full bg-white/60 border border-white/20 text-xs focus:outline-none focus:border-[#C5A059] shadow-inner font-bold placeholder:text-gray-400"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <button
+              onClick={() => {
+                if (isSearchOpen && searchQuery) {
+                  navigate(`/explore?search=${encodeURIComponent(searchQuery)}`);
+                  setIsSearchOpen(false);
+                  setSearchQuery("");
+                } else {
+                  setIsSearchOpen(!isSearchOpen);
+                }
+              }}
+              className="text-gray-800 hover:text-[#EE1C47] transition-colors p-1"
+            >
+              {isSearchOpen && !searchQuery ? <X size={20} strokeWidth={1.5} /> : <Search size={20} strokeWidth={1.5} />}
+            </button>
+          </div>
           {/* LOGIN WHEN NOT AUTH */}
           {!loading && !user && (
             <button

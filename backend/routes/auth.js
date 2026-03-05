@@ -119,7 +119,7 @@ router.post("/login", async (req, res) => {
 router.post("/google", async (req, res) => {
   console.log("➡️ Google Auth Route Hit");
   try {
-    const { token } = req.body;
+    const { token, displayName, photoURL } = req.body;
     console.log("Token received:", !!token);
 
     if (!token) {
@@ -127,40 +127,33 @@ router.post("/google", async (req, res) => {
     }
 
     // Verify Token using Google's Public Endpoint
-    // This avoids needing a service account key on the backend
     const googleVerifyURL = `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`;
-    console.log("Verifying with:", googleVerifyURL.substring(0, 50) + "...");
-
+    
     let payload;
     try {
       const verifyRes = await fetch(googleVerifyURL);
       payload = await verifyRes.json();
-      console.log("Verification payload:", payload ? "Got payload" : "No payload");
     } catch (fetchErr) {
-      console.error("Fetch error (Node version issue?):", fetchErr);
+      console.error("Fetch error:", fetchErr);
       return res.status(500).json({ msg: "Server fetch error" });
     }
 
     if (payload.error) {
       console.error("Token verification error:", payload.error);
-      return res.status(401).json({ msg: "Invalid Google token: " + payload.error_description });
+      return res.status(401).json({ msg: "Invalid Google token" });
     }
 
-    // Verify audience to ensure token is for YOUR app
-    console.log("Audience:", payload.aud);
-    /* 
-    if (payload.aud !== "mangalam-71d5c") {
-      console.error("Audience mismatch:", payload.aud);
-      return res.status(401).json({ msg: "Invalid Google token audience" });
-    } 
-    */
+    const uid = payload.sub;
+    const email = payload.email;
+    const picture = payload.picture || photoURL;
+    
+    // Most robust name extraction
+    const name = payload.name || 
+                 (payload.given_name ? `${payload.given_name} ${payload.family_name || ""}`.trim() : null) || 
+                 displayName || 
+                 "User";
 
-    const { sub: uid, email, name, picture } = payload;
-    console.log("User info:", { email, uid, name });
-
-    if (!email) {
-      return res.status(400).json({ msg: "Invalid Google token payload" });
-    }
+    console.log("Resolved user info:", { email, name });
 
     // Find existing user by Google ID (using uid) or email
     let user = await User.findOne({
@@ -180,7 +173,8 @@ router.post("/google", async (req, res) => {
         changed = true;
       }
       // Update name if valid name provided and current is "User" or empty
-      if (name && (user.name === "User" || !user.name)) {
+      const isGeneric = !user.name || user.name === "User" || user.name.toLowerCase().includes("user");
+      if (name && name !== "User" && isGeneric) {
         user.name = name;
         changed = true;
       }

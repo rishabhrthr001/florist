@@ -4,7 +4,7 @@ import Category from "../models/Category.js";
 import CustomBouquet from "../models/CustomBouquet.js";
 import mongoose from "mongoose";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
-import { uploadThree } from "../middleware/upload.js";
+import { uploadFields } from "../middleware/upload.js";
 import cloudinary from "../config/cloudinary.js";
 
 const router = express.Router();
@@ -210,7 +210,7 @@ router.post(
   "/add",
   requireAuth,
   requireAdmin,
-  uploadThree,
+  uploadFields,
   async (req, res) => {
     try {
       const { name, price, description, categoryId, premiumWrapping } = req.body;
@@ -238,7 +238,10 @@ router.post(
         slug = `${baseSlug}-${count++}`;
       }
 
-      const images = req.files?.map((f) => f.path) || [];
+      const images = [];
+      if (req.files['image0']) images.push(req.files['image0'][0].path);
+      if (req.files['image1']) images.push(req.files['image1'][0].path);
+      if (req.files['image2']) images.push(req.files['image2'][0].path);
 
       const product = await Product.create({
         name,
@@ -266,73 +269,85 @@ router.post(
 /* ------------------------------------
         UPDATE PRODUCT
 ------------------------------------ */
-router.put("/:id", requireAuth, requireAdmin, uploadThree, async (req, res) => {
+router.put("/:id", requireAuth, requireAdmin, uploadFields, async (req, res) => {
   try {
+    const { id } = req.params;
     const { name, price, description, categoryId, premiumWrapping } = req.body;
-    let tags = undefined;
-    if (req.body.tags !== undefined) {
-      try {
-        tags = Array.isArray(req.body.tags) ? req.body.tags : JSON.parse(req.body.tags);
-      } catch(e) { /* silent fail on parse */ }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ msg: "Invalid product id" });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(req.params.id))
-      return res.status(400).json({
-        msg: "Invalid product id",
-      });
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ msg: "Product not found" });
+    }
 
-    const update = {};
-
-    if (name) {
-      update.name = name;
-
+    // Update name and handle slug if name changed
+    if (name && name !== product.name) {
+      product.name = name;
       const baseSlug = makeSlug(name);
-
       let slug = baseSlug;
       let count = 1;
 
-      while (
-        await Product.findOne({
-          slug,
-          _id: { $ne: req.params.id },
-        })
-      ) {
+      while (await Product.findOne({ slug, _id: { $ne: id } })) {
         slug = `${baseSlug}-${count++}`;
       }
-
-      update.slug = slug;
+      product.slug = slug;
     }
 
-    if (price) update.price = price;
-    if (description) update.description = description;
-    if (tags !== undefined) update.tags = tags;
+    // Update basic fields if they are in the body
+    if (price !== undefined) product.price = Number(price);
+    if (description !== undefined) product.description = description;
 
+    // Handle tags
+    if (req.body.tags !== undefined) {
+      try {
+        product.tags = Array.isArray(req.body.tags) 
+          ? req.body.tags 
+          : JSON.parse(req.body.tags);
+      } catch (e) {
+        console.error("TAG PARSE ERROR:", e);
+      }
+    }
+
+    // Handle Category
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
-      update.categoryId = categoryId;
+      product.categoryId = categoryId;
     }
 
-    if (req.files?.length) {
-      update.images = req.files.map((f) => f.path);
-    }
-
+    // Handle Premium Wrapping
     if (premiumWrapping !== undefined) {
-      update.premiumWrapping = premiumWrapping === "true" || premiumWrapping === true;
+      product.premiumWrapping = premiumWrapping === "true" || premiumWrapping === true;
     }
 
-    const product = await Product.findByIdAndUpdate(req.params.id, update, {
-      new: true,
-    }).populate("categoryId");
+    // Handle Images Positionally
+    let finalImages = [];
+    try {
+      // Frontend should send existingImages as a JSON array of 3 slots: [url, null, url]
+      finalImages = req.body.existingImages ? JSON.parse(req.body.existingImages) : [...product.images];
+    } catch (e) {
+      finalImages = [...product.images];
+    }
 
-    if (!product)
-      return res.status(404).json({
-        msg: "Product not found",
-      });
+    // Ensure we have 3 slots to work with
+    while (finalImages.length < 3) finalImages.push(null);
 
-    res.json(product);
+    if (req.files['image0']) finalImages[0] = req.files['image0'][0].path;
+    if (req.files['image1']) finalImages[1] = req.files['image1'][0].path;
+    if (req.files['image2']) finalImages[2] = req.files['image2'][0].path;
+
+    product.images = finalImages.filter(img => img && typeof img === 'string');
+
+    await product.save();
+    
+    const populated = await product.populate("categoryId");
+    res.json(populated);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      msg: "Update failed",
+    console.error("PRODUCT UPDATE ERROR:", err);
+    res.status(500).json({ 
+      msg: err.message || "Update failed",
+      error: err.name
     });
   }
 });

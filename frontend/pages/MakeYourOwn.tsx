@@ -32,27 +32,30 @@ const MakeYourOwn: React.FC = () => {
     axios
       .get(`${API}/custom-bouquet`)
       .then((res) => {
-        const mapped: ComponentItem[] = res.data.map((item: any) => {
-          // flower / chocolate → product
-          if (item.type === "flower" || item.type === "chocolate") {
+        const mapped: ComponentItem[] = res.data
+          .map((item: any) => {
+            // flower / chocolate → must have a valid product
+            if (item.type === "flower" || item.type === "chocolate") {
+              if (!item.product) return null; // Skip if product is null
+              return {
+                id: item.product._id,
+                name: item.product.name,
+                price: item.product.price,
+                image: (item.product.images && item.product.images[0]) || "/placeholder.jpg",
+                type: item.type,
+              };
+            }
+
+            // base / ribbon → embedded
             return {
-              id: item.product._id,
-              name: item.product.name,
-              price: item.product.price,
-              image: item.product.images?.[0] || "/placeholder.jpg",
+              id: item._id,
+              name: item.name,
+              price: item.price,
+              image: item.image || "/placeholder.jpg",
               type: item.type,
             };
-          }
-
-          // base / ribbon → embedded
-          return {
-            id: item._id,
-            name: item.name,
-            price: item.price,
-            image: item.image || "/placeholder.jpg",
-            type: item.type,
-          };
-        });
+          })
+          .filter(Boolean); // Remove null entries (deleted products)
 
         setItems(mapped);
       })

@@ -69,6 +69,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           transition={{ duration: 0.6, ease: "easeOut" }}
           src={product.images[0]}
           alt={product.name}
+          loading="lazy"
           className="w-full h-full object-cover"
         />
 

@@ -17,12 +17,22 @@ import contactRoutes from "./routes/contactRoutes.js";
 import ticketRoutes from "./routes/tickets.js";
 import wishlistRoutes from "./routes/wishlist.js";
 import customRoutes from "./routes/custom.js";
+import tagRoutes from "./routes/tagRoutes.js";
 
 import { initSocket, getIO } from "./socket/index.js";
+
+import compression from "compression";
+import helmet from "helmet";
 
 dotenv.config();
 
 const app = express();
+
+// Middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Avoid blocking Cloudinary/external assets if not configured properly
+}));
+app.use(compression());
 app.use(express.json());
 
 // CORS configuration for production
@@ -39,7 +49,7 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".run.app")) {
       callback(null, true);
     } else {
       console.log(`Blocked by CORS: ${origin}`);
@@ -84,6 +94,7 @@ app.use("/contact", contactRoutes);
 app.use("/tickets", ticketRoutes);
 app.use("/wishlist", wishlistRoutes);
 app.use("/custom-bouquet", customRoutes);
+app.use("/tag", tagRoutes);
 const server = http.createServer(app);
 
 initSocket(server);

@@ -5,7 +5,7 @@ import React from "react";
 import { toast } from "sonner";
 import API from "../../config";
 import { Product, Category } from "../../types";
-import ProductModal from "../components/ProductModal";
+import ProductModal from "./ProductModal";
 import ConfirmDialog from "../../components/ConfirmDialog";
 
 const ProductPanel = () => {
@@ -170,6 +170,7 @@ const ProductPanel = () => {
               <thead>
                 <tr className="bg-gray-50 text-[9px] uppercase tracking-widest text-gray-400 font-bold">
                   <th className="px-8 py-4 text-left">Product</th>
+                  <th className="px-8 py-4 text-left">Category</th>
                   <th className="px-8 py-4 text-left">Price</th>
                   <th className="px-8 py-4 text-left">Description</th>
                   <th className="px-8 py-4 text-right">Actions</th>
@@ -190,7 +191,13 @@ const ProductPanel = () => {
                       </div>
                     </td>
 
-                    <td className="px-8 py-4 font-medium">₹{p.price}</td>
+                    <td className="px-8 py-4">
+                      <span className="text-[10px] bg-gray-100 px-2.5 py-1 rounded-md text-gray-500 font-bold uppercase tracking-widest border border-gray-200">
+                        {(p as any).categoryId?.name || "Uncategorized"}
+                      </span>
+                    </td>
+
+                    <td className="px-8 py-4 font-medium italic">₹{p.price}</td>
 
                     <td className="px-8 py-4 text-xs text-gray-500 max-w-[240px] truncate">
                       {p.description}

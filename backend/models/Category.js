@@ -22,6 +22,7 @@ const categorySchema = new mongoose.Schema(
     section: {
       type: String, // 'shop-by-category', 'celebrate-love', 'cherished-celebrations', etc.
       default: 'general',
+      index: true,
     },
     featured: {
       type: Boolean,

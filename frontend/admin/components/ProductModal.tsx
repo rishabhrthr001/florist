@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { X, ImagePlus, Plus } from "lucide-react";
+import { X, ImagePlus, Plus, Edit, Trash2 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -45,8 +45,12 @@ const ProductModal = ({
   
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const [files, setFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [imageSlots, setImageSlots] = useState<{ url: string | null; file: File | null }[]>([
+    { url: null, file: null },
+    { url: null, file: null },
+    { url: null, file: null },
+  ]);
+  const [activeSlot, setActiveSlot] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -69,19 +73,13 @@ const ProductModal = ({
       try {
         const [catRes, tagsRes] = await Promise.all([
           axios.get(`${API}/category`),
-          axios.get(`${API}/product/tags`),
+          axios.get(`${API}/tag`), // Fetching specialized tags
         ]);
         
         setCategories(catRes.data);
         
-        // Merge fetched tags with hardcoded front-end tags
-        const predefined = [
-          "wedding", "anniversary", "thinking-of-you", "sorry", "flowers",
-          "girlfriend", "boyfriend", "miss-you", "baby-shower", "retirement",
-          "new-born", "wellness", "thank-you", "best-wishes", "balloons", "housewarming"
-        ];
-        const uniqueTags = Array.from(new Set([...predefined, ...tagsRes.data]));
-        setAvailableTags(uniqueTags);
+        // Use database tags exclusively
+        setAvailableTags(tagsRes.data.map((t: any) => t.slug));
       } catch {
         toast.error("Failed to load options");
       }
@@ -98,21 +96,26 @@ const ProductModal = ({
 
     if (mode === "edit" && product) {
       setForm({
-        name: product.name,
-        price: String(product.price),
+        name: product.name || "",
+        price: String(product.price || ""),
         description: product.description || "",
-        tags: product.tags?.join(", ") || "",
+        tags: Array.isArray(product.tags) ? product.tags.join(", ") : (typeof product.tags === "string" ? product.tags : ""),
         premiumWrapping: product.premiumWrapping || false,
       });
 
       setSelectedCategory(
-        typeof product.categoryId === "object"
-          ? product.categoryId._id
-          : product.categoryId,
+        product.categoryId 
+          ? (typeof product.categoryId === "object" ? product.categoryId._id : product.categoryId)
+          : ""
       );
 
-      setPreviews(product.images || []);
-      setFiles([]);
+      // Map existing images to slots
+      const initialSlots = [
+        { url: product.images?.[0] || null, file: null },
+        { url: product.images?.[1] || null, file: null },
+        { url: product.images?.[2] || null, file: null },
+      ];
+      setImageSlots(initialSlots);
     }
 
     if (mode === "add") {
@@ -124,53 +127,51 @@ const ProductModal = ({
         premiumWrapping: false,
       });
 
-      setPreviews([]);
-      setFiles([]);
+      setImageSlots([
+        { url: null, file: null },
+        { url: null, file: null },
+        { url: null, file: null },
+      ]);
     }
   }, [isOpen, mode, product]);
 
   /* ----------------------------------
         IMAGE PICKER
   ---------------------------------- */
-  const openFilePicker = () => {
-    if (files.length + previews.length >= MAX_IMAGES) {
-      toast.error("Max 3 images allowed");
-      return;
-    }
-
+  const openFilePicker = (index: number) => {
+    setActiveSlot(index);
     fileInputRef.current?.click();
   };
 
   const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files;
-    if (!selected) return;
+    const selected = e.target.files?.[0];
+    if (!selected || activeSlot === null) return;
 
-    const remaining = MAX_IMAGES - previews.length;
-
-    const incoming = Array.from(selected as FileList).slice(0, remaining);
-
-    const incomingPreviews = incoming.map((f: File) => URL.createObjectURL(f));
-
-    setFiles((prev) => [...incoming, ...prev]);
-
-    setPreviews((prev) => [...incomingPreviews, ...prev]);
+    const newUrl = URL.createObjectURL(selected);
+    
+    setImageSlots(prev => {
+      const next = [...prev];
+      // Revoke old blob if exists
+      if (next[activeSlot].url?.startsWith("blob:")) {
+        URL.revokeObjectURL(next[activeSlot].url!);
+      }
+      next[activeSlot] = { url: newUrl, file: selected };
+      return next;
+    });
 
     e.target.value = "";
+    setActiveSlot(null);
   };
 
-  /* ----------------------------------
-        REMOVE IMAGE
-  ---------------------------------- */
   const removeImage = (index: number) => {
-    const removed = previews[index];
-
-    if (removed.startsWith("blob:")) {
-      URL.revokeObjectURL(removed);
-    }
-
-    setPreviews((prev) => prev.filter((_, i) => i !== index));
-
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setImageSlots(prev => {
+      const next = [...prev];
+      if (next[index].url?.startsWith("blob:")) {
+        URL.revokeObjectURL(next[index].url!);
+      }
+      next[index] = { url: null, file: null };
+      return next;
+    });
   };
 
   /* ----------------------------------
@@ -186,29 +187,36 @@ const ProductModal = ({
       setIsSubmitting(true);
 
       const payload = new FormData();
-
       payload.append("name", form.name);
       payload.append("price", form.price);
       payload.append("description", form.description);
       payload.append("categoryId", selectedCategory);
+      payload.append("premiumWrapping", String(form.premiumWrapping));
 
       const parsedTags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
       payload.append("tags", JSON.stringify(parsedTags));
-      payload.append("premiumWrapping", String(form.premiumWrapping));
 
-      files.forEach((img) => payload.append("images", img));
+      // Handle positional images
+      const existingUrls = imageSlots.map(s => s.file ? null : s.url);
+      payload.append("existingImages", JSON.stringify(existingUrls));
+
+      imageSlots.forEach((slot, idx) => {
+        if (slot.file) {
+          payload.append(`image${idx}`, slot.file);
+        }
+      });
 
       if (mode === "add") {
         await axios.post(`${API}/product/add`, payload);
         toast.success("Product created");
       } else if (mode === "edit" && product) {
         await axios.put(`${API}/product/${product._id}`, payload);
-
         toast.success("Product updated");
       }
 
-      previews.forEach((p) => {
-        if (p.startsWith("blob:")) URL.revokeObjectURL(p);
+      // Cleanup
+      imageSlots.forEach(s => {
+        if (s.url?.startsWith("blob:")) URL.revokeObjectURL(s.url);
       });
 
       onClose();
@@ -306,7 +314,7 @@ const ProductModal = ({
                   className="w-full min-h-[56px] p-2 border rounded-xl bg-white flex flex-wrap gap-2 items-center cursor-text"
                   onClick={() => setTagsDropdownOpen(true)}
                 >
-                  {form.tags.split(",").map(t => t.trim()).filter(Boolean).map(tag => (
+                  {(form.tags || "").split(",").map(t => t.trim()).filter(Boolean).map(tag => (
                     <span key={tag} className="bg-pink-100 text-pink-800 text-xs px-3 py-1 rounded-full flex items-center gap-1 font-medium">
                       {tag}
                       <X 
@@ -314,7 +322,7 @@ const ProductModal = ({
                         className="cursor-pointer hover:text-pink-900" 
                         onClick={(e) => {
                           e.stopPropagation();
-                          const newTags = form.tags.split(",").map(t => t.trim()).filter(t => t && t !== tag);
+                          const newTags = (form.tags || "").split(",").map(t => t.trim()).filter(t => t && t !== tag);
                           setForm({ ...form, tags: newTags.join(", ") });
                         }} 
                       />
@@ -323,7 +331,7 @@ const ProductModal = ({
                   <input
                     placeholder={form.tags ? "" : "Select or type tags..."}
                     className="flex-1 min-w-[120px] bg-transparent outline-none text-sm p-2"
-                    value="" // It only controls the active typing if needed, but we keep it simple for now
+                    value="" 
                     readOnly
                   />
                 </div>
@@ -339,7 +347,7 @@ const ProductModal = ({
                         className="absolute z-20 top-full left-0 right-0 mt-2 bg-white border rounded-xl shadow-xl max-h-48 overflow-y-auto p-2 flex flex-wrap gap-2"
                       >
                         {availableTags.map(tag => {
-                          const currentTags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
+                          const currentTags = (form.tags || "").split(",").map(t => t.trim()).filter(Boolean);
                           const isSelected = currentTags.includes(tag);
                           return (
                             <button
@@ -395,76 +403,66 @@ const ProductModal = ({
               </div>
 
               {/* IMAGE UPLOADER */}
-              <div>
-                <p className="text-[10px] uppercase font-bold text-gray-400 mb-2">
-                  Product Images (max 3)
-                </p>
-
-                {/* MAIN */}
-                <div
-                  onClick={openFilePicker}
-                  className="relative border-2 border-dashed border-gray-300 rounded-2xl h-48 overflow-hidden flex items-center justify-center cursor-pointer"
-                >
-                  {previews[0] ? (
-                    <img
-                      src={previews[0]}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 text-gray-400">
-                      <ImagePlus size={30} />
-                      <p className="text-xs font-bold uppercase">
-                        Upload Image
-                      </p>
-                    </div>
-                  )}
+              <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                  <p className="text-[10px] uppercase font-bold text-gray-400">
+                    Product Images (Max 3)
+                  </p>
+                  <p className="text-[9px] text-gray-400 italic">
+                    Images are saved in order (Left to Right)
+                  </p>
                 </div>
 
-                {/* THUMBS */}
-                {previews.length > 1 && (
-                  <div className="flex gap-3 mt-3">
-                    {previews.slice(1).map((src, i) => {
-                      const index = i + 1;
-
-                      return (
-                        <div
-                          key={src}
-                          className="relative w-20 h-20 rounded-xl overflow-hidden border group"
-                        >
+                <div className="grid grid-cols-3 gap-4 h-32">
+                  {imageSlots.map((slot, index) => (
+                    <div
+                      key={index}
+                      className="relative group rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden transition-all hover:border-[#F8BBD0]"
+                    >
+                      {slot.url ? (
+                        <>
                           <img
-                            src={src}
+                            src={slot.url}
                             className="w-full h-full object-cover"
+                            alt={`Slot ${index + 1}`}
                           />
-
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {previews.length < MAX_IMAGES && (
-                  <button
-                    type="button"
-                    onClick={openFilePicker}
-                    className="mt-4 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-[#F8BBD0]"
-                  >
-                    <Plus size={14} />
-                    Add Image
-                  </button>
-                )}
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              type="button"
+                              onClick={() => openFilePicker(index)}
+                              className="bg-white p-1.5 rounded-full shadow-lg mx-1 text-gray-700 hover:text-black"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="bg-white p-1.5 rounded-full shadow-lg mx-1 text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => openFilePicker(index)}
+                          className="flex flex-col items-center gap-1 text-gray-400 hover:text-[#F8BBD0] transition-colors"
+                        >
+                          <ImagePlus size={20} />
+                          <span className="text-[8px] font-bold uppercase tracking-tighter">
+                            Slot {index + 1}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
                 <input
                   ref={fileInputRef}
                   hidden
                   type="file"
-                  multiple
                   accept="image/*"
                   onChange={handleFilesSelected}
                 />

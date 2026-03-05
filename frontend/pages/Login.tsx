@@ -64,7 +64,9 @@ const Login: React.FC = () => {
       console.log("4. Got Google credential, calling backend...");
 
       const res = await axios.post(`${API_BASE_URL}/auth/google`, {
-        token: googleIdToken, // Send Google OAuth ID token (not Firebase ID token)
+        token: googleIdToken,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL,
       });
       console.log("5. Backend response:", res.data);
 

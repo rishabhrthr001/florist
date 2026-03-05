@@ -37,11 +37,13 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: true,
+      index: true,
     },
 
     tags: {
       type: [String],
       default: [],
+      index: true,
     },
 
     isActive: {

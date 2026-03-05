@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+import { Search } from "lucide-react";
 import Button from "../components/Button";
 import ProductCard from "../components/ProductCard";
 import ProductSkeleton from "../components/ProductSkeleton";
@@ -46,6 +47,7 @@ const FALLBACK_SHOP_CATEGORIES = [
   { name: "Anniversary", image: "/categories-new/anniversary.png", slug: 'anniversary' },
   { name: "Chocolates", image: "/categories-new/chocolates.png", slug: 'chocolates' },
   { name: "Cakes", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=300&q=80", slug: 'cakes' },
+  { name: "Bouquets", image: "https://images.unsplash.com/photo-1522673607200-1648832cee98?w=300&q=80", slug: 'bouquets' },
   { name: "Plants", image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=300&q=80", slug: 'plants' },
   { name: "Big Bunches", image: "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?w=300&q=80", slug: 'big-bunches' },
 ];
@@ -66,7 +68,7 @@ const FALLBACK_CHERISHED = [
   { name: "Fruit Basket", image: "/icons-new/fruit.png", slug: 'fruit-basket' },
   { name: "Plants", image: "/icons-new/plants.png", slug: 'plants' },
   { name: "Exotic Flowers", image: "/icons-new/exotic.png", slug: 'exotic' },
-  { name: "Jaimala", image: "/icons-new/jaimala.png", slug: 'jaimala' },
+  { name: "Garland", image: "/icons-new/jaimala.png", slug: 'garland' },
 ];
 
 const FALLBACK_FLOWERS = [
@@ -160,7 +162,6 @@ const Home: React.FC = () => {
   return (
     <div className="bg-[#FAF9F6] min-h-screen pt-32 pb-10">
       
-      {/* ---------------- BANNERS SECTION ---------------- */}
       <section className="mb-20 max-w-[120rem] mx-auto px-4 md:px-8">
         <div className="flex gap-4 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {displayBanners.map((banner, idx) => (
@@ -277,7 +278,7 @@ const Home: React.FC = () => {
             hidden: { opacity: 0 },
             visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
           }}
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6"
+          className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6"
         >
           {favouriteFlowers.map((flower) => (
              <motion.div 
@@ -303,7 +304,7 @@ const Home: React.FC = () => {
           <span className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-black transition-colors block pb-1 md:hidden" onClick={() => navigate('/explore')}>Discover More →</span>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
           {loading
             ? [...Array(6)].map((_, i) => (
                 <ProductSkeleton key={i} />

@@ -18,6 +18,7 @@ import API from "@/config";
 import { useAuth } from "@/context/AuthContext";
 import { Order } from "@/admin/components/OrdersPanel";
 import CommentPanel from "@/admin/components/CommentPanel";
+import TagPanel from "@/admin/components/TagPanel";
 
 interface AdminLayoutProps {
   onEnterAdmin: () => void;
@@ -107,6 +108,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     "/admin/customers": "Customers",
     "/admin/comments": "Comments",
     "/admin/tickets": "Support Tickets",
+    "/admin/tags": "Tag Management",
   };
 
   const currentTitle =
@@ -168,6 +170,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
           <Route path="/comments" element={<CommentPanel />} />
           <Route path="/customers" element={<CustomersPanel />} />
           <Route path="/tickets" element={<TicketsPanel />} />
+          <Route path="/tags" element={<TagPanel />} />
         </Routes>
       </main>
     </div>
