@@ -137,11 +137,11 @@ const Home: React.FC = () => {
   /* ---------------- DESKTOP & DEFAULT BANNERS ---------------- */
 
   const defaultBanners: Banner[] = [
-    { _id: 'b1', title: 'Birthdays', description: 'Curated blooms and luxury gifts for their special day.', category: 'Birthday', link: '/explore', imageUrl: '/banners/birthday.png' },
-    { _id: 'b2', title: 'Anniversary', description: 'Timeless arrangements for your beautiful journey.', category: 'Anniversary', link: '/explore', imageUrl: '/banners/anniversary.png' },
-    { _id: 'b3', title: 'Wedding', description: 'Elegant designs for their perfect beginning.', category: 'Wedding', link: '/explore', imageUrl: '/banners/wedding.png' },
-    { _id: 'b4', title: 'For Her', description: 'Chic, delicate curations designed for her grace.', category: 'For Her', link: '/explore', imageUrl: '/banners/for_her.png' },
-    { _id: 'b5', title: 'For Him', description: 'Sophisticated luxury for the modern gentleman.', category: 'For Him', link: '/explore', imageUrl: '/banners/for_him.png' },
+    { _id: 'b1', title: 'Birthdays', description: 'Make their day unforgettable with our premium arrangements.', category: 'Birthday', link: '/explore', imageUrl: '/banners/Birthday_Banner.png' },
+    { _id: 'b2', title: 'Anniversary', description: 'Celebrate your love with timeless romance and fresh blooms.', category: 'Anniversary', link: '/explore', imageUrl: '/banners/Anniversary_Banner.png' },
+    { _id: 'b3', title: 'Wedding', description: 'Elegant gifts for their perfect beginning together.', category: 'Wedding', link: '/explore', imageUrl: '/banners/Wedding_Banner.png' },
+    { _id: 'b4', title: 'For Her', description: 'Chic, delicate curations designed beautifully for her.', category: 'For Her', link: '/explore', imageUrl: '/banners/Forher_Banner.png' },
+    { _id: 'b5', title: 'For Him', description: 'Sophisticated and sleek luxury gifts for the modern man.', category: 'For Him', link: '/explore', imageUrl: '/banners/Forhim_Banner.png' },
   ];
 
   const displayBanners = defaultBanners;
