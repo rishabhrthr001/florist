@@ -1,6 +1,7 @@
 import express from "express";
 import SupportMessage from "../models/SupportMessage.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { sendSupportNotificationToAdmin } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -20,6 +21,11 @@ router.post("/", async (req, res) => {
             subject: subject || "General Inquiry",
             message,
             source: source || "contact-page",
+        });
+
+        // Send Notification Email (Background)
+        sendSupportNotificationToAdmin(supportMessage).catch(err => {
+            console.error("Failed to send support email notification:", err);
         });
 
         res.status(201).json({

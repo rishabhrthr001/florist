@@ -1,0 +1,83 @@
+
+import cloudinary from "cloudinary";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+
+dotenv.config();
+
+// Configure Cloudinary
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY.trim(),
+  api_secret: process.env.CLOUDINARY_API_SECRET.trim(),
+});
+
+const imagePath = "/Users/rishabhrathore/.gemini/antigravity/brain/0369984b-cab7-453c-b4f9-b350e6e8c3bb/media__1773230393568.jpg";
+
+async function run() {
+  try {
+    console.log("Connecting to MongoDB...");
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("Connected to MongoDB");
+
+    // Models
+    const categorySchema = new mongoose.Schema({ name: String, slug: String });
+    const Category = mongoose.models.Category || mongoose.model("Category", categorySchema);
+
+    const productSchema = new mongoose.Schema({
+      name: String,
+      slug: String,
+      description: String,
+      images: [String],
+      price: Number,
+      categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
+      tags: [String],
+      isActive: { type: Boolean, default: true },
+      premiumWrapping: { type: Boolean, default: false }
+    });
+    const Product = mongoose.models.Product || mongoose.model("Product", productSchema);
+
+    // 1. Upload to Cloudinary
+    console.log("Uploading to Cloudinary...");
+    const uploadRes = await cloudinary.v2.uploader.upload(imagePath, {
+      folder: "products",
+    });
+    console.log("Uploaded:", uploadRes.secure_url);
+
+    // 2. Get category
+    const category = await Category.findOne({ slug: "birthday" });
+    if (!category) throw new Error("Category 'birthday' not found");
+    console.log("Found Category:", category.name, category._id);
+
+    // 3. Create Product
+    const productName = "Golden Harvest Fruit & Chocolate Celebration Basket";
+    let baseSlug = "golden-harvest-fruit-chocolate-celebration-basket";
+    let slug = baseSlug;
+    const existing = await Product.findOne({ slug });
+    if (existing) {
+        slug += "-" + Math.floor(Math.random() * 1000);
+    }
+    
+    const newProduct = new Product({
+      name: productName,
+      slug: slug,
+      description: "A comprehensive gift basket designed to provide a perfect mix of health, sweetness, and elegance. This grand arrangement features a bounty of fresh seasonal fruits, a diverse selection of premium chocolates, and a vibrant floral topper of yellow chrysanthemums and pink carnations.\n\n**This Product Consists of**:\n- **Fresh Fruits**: 2 Red apples, 2 Green apples, 2 Seasonal mangoes, and 2 Fresh oranges.\n- **Indulgent Chocolates**: 4-6 Cadbury 5-Star bars, 2-3 Dairy Milk Silk bars, 2-3 KitKat bars, and assorted Munch bars.\n- **Floral Topper**: 2-3 Stems of sunny yellow decorative chrysanthemums, 3-4 delicate pink carnations, and fresh white baby's breath.\n- **Garnish**: Fresh palm leaves and lush greenery for a tropical feel.\n- **Packaging**: Large hand-woven luxury wicker basket wrapped in clear premium cellophane.\n- **Finishing**: Vibrant yellow floral-themed ribbon bow.\n\n**Suitable for**: Family celebrations, corporate gifting, get-well wishes, or housewarming parties.",
+      images: [uploadRes.secure_url],
+      price: 1850,
+      categoryId: category._id,
+      tags: ["fruit basket", "chocolate", "healthy gift", "combo", "birthday", "gift basket"],
+      isActive: true,
+      premiumWrapping: false
+    });
+
+    const saved = await newProduct.save();
+    console.log("Product saved successfully:", saved.name, "at Rs.", saved.price);
+
+    process.exit(0);
+  } catch (err) {
+    console.error("Error:", err);
+    process.exit(1);
+  }
+}
+
+run();

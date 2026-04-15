@@ -7,6 +7,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { toast } from "sonner";
 
 import { Product } from "../types";
+import { optimizeCloudinaryUrl } from "../lib/cloudinary";
 
 interface ProductCardProps {
   product: Product;
@@ -58,7 +59,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="group h-full flex flex-col"
+      className={`group h-full flex flex-col ${product.isOutOfStock ? "opacity-60 grayscale-[0.3]" : ""}`}
     >
       <Link
         to={`/product/${product.slug}`}
@@ -67,7 +68,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <motion.img
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          src={product.images[0]}
+          src={optimizeCloudinaryUrl(product.images[0], 600, true)}
           alt={product.name}
           loading="lazy"
           className="w-full h-full object-cover"
@@ -87,6 +88,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
             <Heart size={16} fill={inWishlist ? "currentColor" : "none"} strokeWidth={inWishlist ? 1 : 1.5} />
           </button>
         </div>
+
+        {/* OUT OF STOCK OVERLAY */}
+        {product.isOutOfStock && (
+          <div className="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-[1px]">
+            <span className="bg-red-500 text-white text-[10px] md:text-[11px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-lg">
+              Out of Stock
+            </span>
+          </div>
+        )}
       </Link>
 
       {/* INFO */}
@@ -137,9 +147,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
             <button
               onClick={handleAdd}
-              className="flex-1 text-[10px] md:text-[11px] uppercase tracking-widest font-bold py-2.5 rounded-full bg-black text-white hover:bg-gray-800 transition-all duration-300 shadow-sm"
+              disabled={product.isOutOfStock}
+              className={`flex-1 text-[10px] md:text-[11px] uppercase tracking-widest font-bold py-2.5 rounded-full transition-all duration-300 shadow-sm ${
+                product.isOutOfStock 
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
+                  : "bg-black text-white hover:bg-gray-800"
+              }`}
             >
-              Add
+              {product.isOutOfStock ? "Out of Stock" : "Add"}
             </button>
           </div>
         )}

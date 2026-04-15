@@ -11,6 +11,16 @@ const categoryStorage = new CloudinaryStorage({
   params: {
     folder: "categories",
     allowed_formats: ["jpg", "png", "jpeg", "webp"],
+    transformation: [
+      {
+        width: 600,
+        height: 600,
+        crop: "limit",
+        quality: "auto",
+        fetch_format: "auto",
+        dpr: "auto",
+      },
+    ],
   },
 });
 
@@ -20,6 +30,16 @@ const productStorage = new CloudinaryStorage({
   params: {
     folder: "products",
     allowed_formats: ["jpg", "png", "jpeg", "webp"],
+    transformation: [
+      {
+        width: 1000,
+        height: 1000,
+        crop: "limit",
+        quality: "auto",
+        fetch_format: "auto",
+        dpr: "auto",
+      },
+    ],
   },
 });
 

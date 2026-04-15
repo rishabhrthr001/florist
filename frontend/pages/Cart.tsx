@@ -2,8 +2,8 @@ import React, { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Truck, Clock, Calendar, Sun, Moon, ChevronDown } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { toast } from "sonner";
 import { useCart } from "../context/CartContext";
+import { optimizeCloudinaryUrl } from "../lib/cloudinary";
 import { DELIVERY_SLOTS } from "../constants";
 
 const Cart: React.FC = () => {
@@ -21,7 +21,9 @@ const Cart: React.FC = () => {
     setDeliveryDate,
     deliveryTime,
     setDeliveryTime,
+    addVaseToItem,
   } = useCart();
+
 
   const [isTimeDropdownOpen, setIsTimeDropdownOpen] = React.useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -41,23 +43,14 @@ const Cart: React.FC = () => {
     0,
   );
 
-  const deliveryCharge = useMemo(() => {
-    if (items.length === 0 || subtotal >= 2500) return 0;
-    
-    if (deliveryOption === "standard") return 150;
-
-    const slot = DELIVERY_SLOTS.find(s => s.label === deliveryTime);
-    return slot?.premium ? 300 : 150;
-  }, [items.length, subtotal, deliveryOption, deliveryTime]);
-
-  const total = subtotal + deliveryCharge;
+  const total = subtotal;
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] pt-32 pb-20 px-4 md:px-6">
+    <div className="min-h-screen bg-[#FAF9F6] pt-24 sm:pt-32 pb-20 px-2 sm:px-4 md:px-6">
       
       {/* HEADER / BREADCRUMBS */}
-      <div className="max-w-[120rem] mx-auto mb-10 overflow-hidden px-2 lg:px-8">
-        <nav className="flex text-[10px] sm:text-[11px] text-gray-400 border-b border-gray-200/50 pb-4 font-bold uppercase tracking-widest">
+      <div className="max-w-[120rem] mx-auto mb-6 sm:mb-10 overflow-hidden px-2 lg:px-8">
+        <nav className="flex text-[9px] sm:text-[11px] text-gray-400 border-b border-gray-200/50 pb-3 sm:pb-4 font-bold uppercase tracking-widest">
           <Link to="/" className="hover:text-black transition-colors shrink-0">Home</Link>
           <span className="mx-2 shrink-0">/</span>
           <Link to="/explore" className="hover:text-black transition-colors shrink-0">Products</Link>
@@ -66,15 +59,15 @@ const Cart: React.FC = () => {
         </nav>
       </div>
 
-      <div className="max-w-[120rem] mx-auto grid lg:grid-cols-[1.5fr_1fr] gap-10 xl:gap-16 px-2 lg:px-8">
+      <div className="max-w-[120rem] mx-auto grid md:grid-cols-[1.8fr_1fr] gap-6 md:gap-10 xl:gap-16 px-2 lg:px-8">
         {/* ================= LEFT ================= */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-4 sm:gap-6"
         >
-          <div className="flex items-end justify-between mb-2">
-             <h1 className="font-serif italic text-4xl md:text-5xl lg:text-[4rem] tracking-tight text-gray-900 leading-[1.1]">
+          <div className="flex items-end justify-between mb-1 sm:mb-2">
+             <h1 className="font-serif italic text-3xl md:text-5xl lg:text-[4rem] tracking-tight text-gray-900 leading-[1.1]">
                Your Cart
              </h1>
           </div>
@@ -102,7 +95,7 @@ const Cart: React.FC = () => {
               {items.map((item) => (
                 <div
                   key={item._id}
-                  className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-row sm:flex-row gap-4 relative group"
+                  className="bg-white rounded-[1.25rem] md:rounded-[2rem] p-3 md:p-6 shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-gray-100 flex gap-3 md:gap-6 relative group"
                 >
                   {/* PUSH TRASH TO TOP RIGHT ON MOBILE */}
                   <button
@@ -116,9 +109,9 @@ const Cart: React.FC = () => {
                   </button>
 
                   {/* IMAGE */}
-                  <div className="w-20 h-20 md:w-28 md:h-28 shrink-0 rounded-xl md:rounded-[1.25rem] overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 shrink-0 rounded-xl md:rounded-[1.25rem] overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
                     <img
-                      src={item.image}
+                      src={optimizeCloudinaryUrl(item.image, 200, true)}
                       alt={item.name}
                       className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
                     />
@@ -146,7 +139,31 @@ const Cart: React.FC = () => {
                            <span className="w-1 h-1 rounded-full bg-pink-500"></span> Premium Wrap
                         </span>
                       )}
+
+                      {item.isOutOfStock && (
+                        <span className="text-[8px] md:text-[9px] bg-red-500 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest border border-red-600 flex items-center gap-1 shrink-0 animate-pulse">
+                           Out of Stock
+                        </span>
+                      )}
                     </div>
+
+                    {item.vase ? (
+                      <div className="flex items-center gap-2.5 mb-4 bg-gray-50/50 p-2 rounded-xl border border-gray-100/50">
+                        <div className="w-10 h-10 shrink-0 rounded-lg overflow-hidden border border-gray-200 shadow-xs">
+                          <img src={item.vase.image} alt={item.vase.name} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[10px] font-bold text-gray-800 line-clamp-1 leading-tight">{item.vase.name}</p>
+                          <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Vase Add-on • ₹{item.vase.price}</p>
+                        </div>
+                        <button
+                          onClick={() => addVaseToItem(item._id, null as any)}
+                          className="p-1 px-2 text-[8px] font-bold uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-lg"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : null}
 
                     {/* CUSTOM COMPOSITION BREAKDOWN */}
                     {item.custom && (
@@ -249,7 +266,7 @@ const Cart: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-gray-100 lg:sticky lg:top-32 flex flex-col gap-6 !overflow-visible"
+            className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-gray-100 md:sticky md:top-32 flex flex-col gap-6 !overflow-visible"
           >
             <h2 className="font-serif italic text-3xl md:text-4xl text-gray-900 border-b border-gray-100 pb-6 tracking-tight">
                Summary
@@ -339,11 +356,6 @@ const Cart: React.FC = () => {
                                           <span className="text-[9px] text-pink-500 font-bold uppercase tracking-tighter">Premium Delivery</span>
                                         )}
                                       </div>
-                                      {slot.premium && (
-                                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-md ${deliveryTime === slot.label ? 'bg-white/20 text-white' : 'bg-pink-50 text-pink-500'}`}>
-                                          +₹150
-                                        </span>
-                                      )}
                                     </button>
                                   ))}
                                 </div>
@@ -352,9 +364,6 @@ const Cart: React.FC = () => {
                           </AnimatePresence>
                         </div>
 
-                        <p className="text-[10px] text-gray-400 font-medium px-1 flex items-center gap-1.5 pt-1">
-                          <Clock size={10}/> Premium slots incur an extra delivery fee.
-                        </p>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -365,19 +374,8 @@ const Cart: React.FC = () => {
                     <span>Subtotal</span>
                     <span className="text-gray-900 font-bold">₹{subtotal.toLocaleString()}</span>
                   </div>
-
-                  <div className="flex justify-between items-center text-gray-500">
-                    <span className="flex items-center gap-2">Delivery ({deliveryOption === 'standard' ? 'Standard' : 'Scheduled'})</span>
-                    <span className="text-gray-900 font-bold">
-                       {deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge}`}
-                    </span>
-                  </div>
                   
-                  {subtotal >= 2500 && (
-                     <div className="text-[10px] bg-green-50 text-green-600 px-3 py-1.5 rounded-lg font-bold border border-green-100 uppercase tracking-widest text-center">
-                        Free delivery applied
-                     </div>
-                  )}
+                  
                 </div>
              </div>
 
@@ -388,11 +386,11 @@ const Cart: React.FC = () => {
              <p className="text-[10px] text-gray-400 text-right uppercase tracking-widest font-bold mt-[-8px]">Inclusive of all taxes</p>
 
             <button
-              disabled={items.length === 0}
+              disabled={items.length === 0 || items.some(i => i.isOutOfStock)}
               onClick={() => navigate("/checkout")}
-              className="mt-6 w-full py-4 bg-black text-white rounded-full uppercase tracking-widest text-[11px] md:text-xs font-bold hover:bg-gray-800 transition-all shadow-md hover:-translate-y-0.5 hidden md:flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:translate-y-0"
+              className="mt-6 w-full py-4 bg-black text-white rounded-full uppercase tracking-widest text-[11px] md:text-xs font-bold hover:bg-gray-800 transition-all shadow-md hover:-translate-y-0.5 hidden md:flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
             >
-              Checkout Securely <ArrowRight size={16} strokeWidth={2.5}/>
+              {items.some(i => i.isOutOfStock) ? "Remove Out of Stock Items" : <><ShoppingBag size={16} strokeWidth={2.5}/> Checkout Securely <ArrowRight size={16} strokeWidth={2.5}/></>}
             </button>
 
             {/* TRUST BADGES */}
@@ -407,16 +405,17 @@ const Cart: React.FC = () => {
       
       {/* MOBILE STICKY CHECKOUT */}
       {items.length > 0 && (
-        <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-6">
+        <div className="md:hidden fixed bottom-1 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-6">
            <div className="flex flex-col justify-center">
               <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest leading-tight mb-0.5">Total</p>
               <p className="font-sans font-bold text-xl text-gray-900 leading-tight">₹{total.toLocaleString()}</p>
            </div>
            <button 
+             disabled={items.some(i => i.isOutOfStock)}
              onClick={() => navigate("/checkout")}
-             className="flex-1 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gray-800 shadow-lg transition-colors h-14 flex items-center justify-center gap-2"
+             className="flex-1 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-gray-800 shadow-lg transition-colors h-14 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
            >
-              Checkout <ArrowRight size={16} strokeWidth={2.5}/>
+              {items.some(i => i.isOutOfStock) ? "Check Cart Items" : <>Checkout <ArrowRight size={16} strokeWidth={2.5}/></>}
            </button>
         </div>
       )}

@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { sendResetOTPMail } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -83,6 +84,10 @@ router.post("/login", async (req, res) => {
 
     if (!user) {
       return res.status(400).json({ msg: "Invalid credentials" });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({ msg: "This account was created with Google login. Please use Google Login button." });
     }
 
     const match = await bcrypt.compare(password, user.password);
@@ -212,6 +217,65 @@ router.post("/google", async (req, res) => {
   } catch (err) {
     console.error("Google auth error:", err);
     res.status(500).json({ msg: "Google authentication failed" });
+  }
+});
+
+/* ---------- FORGOT PASSWORD ---------- */
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ msg: "User with this email not found" });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.resetPasswordToken = otp;
+    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    await user.save();
+
+    await sendResetOTPMail(email, otp);
+
+    res.json({ msg: "OTP sent to your email" });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ msg: "Failed to process forgot password" });
+  }
+});
+
+/* ---------- RESET PASSWORD ---------- */
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    const user = await User.findOne({
+      email,
+      resetPasswordToken: otp,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ msg: "Invalid or expired OTP" });
+    }
+
+    // Hash new password
+    const hashed = await bcrypt.hash(newPassword, 12);
+    user.password = hashed;
+    
+    // Clear reset token fields
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+
+    res.json({ msg: "Password reset successful. You can now login." });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ msg: "Failed to reset password" });
   }
 });
 

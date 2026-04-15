@@ -19,7 +19,7 @@ import wishlistRoutes from "./routes/wishlist.js";
 import customRoutes from "./routes/custom.js";
 import tagRoutes from "./routes/tagRoutes.js";
 
-import { initSocket, getIO } from "./socket/index.js";
+// WebSocket imports removed
 
 import compression from "compression";
 import helmet from "helmet";
@@ -30,10 +30,23 @@ const app = express();
 
 // Middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Avoid blocking Cloudinary/external assets if not configured properly
+  contentSecurityPolicy: false,
 }));
-app.use(compression());
-app.use(express.json());
+app.use(compression({ level: 6 })); // Optimal balance between speed and compression
+app.use(express.json({ limit: "1mb" })); // Protection against large payloads
+
+// Simple Request Logger
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (duration > 500) {
+      console.warn(`🐢 SLOW: ${req.method} ${req.originalUrl} - ${duration}ms`);
+    }
+  });
+  next();
+});
 
 // CORS configuration for production
 // CORS configuration
@@ -78,10 +91,7 @@ app.get("/health", (req, res) => {
     .json({ status: "healthy", timestamp: new Date().toISOString() });
 });
 
-app.use((req, res, next) => {
-  req.io = getIO();
-  next();
-});
+// req.io cleanup removed
 
 app.use("/auth", authRoutes);
 app.use("/product", productRoutes);
@@ -97,7 +107,7 @@ app.use("/custom-bouquet", customRoutes);
 app.use("/tag", tagRoutes);
 const server = http.createServer(app);
 
-initSocket(server);
+// initSocket removed
 
 // Listen on 0.0.0.0 for Cloud Run
 server.listen(PORT, "0.0.0.0", () => {

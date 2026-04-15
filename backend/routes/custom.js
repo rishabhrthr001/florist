@@ -58,7 +58,7 @@ router.get("/admin", requireAuth, requireAdmin, async (req, res) => {
 
 router.post("/", requireAuth, requireAdmin, uploadSingle, async (req, res) => {
   try {
-    const { type, productId, name, price } = req.body;
+    const { type, productId, name, price, isOutOfStock } = req.body;
 
     // flower / chocolate must reference product
     if (type === "flower" || type === "chocolate") {
@@ -89,6 +89,7 @@ router.post("/", requireAuth, requireAdmin, uploadSingle, async (req, res) => {
       name,
       price,
       image: req.file?.path,
+      isOutOfStock: isOutOfStock === "true" || isOutOfStock === true,
     });
 
     res.status(201).json(item);
@@ -109,7 +110,7 @@ router.put(
   uploadSingle,
   async (req, res) => {
     try {
-      const { type, productId, name, price } = req.body;
+      const { type, productId, name, price, isOutOfStock } = req.body;
 
       const item = await CustomBouquet.findById(req.params.id);
 
@@ -124,11 +125,15 @@ router.put(
         }
       }
 
-      // base/ribbon
-      if (item.type === "base" || item.type === "ribbon") {
+      // base/ribbon/filler/paper
+      if (item.type === "base" || item.type === "ribbon" || item.type === "filler" || item.type === "paper" || item.type === "vase") {
         if (name) item.name = name;
         if (price) item.price = price;
         if (req.file) item.image = req.file.path;
+      }
+
+      if (isOutOfStock !== undefined) {
+        item.isOutOfStock = isOutOfStock === "true" || isOutOfStock === true;
       }
 
       await item.save();
@@ -160,6 +165,24 @@ router.patch("/:id/toggle", requireAuth, requireAdmin, async (req, res) => {
   } catch (err) {
     console.error("TOGGLE ERROR:", err);
     res.status(500).json({ msg: "Toggle failed" });
+  }
+});
+
+router.patch("/:id/stock", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const item = await CustomBouquet.findById(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({ msg: "Not found" });
+    }
+
+    item.isOutOfStock = !item.isOutOfStock;
+    await item.save();
+
+    res.json(item);
+  } catch (err) {
+    console.error("STOCK TOGGLE ERROR:", err);
+    res.status(500).json({ msg: "Stock toggle failed" });
   }
 });
 

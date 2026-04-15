@@ -10,6 +10,7 @@ export interface Product {
   stock?: number;
   slug?: string;
   premiumWrapping?: boolean;
+  isOutOfStock?: boolean;
 }
 
 export interface Category {
@@ -66,4 +67,5 @@ export interface ComponentItem {
   price: number;
   image: string;
   type: "base" | "flower" | "chocolate" | "ribbon";
+  isOutOfStock?: boolean;
 }

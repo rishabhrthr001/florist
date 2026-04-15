@@ -105,16 +105,22 @@ const Footer: React.FC = () => {
           <p>© 2024 Mangalam Florist. All Rights Reserved.</p>
           <div className="flex gap-8">
             <Link
-              to="privacy-policy"
+              to="/privacy-policy"
               className="hover:text-white transition-colors"
             >
               Privacy Policy
             </Link>
             <Link
-              to="terms-of-service"
+              to="/terms-of-service"
               className="hover:text-white transition-colors"
             >
               Terms of Service
+            </Link>
+            <Link
+              to="/refund-policy"
+              className="hover:text-white transition-colors"
+            >
+              Refund Policy
             </Link>
           </div>
         </div>

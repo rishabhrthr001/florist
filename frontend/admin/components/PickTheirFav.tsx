@@ -81,7 +81,7 @@ const PickTheirFav = () => {
 
       const { data } = await axios.get(`${API}/product`);
 
-      setAllProducts(data);
+      setAllProducts(data.products || []);
     } catch {
       toast.error("Failed to load products");
     } finally {

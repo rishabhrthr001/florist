@@ -35,9 +35,11 @@ if (!admin.apps.length) {
             credential: admin.credential.cert(serviceAccount),
         });
     } else {
-        // Fallback to Application Default Credentials (ADC)
-        console.log("⚠️ No specific credentials found, using Application Default Credentials");
-        admin.initializeApp();
+        // Fallback to Application Default Credentials (ADC) with explicit Project ID
+        console.log("⚠️ No specific credentials found, using Application Default Credentials for mangalam-florist-489318");
+        admin.initializeApp({
+            projectId: "mangalam-florist-489318",
+        });
     }
 }
 

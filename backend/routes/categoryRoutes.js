@@ -4,13 +4,19 @@ import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { uploadSingle } from "../middleware/upload.js";
 import mongoose from "mongoose";
 import slugify from "slugify";
+import { getCache, setCache, clearCache } from "../utils/cache.js";
 
 const router = express.Router();
 
 /* ---------- GET ALL CATEGORIES ---------- */
 router.get("/", async (req, res) => {
   try {
-    const categories = await Category.find();
+    const cacheKey = "categories_all";
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
+    const categories = await Category.find().lean();
+    setCache(cacheKey, categories, 300000); // 5 minutes
     res.json(categories);
   } catch (err) {
     res.status(500).json({ msg: "Failed to fetch categories" });
@@ -20,10 +26,15 @@ router.get("/", async (req, res) => {
 /* ---------- GET SINGLE CATEGORY ---------- */
 router.get("/:id", async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const cacheKey = `category_${req.params.id}`;
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
+    const category = await Category.findById(req.params.id).lean();
 
     if (!category) return res.status(404).json({ msg: "Category not found" });
 
+    setCache(cacheKey, category, 300000); // 5 minutes
     res.json(category);
   } catch (err) {
     res.status(500).json({ msg: "Failed to fetch category" });
@@ -73,6 +84,7 @@ router.post(
         section: section || 'general',
       });
 
+      clearCache();
       res.status(201).json(category);
     } catch (err) {
       console.error(err);
@@ -137,6 +149,7 @@ router.put(
 
       await category.save();
 
+      clearCache();
       res.json(category);
     } catch (err) {
       console.error(err);
@@ -193,6 +206,7 @@ router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
     // Now delete the category
     await Category.findByIdAndDelete(id);
 
+    clearCache();
     res.json({
       msg: "Category deleted successfully",
       id,

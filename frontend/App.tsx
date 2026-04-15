@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   useLocation,
+  useNavigationType,
 } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Toaster } from "sonner";
@@ -11,35 +12,51 @@ import { Toaster } from "sonner";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
+// Utility to handle lazy load errors (e.g. after a new deployment)
+const lazyWithRetry = (componentImport: any) =>
+  React.lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      console.error("Chunk load failed, reloading...", error);
+      window.location.reload();
+      return { default: () => null };
+    }
+  });
+
 import Home from "./pages/Home";
-const CategoryPage = React.lazy(() => import("./pages/CategoryPage"));
-const ProductDetail = React.lazy(() => import("./pages/ProductDetail"));
-const MakeYourOwn = React.lazy(() => import("./pages/MakeYourOwn"));
-const Login = React.lazy(() => import("./pages/Login"));
-const Signup = React.lazy(() => import("./pages/Signup"));
-const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
-const AuthAction = React.lazy(() => import("./pages/AuthAction"));
-const ExplorePage = React.lazy(() => import("./pages/ExplorePage"));
-const AdminLayout = React.lazy(() => import("./pages/Admin/AdminLayout"));
-const Profile = React.lazy(() => import("./pages/Profile"));
-const Cart = React.lazy(() => import("./pages/Cart"));
-const Checkout = React.lazy(() => import("./pages/Checkout"));
-const ContactPage = React.lazy(() => import("./pages/ContactPage"));
+const CategoryPage = lazyWithRetry(() => import("./pages/CategoryPage"));
+const ProductDetail = lazyWithRetry(() => import("./pages/ProductDetail"));
+const MakeYourOwn = lazyWithRetry(() => import("./pages/MakeYourOwn"));
+const Login = lazyWithRetry(() => import("./pages/Login"));
+const Signup = lazyWithRetry(() => import("./pages/Signup"));
+const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"));
+const AuthAction = lazyWithRetry(() => import("./pages/AuthAction"));
+const ExplorePage = lazyWithRetry(() => import("./pages/ExplorePage"));
+const AdminLayout = lazyWithRetry(() => import("./pages/Admin/AdminLayout"));
+const Profile = lazyWithRetry(() => import("./pages/Profile"));
+const Cart = lazyWithRetry(() => import("./pages/Cart"));
+const Checkout = lazyWithRetry(() => import("./pages/Checkout"));
+const ContactPage = lazyWithRetry(() => import("./pages/ContactPage"));
 
 import PrivateRoute from "./routes/PrivateRoute";
 import AdminRoute from "./routes/AdminRoute";
-const MyOrders = React.lazy(() => import("./pages/MyOrders"));
-const SupportTickets = React.lazy(() => import("./pages/SupportTickets"));
-const Wishlist = React.lazy(() => import("./pages/Wishlist"));
-const PrivacyPolicy = React.lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService = React.lazy(() => import("./pages/TermsOfService"));
+const MyOrders = lazyWithRetry(() => import("./pages/MyOrders"));
+const SupportTickets = lazyWithRetry(() => import("./pages/SupportTickets"));
+const Wishlist = lazyWithRetry(() => import("./pages/Wishlist"));
+const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
+const RefundPolicy = lazyWithRetry(() => import("./pages/RefundPolicy"));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
+  const navigationType = useNavigationType();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    if (navigationType !== "POP") {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, navigationType]);
 
   return null;
 };
@@ -67,7 +84,8 @@ const AnimatedRoutes = ({ setIsAdminMode }: { setIsAdminMode: (val: boolean) => 
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="terms-of-service" element={<TermsOfService />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
 
           {/* AUTH */}
           <Route path="/login" element={<Login />} />

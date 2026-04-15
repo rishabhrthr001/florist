@@ -8,6 +8,7 @@ import CategoryModal from "./CategoryModal";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import { toast } from "sonner";
 import API from "../../config";
+import { optimizeCloudinaryUrl } from "../../lib/cloudinary";
 
 const CategoryPanel = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -84,7 +85,7 @@ const CategoryPanel = () => {
           >
             <div className="h-40 md:h-48 relative">
               <img
-                src={cat.image}
+                src={optimizeCloudinaryUrl(cat.image || "", 200)}
                 className="w-full h-full object-cover"
                 alt={cat.name}
               />

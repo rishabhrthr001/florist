@@ -144,15 +144,7 @@ const Checkout: React.FC = () => {
     [items],
   );
 
-  const deliveryCharge = useMemo(() => {
-    if (items.length === 0 || subtotal >= 2500) return 0;
-    if (deliveryOption === "standard") return 150;
-
-    const slot = DELIVERY_SLOTS.find((s) => s.label === deliveryTime);
-    return slot?.premium ? 300 : 150;
-  }, [items.length, subtotal, deliveryOption, deliveryTime]);
-
-  const totalAmount = subtotal + deliveryCharge;
+  const totalAmount = subtotal;
 
   /* ---------------- CONFETTI ---------------- */
 
@@ -247,12 +239,12 @@ const Checkout: React.FC = () => {
           quantity: i.quantity,
           image: i.image,
           hasPremiumWrapping: i.hasPremiumWrapping || false,
+          vase: i.vase || null,
 
           custom: i.custom || null,
         })),
 
         subtotal,
-        deliveryCharge,
         totalAmount,
 
         paymentMethod: "cod",
@@ -315,12 +307,20 @@ const Checkout: React.FC = () => {
                 
                 {/* ITEMS LIST */}
                 <div className="space-y-4 text-sm font-medium border-b border-gray-100 pb-6 max-h-[30vh] overflow-y-auto scrollbar-hide pr-2">
-                   {items.map((i) => (
-                     <div key={i._id} className="flex justify-between items-start text-gray-600 gap-4">
-                       <span className="leading-snug">{i.name} <span className="text-gray-400 font-bold ml-1">× {i.quantity}</span></span>
-                       <span className="font-bold text-gray-900 shrink-0">₹{(i.price * i.quantity).toLocaleString()}</span>
-                     </div>
-                   ))}
+                    {items.map((i, idx) => (
+                      <div key={`${i._id}-${idx}`} className="border-b border-gray-50 last:border-0 pb-4 last:pb-0">
+                        <div className="flex justify-between items-start text-gray-600 gap-4 mb-1">
+                          <span className="leading-snug text-sm font-bold text-gray-800">{i.name} <span className="text-gray-400 ml-1">× {i.quantity}</span></span>
+                          <span className="font-bold text-gray-900 shrink-0">₹{(i.price * i.quantity).toLocaleString()}</span>
+                        </div>
+                        {i.vase && (
+                          <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest pl-2">
+                             <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                             With {i.vase.name}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                 </div>
 
                 {/* PRICING BREAKDOWN */}
@@ -334,19 +334,8 @@ const Checkout: React.FC = () => {
                      <span>Taxes (Included)</span>
                      <span className="text-gray-900 font-bold">₹0</span>
                    </div>
+                  </div>
 
-                   <div className="flex justify-between items-center text-gray-500">
-                     <span>Delivery ({deliveryOption === 'standard' ? 'Standard' : (deliveryTime || 'Scheduled')})</span>
-                     <span className="text-gray-900 font-bold">{deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge.toLocaleString()}`}</span>
-                   </div>
-                   
-                   {subtotal >= 2500 && (
-                     <div className="flex justify-between items-center text-green-600 font-bold bg-green-50 px-3 py-2 rounded-lg border border-green-100">
-                       <span className="text-[11px] uppercase tracking-widest">Free Delivery Applied</span>
-                       <span>-₹150</span>
-                     </div>
-                   )}
-                </div>
 
                 {/* FINAL TOTAL */}
                 <div className="flex justify-between items-end pt-2">

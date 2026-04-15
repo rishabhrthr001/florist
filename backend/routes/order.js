@@ -3,7 +3,8 @@ import Order from "../models/Order.js";
 import OrderCounter from "../models/orderCounter.js";
 import Product from "../models/Product.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
-import { getIO } from "../socket/index.js";
+// getIO removed
+import { sendOrderNotificationToAdmin, sendOrderConfirmationToCustomer } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -32,16 +33,20 @@ const generateOrderId = async () => {
 /* ---------------- CUSTOM PRICE CALC ---------------- */
 
 const calcCustomPrice = (custom) => {
-  const base = custom.base.price;
-  const wrapper = custom.wrapper?.price || 0;
+  if (!custom || !custom.base) return 0;
+  
+  const base = custom.base.price || 0;
+  const paper = custom.paper?.price || custom.wrapper?.price || 0;
   const ribbon = custom.ribbon?.price || 0;
 
-  const additionsTotal = custom.additions.reduce(
-    (sum, a) => sum + a.item.price * a.qty,
+  const additionsTotal = (custom.additions || []).reduce(
+    (sum, a) => sum + (a.item?.price || 0) * (a.qty || 0),
     0,
   );
 
-  return base + wrapper + ribbon + additionsTotal;
+  const vase = custom.vase?.price || 0;
+  
+  return base + paper + ribbon + additionsTotal + vase;
 };
 
 /* ---------------- CREATE ORDER ---------------- */
@@ -57,7 +62,6 @@ router.post("/", requireAuth, async (req, res) => {
       isGift,
       gift,
       items,
-      deliveryCharge,
       paymentMethod,
 
       // ✅ DELIVERY PREFERENCES
@@ -85,14 +89,21 @@ router.post("/", requireAuth, async (req, res) => {
 
         if (serverPrice !== item.price) {
           return res.status(400).json({
-            msg: "Custom bouquet price mismatch",
+            msg: `Custom bouquet price mismatch. Server calc: ${serverPrice}, Got: ${item.price}`,
           });
         }
 
         serverSubtotal += serverPrice * item.quantity;
 
+        // Create a clean item object for the DB
+        const dbItem = { ...item };
+        // Remove the temporary frontend 'custom-XXX' ID to avoid Mongoose CastErrors
+        if (typeof dbItem._id === 'string' && dbItem._id.startsWith('custom-')) {
+          delete dbItem._id;
+        }
+
         verifiedItems.push({
-          ...item,
+          ...dbItem,
           price: serverPrice,
         });
 
@@ -110,6 +121,10 @@ router.post("/", requireAuth, async (req, res) => {
           expectedPrice += 300;
         }
 
+        if (item.vase && item.vase.price) {
+          expectedPrice += item.vase.price;
+        }
+
         if (expectedPrice !== item.price) {
           return res.status(400).json({
             msg: `Product price mismatch for ${product.name}. Expected ${expectedPrice}, got ${item.price}`,
@@ -118,11 +133,14 @@ router.post("/", requireAuth, async (req, res) => {
 
         serverSubtotal += expectedPrice * item.quantity;
 
-        verifiedItems.push(item);
+        verifiedItems.push({
+          ...item,
+          slug: product.slug
+        });
       }
     }
 
-    const serverTotal = serverSubtotal + deliveryCharge;
+    const serverTotal = serverSubtotal;
 
     const orderId = await generateOrderId();
 
@@ -133,10 +151,10 @@ router.post("/", requireAuth, async (req, res) => {
       customerName,
       phone,
       address,
-      deliverySlot,
+      deliverySlot: (deliveryType === 'scheduled' && deliveryTime) ? deliveryTime : (deliverySlot || "day"),
       deliveryType,
       deliveryDate,
-      deliveryTime,
+      deliveryTime: (deliveryType === 'scheduled' && deliveryTime) ? deliveryTime : "ASAP",
 
       isGift,
       gift,
@@ -144,7 +162,7 @@ router.post("/", requireAuth, async (req, res) => {
       items: verifiedItems,
 
       subtotal: serverSubtotal,
-      deliveryCharge,
+      deliveryCharge: 0,
       totalAmount: serverTotal,
 
       paymentMethod,
@@ -155,10 +173,16 @@ router.post("/", requireAuth, async (req, res) => {
       specialRequest: specialRequest || null,
     });
 
-    const io = getIO();
 
-    io.to("admin").emit("new-order", order);
-    io.to(`user:${req.user._id.toString()}`).emit("new-order", order);
+
+    // Send Emails (Background)
+    sendOrderNotificationToAdmin(order).catch(err => {
+      console.error("Failed to send admin order email:", err);
+    });
+
+    sendOrderConfirmationToCustomer(order, req.user.email).catch(err => {
+      console.error("Failed to send customer order confirmation:", err);
+    });
 
     res.status(201).json(order);
   } catch (err) {
@@ -171,7 +195,9 @@ router.post("/", requireAuth, async (req, res) => {
 
 router.get("/my", requireAuth, async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user._id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(orders);
   } catch (err) {
     console.error(err);
@@ -185,6 +211,7 @@ router.get("/", requireAuth, requireAdmin, async (req, res) => {
   try {
     const orders = await Order.find()
       .populate("userId", "name email")
+      .populate("items.productId", "name slug description")
       .sort({ createdAt: -1 });
 
     res.json(orders);
@@ -209,13 +236,7 @@ router.patch("/:id/status", requireAuth, requireAdmin, async (req, res) => {
 
     await order.save();
 
-    const io = getIO();
 
-    // 🔥 realtime → admins
-    io.to("admin").emit("order-updated", order);
-
-    // 🔥 realtime → that user
-    io.to(`user:${order.userId.toString()}`).emit("order-updated", order);
 
     res.json(order);
   } catch (err) {
@@ -270,6 +291,7 @@ router.get("/active", requireAuth, requireAdmin, async (req, res) => {
       },
     })
       .populate("userId", "name email")
+      .populate("items.productId", "name slug description")
       .sort({ createdAt: -1 });
 
     res.json({

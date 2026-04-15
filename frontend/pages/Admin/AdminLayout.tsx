@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Menu, X } from "lucide-react";
-import { io, Socket } from "socket.io-client";
+
 import { ComponentItem } from "@/types";
 
 import AdminSidebar from "@/admin/components/AdminSidebar";
@@ -37,7 +37,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const { token } = useAuth();
 
-  const socketRef = useRef<Socket | null>(null);
+
 
   /* ---------------- ADMIN MODE ---------------- */
 
@@ -61,40 +61,25 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
       .catch((err) => console.error("Failed to fetch orders", err));
   }, [token]);
 
-  /* ---------------- SOCKET CONNECT ---------------- */
-
+  /* ---------------- POLLING ORDERS (60s) ---------------- */
   useEffect(() => {
     if (!token) return;
 
-    const socket = io(API, {
-      auth: {
-        token,
-      },
-      withCredentials: true,
-    });
-
-    socketRef.current = socket;
-
-    socket.on("connect", () => {});
-
-    socket.on("new-order", (order: Order) => {
-      console.log("🔥 New order received", order);
-
-      setOrders((prev) => {
-        if (prev.some((o) => o._id === order._id)) return prev;
-        return [order, ...prev];
-      });
-    });
-
-    socket.on("order-updated", (updated: Order) => {
-      setOrders((prev) =>
-        prev.map((o) => (o._id === updated._id ? updated : o)),
-      );
-    });
-
-    return () => {
-      socket.disconnect();
+    const fetchOrders = () => {
+      axios
+        .get(`${API}/orders`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((res) => {
+          setOrders(res.data);
+        })
+        .catch((err) => console.error("Polling orders failed", err));
     };
+
+    const interval = setInterval(fetchOrders, 60000);
+    return () => clearInterval(interval);
   }, [token]);
 
   /* ---------------- TITLES ---------------- */

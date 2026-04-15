@@ -55,6 +55,15 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    isOutOfStock: {
+      type: Boolean,
+      default: false,
+    },
+    isBestSeller: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );

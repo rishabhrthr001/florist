@@ -3,25 +3,28 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Plus, Trash2, X, Image as ImageIcon, Pencil } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary";
 
 import API from "@/config";
 import { useAuth } from "@/context/AuthContext";
 
 /* ---------------- TYPES ---------------- */
 
-type BouquetType = "base" | "flower" | "chocolate" | "ribbon";
+type BouquetType = "base" | "flower" | "chocolate" | "ribbon" | "filler" | "paper" | "vase";
 
 interface Product {
   _id: string;
   name: string;
   price: number;
   images?: string[];
+  isOutOfStock?: boolean;
 }
 
 interface BouquetItem {
   id: string;
   type: BouquetType;
   isActive: boolean;
+  isOutOfStock?: boolean;
 
   name?: string;
   price?: number;
@@ -43,11 +46,6 @@ const AtelierPanel = () => {
   const [loading, setLoading] = useState(false);
 
   const [categories, setCategories] = useState<any[]>([]);
-  const [selectedFlowerTag, setSelectedFlowerTag] = useState<string>("roses");
-
-  const FLOWER_TAGS = [
-    "roses", "lilies", "sunflowers", "orchids", "carnations", "mixed", "exotic"
-  ];
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BouquetItem | null>(null);
@@ -58,6 +56,7 @@ const AtelierPanel = () => {
     price: "",
     image: null as File | null,
     productId: "",
+    isOutOfStock: false,
   });
 
   const [preview, setPreview] = useState<string | null>(null);
@@ -85,9 +84,14 @@ const AtelierPanel = () => {
   /* ================= FETCH FLOWERS ================= */
 
   const fetchFlowers = async () => {
-    if (!selectedFlowerTag) return;
-    const res = await axios.get(`${API}/product?tag=${selectedFlowerTag}`);
-    setFlowerProducts(res.data);
+    // Only look for the "Flowers" category
+    const flowerCat = categories.find((c: any) => 
+      c.name.toLowerCase() === 'flowers'
+    );
+    if (!flowerCat) return;
+
+    const res = await axios.get(`${API}/product?categoryId=${flowerCat._id}&limit=500`);
+    setFlowerProducts(res.data.products || []);
   };
 
   /* ================= FETCH CHOCOLATES ================= */
@@ -95,8 +99,8 @@ const AtelierPanel = () => {
   const fetchChocolates = async () => {
     const chocCat = categories.find((c: any) => c.name.toLowerCase().includes('chocolat'));
     if (chocCat) {
-      const res = await axios.get(`${API}/product?categoryId=${chocCat._id}`);
-      setChocolateProducts(res.data);
+      const res = await axios.get(`${API}/product?categoryId=${chocCat._id}&limit=500`);
+      setChocolateProducts(res.data.products || []);
     }
   };
 
@@ -112,7 +116,7 @@ const AtelierPanel = () => {
       fetchFlowers();
       fetchChocolates();
     }
-  }, [selectedFlowerTag, categories, token]);
+  }, [categories, token]);
 
   /* ================= HELPERS ================= */
 
@@ -123,9 +127,11 @@ const AtelierPanel = () => {
     item.product?.price || item.price || 0;
 
   const displayImage = (item: BouquetItem) =>
-    item.product?.images?.[0] ||
-    item.image ||
-    "https://via.placeholder.com/200x200?text=No+Image";
+    optimizeCloudinaryUrl(
+      item.product?.images?.[0] || item.image || "",
+      100,
+      true
+    ) || "https://via.placeholder.com/100x100?text=No+Image";
 
   const bouquetByProductId = (pid: string) =>
     items.find((i) => i.product?._id === pid);
@@ -143,7 +149,6 @@ const AtelierPanel = () => {
           { headers: { Authorization: `Bearer ${token}` } },
         );
       } else {
-        // Determine type based on category name if possible
         const prod = item.product || item;
         let itemType = item.type || "flower";
         
@@ -164,9 +169,40 @@ const AtelierPanel = () => {
       }
 
       fetchBouquetItems();
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Toggle failed");
+    }
+  };
+
+  const toggleStock = async (item: BouquetItem | any) => {
+    try {
+      const existingId = item.product?._id || item._id; // This is the PRODUCT ID if linked, otherwise ITEM ID
+      
+      // Look for the item in our list to see if it's product-linked
+      const existingNode = items.find(i => (i.product?._id === existingId) || (i.id === item.id));
+
+      if (existingNode?.product) {
+        // Linked to a product -> toggle product stock
+        await axios.patch(`${API}/product/${existingNode.product._id}/stock`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else if (existingNode && (existingNode.type === 'base' || existingNode.type === 'ribbon')) {
+        // Pure bouquet item -> toggle its own stock
+        await axios.patch(`${API}/custom-bouquet/${existingNode.id}/stock`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        // Not in bouquet map yet but it's a product -> toggle product stock
+        await axios.patch(`${API}/product/${existingId}/stock`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+
+      fetchBouquetItems();
+      fetchFlowers();
+      fetchChocolates();
+    } catch {
+      toast.error("Stock toggle failed");
     }
   };
 
@@ -181,6 +217,7 @@ const AtelierPanel = () => {
       fData.append("type", formData.type);
       fData.append("name", formData.name);
       fData.append("price", formData.price);
+      fData.append("isOutOfStock", String(formData.isOutOfStock));
       if (formData.image) fData.append("image", formData.image);
 
       if (editingItem) {
@@ -197,7 +234,7 @@ const AtelierPanel = () => {
 
       setIsModalOpen(false);
       setEditingItem(null);
-      setFormData({ type: "base", name: "", price: "", image: null, productId: "" });
+      setFormData({ type: "base", name: "", price: "", image: null, productId: "", isOutOfStock: false });
       setPreview(null);
       fetchBouquetItems();
     } catch (err) {
@@ -219,7 +256,6 @@ const AtelierPanel = () => {
           await axios.delete(`${API}/custom-bouquet/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-
           fetchBouquetItems();
         },
       },
@@ -247,6 +283,7 @@ const AtelierPanel = () => {
           title="Bases"
           items={items.filter((i) => i.type === "base")}
           toggleItem={toggleItem}
+          toggleStock={toggleStock}
           deleteItem={deleteItem}
           displayImage={displayImage}
           displayName={displayName}
@@ -258,7 +295,8 @@ const AtelierPanel = () => {
                 name: item.name || "",
                 price: item.price?.toString() || "",
                 image: null,
-                productId: ""
+                productId: "",
+                isOutOfStock: item.isOutOfStock || false
              });
              setPreview(item.image);
              setIsModalOpen(true);
@@ -266,71 +304,53 @@ const AtelierPanel = () => {
         />
 
         {/* ================= FLOWERS ================= */}
-        <div className="mb-10">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-sm font-bold uppercase">Flowers</h3>
-            
-            <select 
-              value={selectedFlowerTag}
-              onChange={(e) => setSelectedFlowerTag(e.target.value)}
-              className="px-4 py-2 bg-gray-50 border rounded-xl text-xs font-bold capitalize"
-            >
-              {FLOWER_TAGS.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
-            </select>
-          </div>
-
-          <Section
-            items={flowerProducts.map((p) => {
-              const existing = bouquetByProductId(p._id);
-
-              return (
-                existing || {
-                  id: p._id,
-                  _id: p._id, // compatibility
-                  type: "flower",
-                  isActive: false,
-                  product: p,
-                }
-              );
-            })}
-            toggleItem={toggleItem}
-            deleteItem={deleteItem}
-            displayImage={displayImage}
-            displayName={displayName}
-            displayPrice={displayPrice}
-          />
-        </div>
-
-        {/* ================= CHOCOLATES ================= */}
         <Section
-          title="Chocolates"
-          items={chocolateProducts.map((p) => {
+          title="Flowers"
+          items={flowerProducts.map((p) => {
             const existing = bouquetByProductId(p._id);
-
-            return (
-              existing || {
-                id: p._id,
-                _id: p._id,
-                type: "chocolate",
-                isActive: false,
-                product: p,
-              }
-            );
+            return existing || {
+              id: p._id,
+              _id: p._id,
+              type: "flower",
+              isActive: false,
+              product: p,
+            };
           })}
           toggleItem={toggleItem}
+          toggleStock={toggleStock}
           deleteItem={deleteItem}
           displayImage={displayImage}
           displayName={displayName}
           displayPrice={displayPrice}
         />
 
-        {/* ================= RIBBONS ================= */}
+        {/* ================= CHOCOLATES ================= */}
         <Section
-          title="Ribbons"
-          items={items.filter((i) => i.type === "ribbon")}
+          title="Chocolates"
+          items={chocolateProducts.map((p) => {
+            const existing = bouquetByProductId(p._id);
+            return existing || {
+              id: p._id,
+              _id: p._id,
+              type: "chocolate",
+              isActive: false,
+              product: p,
+            };
+          })}
           toggleItem={toggleItem}
+          toggleStock={toggleStock}
+          deleteItem={deleteItem}
+          displayImage={displayImage}
+          displayName={displayName}
+          displayPrice={displayPrice}
+        />
+
+        {/* ================= FILLERS ================= */}
+        <Section
+          title="Fillers"
+          items={items.filter((i) => i.type === "filler")}
+          toggleItem={toggleItem}
+          toggleStock={toggleStock}
           deleteItem={deleteItem}
           displayImage={displayImage}
           displayName={displayName}
@@ -342,7 +362,83 @@ const AtelierPanel = () => {
                 name: item.name || "",
                 price: item.price?.toString() || "",
                 image: null,
-                productId: ""
+                productId: "",
+                isOutOfStock: item.isOutOfStock || false
+             });
+             setPreview(item.image);
+             setIsModalOpen(true);
+          }}
+        />
+
+        {/* ================= PAPER TYPE ================= */}
+        <Section
+          title="Paper Type"
+          items={items.filter((i) => i.type === "paper")}
+          toggleItem={toggleItem}
+          toggleStock={toggleStock}
+          deleteItem={deleteItem}
+          displayImage={displayImage}
+          displayName={displayName}
+          displayPrice={displayPrice}
+          onEdit={(item: any) => {
+             setEditingItem(item);
+             setFormData({
+                type: item.type,
+                name: item.name || "",
+                price: item.price?.toString() || "",
+                image: null,
+                productId: "",
+                isOutOfStock: item.isOutOfStock || false
+             });
+             setPreview(item.image);
+             setIsModalOpen(true);
+          }}
+        />
+
+        {/* ================= RIBBONS ================= */}
+        <Section
+          title="Ribbons"
+          items={items.filter((i) => i.type === "ribbon")}
+          toggleItem={toggleItem}
+          toggleStock={toggleStock}
+          deleteItem={deleteItem}
+          displayImage={displayImage}
+          displayName={displayName}
+          displayPrice={displayPrice}
+          onEdit={(item: any) => {
+             setEditingItem(item);
+             setFormData({
+                type: item.type,
+                name: item.name || "",
+                price: item.price?.toString() || "",
+                image: null,
+                productId: "",
+                isOutOfStock: item.isOutOfStock || false
+             });
+             setPreview(item.image);
+             setIsModalOpen(true);
+          }}
+        />
+
+        {/* ================= VASES ================= */}
+        <Section
+          title="Vases"
+          items={items.filter((i) => i.type === "vase")}
+          toggleItem={toggleItem}
+          toggleStock={toggleStock}
+          deleteItem={deleteItem}
+          displayImage={displayImage}
+          displayName={displayName}
+          displayPrice={displayPrice}
+          onEdit={(item: any) => {
+             setEditingItem(item);
+             setFormData({
+                type: item.type,
+                name: item.name || "",
+                price: item.price?.toString() || "",
+                image: null,
+                productId: "",
+                isOutOfStock: item.isOutOfStock || false
              });
              setPreview(item.image);
              setIsModalOpen(true);
@@ -382,8 +478,8 @@ const AtelierPanel = () => {
                     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">
                       Type
                     </label>
-                    <div className="grid grid-cols-2 gap-4">
-                      {["base", "ribbon"].map((t) => (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      {["base", "ribbon", "filler", "paper", "vase"].map((t) => (
                         <button
                           key={t}
                           type="button"
@@ -453,6 +549,23 @@ const AtelierPanel = () => {
                     </div>
                   </div>
 
+                  {/* STOCK TOGGLE FOR COMPONENTS */}
+                  {(formData.type === 'base' || formData.type === 'ribbon' || formData.type === 'filler' || formData.type === 'paper' || formData.type === 'vase') && (
+                    <div className="flex items-center justify-between p-4 bg-red-50/30 rounded-2xl border">
+                      <div>
+                        <p className="text-xs font-bold text-gray-900 uppercase">Stock Status</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Toggle product availability</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(p => ({ ...p, isOutOfStock: !p.isOutOfStock }))}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.isOutOfStock ? 'bg-red-500' : 'bg-gray-200'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.isOutOfStock ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+                  )}
+
                   <button
                     disabled={loading}
                     type="submit"
@@ -478,6 +591,7 @@ const Section = ({
   title,
   items,
   toggleItem,
+  toggleStock,
   deleteItem,
   displayImage,
   displayName,
@@ -488,54 +602,81 @@ const Section = ({
     {title && <h3 className="text-sm font-bold uppercase mb-4">{title}</h3>}
 
     <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-      {items.map((item: BouquetItem) => (
-        <div
-          key={item.id}
-          className={`p-3 rounded-xl border ${
-            item.isActive
-              ? "bg-green-50 border-green-400"
-              : "bg-red-50 border-red-300"
-          }`}
-        >
-          <img
-            src={displayImage(item)}
-            className="h-20 w-full object-cover rounded-lg mb-2"
-          />
-
-          <p className="font-semibold text-sm">{displayName(item)}</p>
-
-          <p className="text-[11px] text-gray-500">₹{displayPrice(item)}</p>
-
-          <div className="flex gap-1.5 mt-2">
-            <button
-              onClick={() => toggleItem(item)}
-              className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg border ${
-                item.isActive ? "bg-red-50 text-red-600 border-red-200" : "bg-green-50 text-green-600 border-green-200"
-              }`}
-            >
-              {item.isActive ? "Disable" : "Enable"}
-            </button>
-
-            {onEdit && (
-               <button
-                 onClick={() => onEdit(item)}
-                 className="p-1.5 bg-white border rounded-lg text-gray-500"
-               >
-                 <Pencil size={12} />
-               </button>
+      {items.map((item: BouquetItem) => {
+        const isOutOfStock = item.isOutOfStock || (item as any).product?.isOutOfStock;
+        
+        return (
+          <div
+            key={item.id}
+            className={`p-3 rounded-xl border relative overflow-hidden flex flex-col transition-all ${
+              item.isActive
+                ? isOutOfStock ? "bg-red-50 border-red-200" : "bg-green-50 border-green-400 shadow-sm"
+                : "bg-gray-50 border-gray-200 opacity-60"
+            }`}
+          >
+            {/* Out of Stock Label Overlay */}
+            {isOutOfStock && (
+              <div className="absolute top-2 left-2 z-10">
+                 <span className="bg-red-500 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded shadow-sm">
+                    Stocked Out
+                 </span>
+              </div>
             )}
 
-            {(item.id || (item as any)._id) && (
+            <div className="h-16 w-full bg-gray-100 rounded-lg mb-2 overflow-hidden flex items-center justify-center">
+              <img
+                src={displayImage(item)}
+                className={`w-full h-full object-cover transition-all ${ isOutOfStock ? 'grayscale brightness-75' : '' }`}
+              />
+            </div>
+
+            <p className="font-bold text-[12px] line-clamp-1 text-gray-900">{displayName(item)}</p>
+
+            <p className="text-[10px] font-bold text-gray-400 mb-2 mt-0.5">₹{displayPrice(item).toLocaleString()}</p>
+
+            <div className="flex flex-col gap-2 mt-auto">
+              {/* STOCK TOGGLE */}
               <button
-                onClick={() => deleteItem(item.id || (item as any)._id)}
-                className="p-1.5 bg-white border rounded-lg text-red-500"
+                onClick={() => toggleStock(item)}
+                className={`w-full text-[8px] font-black uppercase py-2 rounded-lg border transition-all ${
+                  isOutOfStock ? "bg-red-500 text-white border-red-600 shadow-md" : "bg-white text-gray-600 border-gray-200 hover:border-black"
+                }`}
               >
-                <Trash2 size={12} />
+                {isOutOfStock ? "Mark In Stock" : "Mark Out of Stock"}
               </button>
-            )}
+
+              <div className="flex gap-1">
+                <button
+                  onClick={() => toggleItem(item)}
+                  className={`flex-1 text-[8px] font-black uppercase py-1.5 rounded-lg border transition-all ${
+                    item.isActive ? "bg-white text-gray-600 border-gray-200" : "bg-black text-white border-black"
+                  }`}
+                >
+                  {item.isActive ? "Disable" : "Enable"}
+                </button>
+
+                {onEdit && (
+                   <button
+                     onClick={() => onEdit(item)}
+                     className="p-1.5 bg-white border rounded-lg text-gray-500 hover:text-black transition-colors"
+                   >
+                     <Pencil size={12} />
+                   </button>
+                )}
+
+                {(item.id || (item as any)._id) && (
+                  <button
+                    onClick={() => deleteItem(item.id || (item as any)._id)}
+                    className="p-1.5 bg-white border rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   </div>
 );

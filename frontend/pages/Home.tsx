@@ -7,8 +7,7 @@ import { Search } from "lucide-react";
 import Button from "../components/Button";
 import ProductCard from "../components/ProductCard";
 import ProductSkeleton from "../components/ProductSkeleton";
-
-
+import { optimizeCloudinaryUrl } from "../lib/cloudinary";
 
 import API from "../config";
 import { Helmet } from "react-helmet-async";
@@ -39,6 +38,7 @@ interface Product {
   description: string;
   images: string[];
   categoryId: Category;
+  isOutOfStock?: boolean;
 }
 
 /* ---------------- FALLBACK DATA ---------------- */
@@ -99,24 +99,15 @@ const Home: React.FC = () => {
       try {
         setLoading(true);
 
-        const [productRes, catRes] = await Promise.all([
+        const [productRes, catRes, bestSellerRes] = await Promise.all([
           axios.get(`${API}/product`), // Fetching all products
           axios.get(`${API}/category`),
+          axios.get(`${API}/product?bestSeller=true&limit=8`),
         ]);
 
-        // Safe check for the products list
-        const rawProducts = Array.isArray(productRes.data) 
-          ? productRes.data 
-          : (productRes.data?.products || productRes.data?.items || []);
-
-        // Randomly pull 8 products but prioritize those with real images over placeholders
-        const shuffled = [...rawProducts].sort((a, b) => {
-          const aValid = (a.images?.[0] && !a.images[0].includes("placeholder") && !a.images[0].includes("default")) ? 1 : 0;
-          const bValid = (b.images?.[0] && !b.images[0].includes("placeholder") && !b.images[0].includes("default")) ? 1 : 0;
-          if (aValid !== bValid) return bValid - aValid;
-          return 0.5 - Math.random();
-        });
-        const bestSellerItems = shuffled.slice(0, 8);
+        const bestSellerItems = bestSellerRes.data?.products?.length > 0 
+          ? bestSellerRes.data.products 
+          : (Array.isArray(productRes.data) ? productRes.data : (productRes.data?.products || [])).slice(0, 8);
 
         const catList: Category[] = Array.isArray(catRes.data)
           ? catRes.data
@@ -180,7 +171,7 @@ const Home: React.FC = () => {
               className="min-w-[88vw] md:min-w-[900px] aspect-[16/9] md:aspect-[21/9] relative rounded-[3rem] overflow-hidden cursor-pointer group snap-center shadow-[0_20px_60px_rgba(0,0,0,0.05)] border border-gray-100 flex-shrink-0"
             >
               <img
-                src={banner.imageUrl}
+                src={optimizeCloudinaryUrl(banner.imageUrl, 1200)}
                 alt={banner.title}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.08] transition-transform duration-[2500ms] ease-out-quint"
               />
@@ -254,10 +245,10 @@ const Home: React.FC = () => {
                     <div className="w-full h-full rounded-full overflow-hidden relative">
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-1000 z-10" />
                       <img
-                        src={cat.image}
+                        src={optimizeCloudinaryUrl(cat.image || "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=300&q=80", 400, true)}
                         className="w-full h-full rounded-full object-cover group-hover:scale-[1.12] transition-transform duration-[1500ms] cubic-bezier(0.25, 0.46, 0.45, 0.94)"
                         alt={cat.name}
-                        loading="lazy" // Added loading="lazy"
+                        loading="lazy"
                       />
                     </div>
                   </div>
@@ -294,7 +285,7 @@ const Home: React.FC = () => {
                className="group cursor-pointer flex flex-col items-center"
              >
                <div className="w-full aspect-[4/5] rounded-[2rem] overflow-hidden mb-4 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] group-hover:shadow-[0_10px_30px_rgba(238,28,71,0.08)] bg-[#FDFBF9] transition-all duration-500 relative">
-                 <img src={flower.image} alt={flower.name} className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-700" />
+                 <img src={optimizeCloudinaryUrl(flower.image, 400, true)} alt={flower.name} className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-700" />
                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
                </div>
                <span className="font-sans font-bold text-[13px] md:text-sm text-gray-800 tracking-wide group-hover:text-[#EE1C47] transition-colors">{flower.name}</span>
@@ -370,7 +361,7 @@ const Home: React.FC = () => {
                       }}
                     >
                       <img 
-                        src={item.image} 
+                        src={optimizeCloudinaryUrl(item.image, 400, true)} 
                         alt={item.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
@@ -421,7 +412,7 @@ const Home: React.FC = () => {
                     className="absolute inset-0 bg-white rounded-xl border-[1.5px] border-[#C5A059] shadow-sm transform group-hover:bg-[#FAF9F6] group-hover:shadow-[0_10px_20px_rgba(197,160,89,0.15)] transition-all duration-500 overflow-hidden flex justify-center items-center"
                   >
                     <img 
-                      src={item.image} 
+                      src={optimizeCloudinaryUrl(item.image, 400, true)} 
                       alt={item.name}
                       className="relative z-10 w-[140%] h-[140%] object-contain object-center scale-100 group-hover:scale-110 transition-transform duration-700 mix-blend-multiply"
                     />

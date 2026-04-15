@@ -4,7 +4,7 @@ const customBouquetSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["base", "flower", "chocolate", "ribbon"],
+      enum: ["base", "flower", "chocolate", "ribbon", "filler", "paper", "vase"],
       required: true,
     },
 
@@ -22,6 +22,10 @@ const customBouquetSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    isOutOfStock: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },

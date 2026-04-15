@@ -5,6 +5,7 @@ import { Heart, ShoppingBag, Trash2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useWishlist } from "../context/WishlistContext";
 import { useCart } from "../context/CartContext";
+import { optimizeCloudinaryUrl } from "../lib/cloudinary";
 
 const Wishlist: React.FC = () => {
     const { items, removeFromWishlist } = useWishlist();
@@ -95,7 +96,7 @@ const Wishlist: React.FC = () => {
                                         <motion.img
                                             whileHover={{ scale: 1.05 }}
                                             transition={{ duration: 0.6 }}
-                                            src={item.image}
+                                            src={optimizeCloudinaryUrl(item.image, 400, true)}
                                             alt={item.name}
                                             className="w-full h-full object-cover"
                                         />

@@ -73,6 +73,9 @@ const TicketsPanel: React.FC = () => {
 
     useEffect(() => {
         fetchTickets();
+        
+        const interval = setInterval(fetchTickets, 60000);
+        return () => clearInterval(interval);
     }, [statusFilter]);
 
     useEffect(() => {

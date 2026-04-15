@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import API from "../config";
-import { socket } from "../lib/Socket";
+
 
 /* ---------------- TYPES ---------------- */
 
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     delete axios.defaults.headers.common["Authorization"];
 
-    socket.disconnect();
+
 
     setUser(null);
     setToken(null);
@@ -110,9 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(JSON.parse(savedUser));
     }
 
-    // socket reconnect
-    socket.auth = { token: savedToken };
-    socket.connect();
+
 
     refreshUser().finally(() => setLoading(false));
   }, []);
@@ -125,8 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     axios.defaults.headers.common["Authorization"] = `Bearer ${jwt}`;
 
-    socket.auth = { token: jwt };
-    socket.connect();
+
 
     setToken(jwt);
     setUser(userData);

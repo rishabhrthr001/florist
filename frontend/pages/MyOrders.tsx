@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Check } from "lucide-react";
-import { io } from "socket.io-client";
+
 
 import API from "../config";
 import { useAuth } from "../context/AuthContext";
+import { optimizeCloudinaryUrl } from "../lib/cloudinary";
 
 /* ---------------- TYPES ---------------- */
 
@@ -116,32 +117,28 @@ const MyOrders: React.FC = () => {
       .finally(() => setLoading(false));
   }, [token]);
 
-  /* ---------------- SOCKET REALTIME ---------------- */
-
+  /* ---------------- POLLING REALTIME (60s) ---------------- */
   useEffect(() => {
     if (!token) return;
 
-    const socket = io(API, {
-      auth: { token },
-      withCredentials: true,
-    });
-
-    socket.on("order-updated", (updated: Order) => {
-      setOrders((prev) =>
-        prev.map((o) => (o._id === updated._id ? updated : o)),
-      );
-    });
-
-    socket.on("new-order", (order: Order) => {
-      setOrders((prev) => {
-        if (prev.some((o) => o._id === order._id)) return prev;
-        return [order, ...prev];
-      });
-    });
-
-    return () => {
-      socket.disconnect();
+    const fetchOrders = () => {
+      axios
+        .get(`${API}/orders/my`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((res) => {
+          const sorted = res.data.sort((a: any, b: any) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          setOrders(sorted);
+        })
+        .catch((err) => console.error("Polling user orders failed", err));
     };
+
+    const interval = setInterval(fetchOrders, 60000);
+    return () => clearInterval(interval);
   }, [token]);
 
   /* ---------------- UI STATES ---------------- */
@@ -314,7 +311,7 @@ const MyOrders: React.FC = () => {
                                {/* IMAGE */}
                                {i.image ? (
                                  <div className="w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center">
-                                   <img src={i.image} alt={i.name} className="w-full h-full object-cover object-center" />
+                                   <img src={optimizeCloudinaryUrl(i.image, 200)} alt={i.name} className="w-full h-full object-cover object-center" />
                                  </div>
                                ) : (
                                  <div className="w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center text-gray-300 text-xs text-center p-2 font-mono">

@@ -21,6 +21,7 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useAuth } from "../context/AuthContext";
 import { Helmet } from "react-helmet-async";
+import { optimizeCloudinaryUrl } from "../lib/cloudinary";
 
 /* ---------------- TYPES ---------------- */
 
@@ -51,6 +52,12 @@ interface Product {
   images: string[];
   price: number;
   premiumWrapping?: boolean;
+  isOutOfStock?: boolean;
+  categoryId?: {
+    _id: string;
+    name: string;
+    slug: string;
+  };
 }
 
 /* ---------------- COMPONENT ---------------- */
@@ -80,6 +87,9 @@ const ProductDetail: React.FC = () => {
 
   const inWishlist = product ? isInWishlist(product._id) : false;
 
+  const [vases, setVases] = useState<Product[]>([]);
+  const [selectedVase, setSelectedVase] = useState<Product | null>(null);
+
   /* ---------------- FETCH PRODUCT ---------------- */
 
   useEffect(() => {
@@ -91,7 +101,7 @@ const ProductDetail: React.FC = () => {
         // Fetch cross-sell
         if (data && data._id) {
            const crossRes = await axios.get(`${API}/product`);
-           const others = crossRes.data.filter((p: any) => p._id !== data._id).slice(0, 4);
+           const others = crossRes.data.products?.filter((p: any) => p._id !== data._id).slice(0, 4) || [];
            setCrossSells(others);
         }
       } finally {
@@ -99,9 +109,28 @@ const ProductDetail: React.FC = () => {
       }
     };
 
+    const fetchVases = async () => {
+       try {
+          const res = await axios.get(`${API}/custom-bouquet`);
+          const atelierVases = res.data
+            .filter((item: any) => (item.type === 'vase' || item.type === 'base') && item.isActive)
+            .map((item: any) => ({
+              _id: item._id,
+              name: item.name,
+              price: item.price,
+              images: [item.image],
+              isOutOfStock: item.isOutOfStock
+            }));
+          setVases(atelierVases);
+       } catch (err) {
+          console.error("Vases fetch error", err);
+       }
+    };
+
     window.scrollTo(0, 0);
 
     fetchProduct();
+    fetchVases();
   }, [slug]);
 
   /* ---------------- FETCH REVIEWS ---------------- */
@@ -189,13 +218,20 @@ const ProductDetail: React.FC = () => {
     addToCart({
       _id: product._id,
       name: product.name,
-      price: product.price + (product.premiumWrapping ? 0 : (hasPremiumWrapping ? 300 : 0)),
+      price: product.price + (product.premiumWrapping ? 0 : (hasPremiumWrapping ? 300 : 0)) + (selectedVase ? selectedVase.price : 0),
       image: product.images[0],
       quantity: qty,
       hasPremiumWrapping: product.premiumWrapping || hasPremiumWrapping,
+      vase: selectedVase ? {
+        id: selectedVase._id,
+        name: selectedVase.name,
+        price: selectedVase.price,
+        image: selectedVase.images[0]
+      } : undefined,
+      categorySlug: (product as any).categoryId?.slug
     });
 
-    toast.success(`Handcrafted ${product.name} added to cart 🛒`);
+    toast.success(`Handcrafted ${product.name} ${selectedVase ? "with vase " : ""}added to cart 🛒`);
   };
 
   /* ---------------- WISHLIST ---------------- */
@@ -237,7 +273,7 @@ const ProductDetail: React.FC = () => {
         <meta name="description" content={product.description.substring(0, 150) + "..."} />
         <meta property="og:title" content={`${product.name} | Mangalam Florist`} />
         <meta property="og:description" content={product.description.substring(0, 150) + "..."} />
-        <meta property="og:image" content={product.images[0]} />
+        <meta property="og:image" content={optimizeCloudinaryUrl(product.images[0], 1200, true)} />
         <link rel="canonical" href={`https://mangalamflorist.com/product/${product.slug}`} />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 pt-28">
@@ -252,10 +288,10 @@ const ProductDetail: React.FC = () => {
         </nav>
 
         {/* PRODUCT SECTION */}
-        <div className="flex flex-col lg:grid lg:grid-cols-[1.2fr_1fr] gap-10 lg:gap-16 max-w-[120rem] mx-auto">
+        <div className="flex flex-col md:grid md:grid-cols-[1.2fr_1fr] gap-10 lg:gap-16 max-w-[120rem] mx-auto">
           
           {/* LEFT: IMAGE GALLERY (STICKY) */}
-          <div className="flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-32 h-max lg:self-start lg:max-h-[calc(100vh-8rem)]">
+          <div className="flex flex-col-reverse md:flex-row gap-4 md:sticky md:top-32 h-max md:self-start md:max-h-[calc(100vh-8rem)]">
             
             {/* THUMBNAILS */}
             {product.images.length > 1 && (
@@ -268,7 +304,7 @@ const ProductDetail: React.FC = () => {
                       idx === activeImg ? "border-pink-300 shadow-md scale-[1.02]" : "border-transparent opacity-60 hover:opacity-100"
                     }`}
                   >
-                    <img src={img} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover bg-white" />
+                    <img src={optimizeCloudinaryUrl(img, 200, true)} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover bg-white" />
                   </button>
                 ))}
               </div>
@@ -277,7 +313,7 @@ const ProductDetail: React.FC = () => {
             {/* MAIN IMAGE */}
             <div className="w-full rounded-[1.5rem] md:rounded-[2rem] overflow-hidden bg-white border border-gray-100 relative group aspect-[4/5] md:aspect-[3/4] lg:min-h-[650px] shadow-sm">
               <img
-                src={product.images[activeImg]}
+                src={optimizeCloudinaryUrl(product.images[activeImg], 1200, true)}
                 alt={product.name}
                 className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.15] cursor-zoom-in"
               />
@@ -316,7 +352,11 @@ const ProductDetail: React.FC = () => {
                 <div className="flex flex-wrap items-end gap-3 mb-1">
                   <span className="font-sans font-bold text-3xl md:text-4xl text-gray-900 tracking-tight">₹{product.price.toLocaleString()}</span>
                   <span className="text-sm md:text-base text-gray-400 line-through mb-1 font-light">₹{(product.price * 1.4).toFixed(0).toLocaleString()}</span>
-                  <span className="text-[10px] md:text-xs text-green-700 font-bold mb-1.5 ml-1 bg-green-50 px-2 py-1 rounded border border-green-100 uppercase tracking-wide">28% OFF</span>
+                  {product.isOutOfStock ? (
+                    <span className="text-[10px] md:text-xs text-red-600 font-bold mb-1.5 ml-1 bg-red-50 px-2 py-1 rounded border border-red-100 uppercase tracking-wide">Out of Stock</span>
+                  ) : (
+                    <span className="text-[10px] md:text-xs text-green-700 font-bold mb-1.5 ml-1 bg-green-50 px-2 py-1 rounded border border-green-100 uppercase tracking-wide">28% OFF</span>
+                  )}
                 </div>
                 <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-bold">Inclusive of all taxes</p>
               </div>
@@ -352,25 +392,69 @@ const ProductDetail: React.FC = () => {
                 )}
               </div>
 
+              {/* VASE SELECTION */}
+              {product && 
+               ((product as any).categoryId?.slug === 'flowers' || 
+                (product as any).categoryId?.slug === 'bouquets') && 
+               vases.length > 0 && (
+                <div className="bg-white border border-gray-100 rounded-[1.25rem] p-3 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                   <div className="flex justify-between items-center mb-2.5">
+                      <div>
+                        <h4 className="text-[9px] sm:text-xs font-bold uppercase tracking-widest text-gray-800">Complete the Look</h4>
+                        <p className="text-[8px] sm:text-[9px] text-gray-400 font-bold uppercase tracking-wide mt-0.5">Add a gorgeous vase</p>
+                      </div>
+                      {selectedVase && (
+                        <button 
+                          onClick={() => setSelectedVase(null)}
+                          className="text-[8px] font-bold text-[#EE1C47] uppercase tracking-widest hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                   </div>
+
+                   <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide no-scrollbar">
+                      {vases.map((v) => (
+                        <button
+                          key={v._id}
+                          onClick={() => setSelectedVase(v._id === selectedVase?._id ? null : v)}
+                          className={`flex-none w-[60px] sm:w-[80px] md:w-[calc(25%-8px)] group transition-all ${selectedVase?._id === v._id ? 'scale-[1.02]' : 'opacity-70 hover:opacity-100'}`}
+                        >
+                          <div className={`aspect-square rounded-lg overflow-hidden border mb-1 transition-all ${selectedVase?._id === v._id ? 'border-pink-500 shadow-sm' : 'border-transparent bg-gray-50'}`}>
+                             <img src={v.images[0]} className="w-full h-full object-cover" alt={v.name} />
+                          </div>
+                          <p className={`text-[8px] font-bold line-clamp-1 ${selectedVase?._id === v._id ? 'text-pink-600' : 'text-gray-700'}`}>{v.name}</p>
+                          <p className="text-[7px] font-bold text-gray-400">₹{v.price}</p>
+                        </button>
+                      ))}
+                   </div>
+                </div>
+              )}
+
               {/* ACTIONS - Hidden on mobile, sticky bar used instead */}
-              <div className="hidden md:flex gap-4 mt-2">
-                <div className="flex items-center justify-between bg-white rounded-full border border-gray-200/60 p-1.5 w-[120px] sm:w-36 h-[3.5rem] shadow-sm shrink-0">
-                  <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all text-gray-600 border border-transparent hover:border-gray-200">
-                    <Minus size={16} strokeWidth={2}/>
-                  </button>
-                  <span className="font-bold text-gray-800 text-sm">{qty}</span>
-                  <button onClick={() => setQty((q) => q + 1)} className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all text-gray-600 border border-transparent hover:border-gray-200">
-                    <Plus size={16} strokeWidth={2} />
+                <div className="hidden md:flex gap-4 mt-2">
+                  <div className={`flex items-center justify-between bg-white rounded-full border border-gray-200/60 p-1.5 w-[120px] sm:w-36 h-[3.5rem] shadow-sm shrink-0 ${product.isOutOfStock ? "opacity-50 pointer-events-none" : ""}`}>
+                    <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all text-gray-600 border border-transparent hover:border-gray-200">
+                      <Minus size={16} strokeWidth={2}/>
+                    </button>
+                    <span className="font-bold text-gray-800 text-sm">{qty}</span>
+                    <button onClick={() => setQty((q) => q + 1)} className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all text-gray-600 border border-transparent hover:border-gray-200">
+                      <Plus size={16} strokeWidth={2} />
+                    </button>
+                  </div>
+                  
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={product.isOutOfStock}
+                    className={`flex-1 flex items-center justify-center gap-2 h-[3.5rem] rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all duration-300 ${
+                      product.isOutOfStock 
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
+                        : "bg-black text-white hover:bg-gray-800 hover:shadow-lg hover:-translate-y-0.5"
+                    }`}
+                  >
+                    <ShoppingBag size={18} /> {product.isOutOfStock ? "Out of Stock" : "Add to Cart"}
                   </button>
                 </div>
-                
-                <button
-                  onClick={handleAddToCart}
-                  className="flex-1 flex items-center justify-center gap-2 h-[3.5rem] bg-black text-white rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest hover:bg-gray-800 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-                >
-                  <ShoppingBag size={18} /> Add to Cart
-                </button>
-              </div>
 
               {/* ACCORDION DESC */}
               <div className="mt-4 border border-gray-100 bg-white rounded-[1.5rem] overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
@@ -552,8 +636,8 @@ const ProductDetail: React.FC = () => {
       </div>
       
       {/* MOBILE STICKY ADD TO CART */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-6">
-         <div className="flex items-center justify-between bg-white rounded-full border border-gray-200/60 p-1 w-[120px] shrink-0 h-14">
+      <div className="md:hidden fixed bottom-1 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-6">
+         <div className={`flex items-center justify-between bg-white rounded-full border border-gray-200/60 p-1 w-[120px] shrink-0 h-14 ${product.isOutOfStock ? "opacity-50 pointer-events-none" : ""}`}>
             <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all text-gray-400">
                <Minus size={16} />
             </button>
@@ -562,8 +646,16 @@ const ProductDetail: React.FC = () => {
                <Plus size={16} />
             </button>
          </div>
-         <button onClick={handleAddToCart} className="flex-1 bg-black text-white rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg h-14 flex items-center justify-center gap-2">
-            Add • ₹{((product.price + (product.premiumWrapping ? 0 : (hasPremiumWrapping ? 300 : 0))) * qty).toLocaleString()}
+         <button 
+           onClick={handleAddToCart} 
+           disabled={product.isOutOfStock}
+           className={`flex-1 rounded-full text-[11px] font-bold uppercase tracking-widest shadow-lg h-14 flex items-center justify-center gap-2 ${
+             product.isOutOfStock 
+               ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
+               : "bg-black text-white"
+           }`}
+         >
+            {product.isOutOfStock ? "Out of Stock" : `Add • ₹${((product.price + (product.premiumWrapping ? 0 : (hasPremiumWrapping ? 300 : 0)) + (selectedVase ? selectedVase.price : 0)) * qty).toLocaleString()}`}
          </button>
       </div>
     </motion.div>

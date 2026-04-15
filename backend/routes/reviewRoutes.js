@@ -28,7 +28,7 @@ router.post("/", requireAuth, async (req, res) => {
       { path: "product", select: "name slug" },
     ]);
 
-    req.io.emit("new-review", populated);
+    // review emit removed
 
     res.status(201).json(populated);
   } catch (err) {
@@ -80,7 +80,7 @@ router.post("/:id/reply", requireAuth, async (req, res) => {
       { path: "product", select: "name slug" },
     ]);
 
-    req.io.emit("review-replied", populated);
+    // review-replied emit removed
 
     res.json(populated);
   } catch (err) {

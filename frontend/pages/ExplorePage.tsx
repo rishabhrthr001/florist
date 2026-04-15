@@ -40,10 +40,15 @@ const ExplorePage: React.FC = () => {
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [maxPrice, setMaxPrice] = useState<number>(10000);
   const [subFilter, setSubFilter] = useState<string>("all");
+
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const LIMIT = 12;
 
   /* ---------------- FETCH CATEGORIES ---------------- */
 
@@ -72,43 +77,87 @@ const ExplorePage: React.FC = () => {
   /* ---------------- FETCH PRODUCTS ---------------- */
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchProducts = async (currentPage: number, isInitial: boolean = false) => {
       try {
-        setLoadingProducts(true);
-
-        // 👉 ALL
-        if (selectedSlug === "all") {
-          const { data } = await axios.get(`${API}/product`);
-          setProducts(data);
-          return;
+        if (isInitial) {
+          setLoadingProducts(true);
+        } else {
+          setIsFetchingMore(true);
         }
 
-        // 👉 Backend slug -> id
-        const category = categories.find((c) => c.slug === selectedSlug);
+        let url = `${API}/product?page=${currentPage}&limit=${LIMIT}`;
 
-        if (!category) {
-          // Fallback check if it's a direct tag search
-          const { data } = await axios.get(`${API}/product?tag=${selectedSlug}`);
-          setProducts(data);
-          return;
+        // 👉 Category Filter
+        if (selectedSlug !== "all") {
+          const category = categories.find((c) => c.slug === selectedSlug);
+          if (category) {
+            url += `&categoryId=${category._id}`;
+          } else {
+            // Fallback for tags - convert dash-slug to space-tag (e.g. teddy-bouquet -> teddy bouquet)
+            url += `&tag=${selectedSlug.replace(/-/g, " ")}`;
+          }
         }
 
-        const { data } = await axios.get(
-          `${API}/product?categoryId=${category._id}`,
-        );
+        // 👉 Search Filter (Server-side)
+        if (search.trim()) {
+          url += `&search=${encodeURIComponent(search)}`;
+        }
 
-        setProducts(data);
+        const { data } = await axios.get(url);
+        
+        // Backend returns { products: [], hasMore: boolean, ... }
+        if (isInitial) {
+          setProducts(data.products || []);
+        } else {
+          setProducts(prev => {
+            const currentIds = new Set(prev.map(p => p._id));
+            const distinctNew = (data.products || []).filter((p: any) => !currentIds.has(p._id));
+            return [...prev, ...distinctNew];
+          });
+        }
+        
+        setHasMore(data.hasMore);
       } catch {
         toast.error("Failed to load products");
       } finally {
         setLoadingProducts(false);
+        setIsFetchingMore(false);
       }
     };
 
     if (categories.length) {
-      fetchProducts();
+      setPage(1);
+      fetchProducts(1, true);
     }
-  }, [selectedSlug, categories]);
+  }, [selectedSlug, categories, search]);
+
+  const handleLoadMore = async () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    
+    try {
+      setIsFetchingMore(true);
+      let url = `${API}/product?page=${nextPage}&limit=${LIMIT}`;
+      if (selectedSlug !== "all") {
+        const category = categories.find((c) => c.slug === selectedSlug);
+        if (category) url += `&categoryId=${category._id}`;
+        else url += `&tag=${selectedSlug.replace(/-/g, " ")}`;
+      }
+      if (search.trim()) url += `&search=${encodeURIComponent(search)}`;
+
+      const { data } = await axios.get(url);
+      setProducts(prev => {
+        const currentIds = new Set(prev.map(p => p._id));
+        const distinctNew = (data.products || []).filter((p: any) => !currentIds.has(p._id));
+        return [...prev, ...distinctNew];
+      });
+      setHasMore(data.hasMore);
+    } catch {
+      toast.error("Failed to load more products");
+    } finally {
+      setIsFetchingMore(false);
+    }
+  };
 
   /* ---------------- CATEGORY CLICK ---------------- */
 
@@ -396,6 +445,40 @@ const ExplorePage: React.FC = () => {
                 ))}
             </AnimatePresence>
           </motion.div>
+
+          {/* ---------------- LOAD MORE ---------------- */}
+          {hasMore && !loadingProducts && (
+            <div className="flex justify-center mt-16 mb-8">
+              <button
+                onClick={handleLoadMore}
+                disabled={isFetchingMore}
+                className={`relative px-10 py-4 bg-white border border-gray-100 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1 active:translate-y-0 group ${
+                  isFetchingMore ? "opacity-70 cursor-not-allowed" : ""
+                }`}
+              >
+                <span className={`transition-opacity duration-300 ${isFetchingMore ? "opacity-0" : "opacity-100"}`}>
+                  Load More Products
+                </span>
+                
+                {isFetchingMore && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-pink-100 border-t-[#EE1C47] rounded-full animate-spin" />
+                  </div>
+                )}
+                
+                {/* Decorative dot */}
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#EE1C47] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </button>
+            </div>
+          )}
+
+          {!hasMore && !loadingProducts && filteredProducts.length > 0 && (
+            <div className="text-center mt-16 mb-8">
+              <p className="text-gray-300 text-[10px] uppercase tracking-[0.3em] font-bold">
+                You've reached the absolute end
+              </p>
+            </div>
+          )}
 
           {!loadingProducts && filteredProducts.length === 0 && (
             <div className="py-20 text-center border-2 border-dashed border-gray-100 rounded-[3rem] mt-10">

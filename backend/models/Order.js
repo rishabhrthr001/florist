@@ -104,6 +104,13 @@ const orderSchema = new mongoose.Schema(
           default: false,
         },
 
+        vase: {
+          id: String,
+          name: String,
+          price: Number,
+          image: String
+        },
+
         /* -------- CUSTOM BOUQUET SNAPSHOT -------- */
 
         custom: {
@@ -119,13 +126,19 @@ const orderSchema = new mongoose.Schema(
             price: Number,
           },
 
-          wrapper: {
+          paper: {
             id: String,
             name: String,
             price: Number,
           },
 
           message: String,
+
+          vase: {
+            id: String,
+            name: String,
+            price: Number,
+          },
 
           additions: [
             {

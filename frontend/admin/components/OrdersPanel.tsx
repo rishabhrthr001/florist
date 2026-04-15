@@ -22,6 +22,12 @@ export interface CustomBouquet {
     price: number;
   };
 
+  paper?: {
+    id: string;
+    name: string;
+    price: number;
+  };
+
   wrapper?: {
     id: string;
     name: string;
@@ -40,7 +46,7 @@ export interface CustomBouquet {
 }
 
 export interface OrderItem {
-  productId: string | null;
+  productId: any | null;
   name: string;
   quantity: number;
   price: number;
@@ -49,6 +55,7 @@ export interface OrderItem {
   isCustom?: boolean;
   hasPremiumWrapping?: boolean;
   custom?: CustomBouquet;
+  slug?: string;
 }
 
 export interface Order {
@@ -111,6 +118,44 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
     filter === "all" ? orders : orders.filter((o) => o.orderStatus === filter);
 
   /* ---------------- UPDATE STATUS ---------------- */
+
+  const copyOrderDetails = (order: Order) => {
+    let text = `📦 ORDER: ${order.orderId}\n`;
+    text += `👤 CUSTOMER: ${order.customerName} (${order.phone})\n`;
+    text += `📍 ADDRESS: ${order.address.line1}, ${order.address.city}\n\n`;
+    
+    if (order.items) {
+      text += `🛒 ITEMS:\n`;
+      order.items.forEach((item, idx) => {
+        text += `${idx + 1}. ${item.name} (QTY: ${item.quantity})\n`;
+        if (item.hasPremiumWrapping) text += `   [PREMIUM WRAPPING REQUIRED]\n`;
+        if (item.isCustom && item.custom) {
+          text += `   --- CUSTOM BOUQUET ---\n`;
+          if (item.custom.base) text += `   Base: ${item.custom.base.name}\n`;
+          if (item.custom.ribbon) text += `   Ribbon: ${item.custom.ribbon.name}\n`;
+          if (item.custom.paper || item.custom.wrapper) text += `   Paper: ${(item.custom.paper || item.custom.wrapper).name}\n`;
+          if (item.custom.additions.length > 0) {
+            text += `   Additions:\n`;
+            item.custom.additions.forEach(a => {
+              text += `     • ${a.item.name} (QTY: ${a.qty})\n`;
+            });
+          }
+          if (item.custom.message) text += `   Note: ${item.custom.message}\n`;
+        }
+        text += `\n`;
+      });
+    }
+
+    if (order.specialRequest) text += `💡 SPECIAL REQUEST: ${order.specialRequest}\n\n`;
+    if (order.gift) {
+      text += `🎁 GIFT INFO:\n`;
+      text += `   Recipient: ${order.gift.name}\n`;
+      if (order.gift.giftMessage) text += `   Card: "${order.gift.giftMessage}"\n`;
+    }
+
+    navigator.clipboard.writeText(text);
+    alert("Order details copied for fulfillment 📋");
+  };
 
   const updateStatus = async (id: string, newStatus: Order["orderStatus"]) => {
     try {
@@ -283,6 +328,12 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                   <h3 className="font-serif text-xl font-bold">
                     {selectedOrder.orderId}
                   </h3>
+                  <button 
+                    onClick={() => copyOrderDetails(selectedOrder)}
+                    className="text-[9px] bg-gray-900 text-white px-2.5 py-1 rounded-md uppercase font-bold tracking-widest mt-1 hover:bg-black transition-colors"
+                  >
+                    Copy for Making
+                  </button>
                   <p className="text-xs text-gray-500 mt-1">
                     {new Date(selectedOrder.createdAt).toLocaleString()}
                   </p>
@@ -403,18 +454,48 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                         key={idx}
                         className="bg-gray-50 rounded-xl px-4 py-3"
                       >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="text-sm font-semibold">{i.name}</p>
-                            <p className="text-[11px] text-gray-500">
-                              ₹{i.price} × {i.quantity}
+                          <div className="flex justify-between items-start">
+                            <div>
+                              {(() => {
+                                const prodDetails =
+                                  typeof i.productId === "object" && i.productId !== null
+                                    ? i.productId
+                                    : null;
+                                const itemSlug = i.slug || prodDetails?.slug;
+                                const description = prodDetails?.description;
+
+                                return (
+                                  <>
+                                    {itemSlug ? (
+                                      <a
+                                        href={`/product/${itemSlug}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-sm font-semibold text-blue-600 hover:underline inline-flex items-center gap-1"
+                                      >
+                                        {i.name}
+                                        <span className="text-[10px]">↗</span>
+                                      </a>
+                                    ) : (
+                                      <p className="text-sm font-semibold">{i.name}</p>
+                                    )}
+                                    <p className="text-[11px] text-gray-500">
+                                      ₹{i.price} × {i.quantity}
+                                    </p>
+                                    {description && (
+                                      <p className="text-xs text-gray-600 mt-2 italic bg-white p-2 rounded border border-gray-100">
+                                        💐 <strong>Contains:</strong> {description}
+                                      </p>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </div>
+
+                            <p className="text-sm font-bold">
+                              ₹{i.price * i.quantity}
                             </p>
                           </div>
-
-                          <p className="text-sm font-bold">
-                            ₹{i.price * i.quantity}
-                          </p>
-                        </div>
 
                         {i.hasPremiumWrapping && (
                           <div className="mt-2 flex items-center gap-1.5 text-pink-500 bg-pink-50 w-fit px-2 py-0.5 rounded-full border border-pink-100">
@@ -436,11 +517,11 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                               </p>
                             )}
 
-                            {i.custom.wrapper && (
+                            {(i.custom.paper || i.custom.wrapper) && (
                               <p>
-                                <strong>Wrapper:</strong>{" "}
-                                {i.custom.wrapper.name} — ₹
-                                {i.custom.wrapper.price}
+                                <strong>Paper:</strong>{" "}
+                                {(i.custom.paper || i.custom.wrapper).name} — ₹
+                                {(i.custom.paper || i.custom.wrapper).price}
                               </p>
                             )}
 

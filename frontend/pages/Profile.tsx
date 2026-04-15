@@ -19,6 +19,7 @@ import axios from "axios";
 
 import { useAuth } from "@/context/AuthContext";
 import API from "../config";
+import { optimizeCloudinaryUrl } from "@/lib/cloudinary";
 
 /* ---------------- TYPES ---------------- */
 
@@ -299,7 +300,7 @@ const Profile: React.FC = () => {
                           <div className="flex items-center gap-4">
                              <div className="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden shadow-sm shrink-0 relative flex items-center justify-center p-2">
                                {order.items[0]?.image ? (
-                                  <img src={order.items[0].image} className="w-full h-full object-cover rounded-lg" alt="" />
+                                  <img src={optimizeCloudinaryUrl(order.items[0].image, 200, true)} className="w-full h-full object-cover rounded-lg" alt="" />
                                ) : (
                                   <Package className="text-gray-300" size={24} />
                                )}

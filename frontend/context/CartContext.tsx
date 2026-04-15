@@ -22,6 +22,12 @@ interface CustomBouquet {
     price: number;
   };
 
+  paper?: {
+    id: string;
+    name: string;
+    price: number;
+  };
+
   additions: CustomAddition[];
 
   message?: string;
@@ -35,6 +41,14 @@ interface CartItem {
   quantity: number;
   custom?: CustomBouquet;
   hasPremiumWrapping?: boolean;
+  isOutOfStock?: boolean;
+  vase?: {
+    id: string;
+    name: string;
+    price: number;
+    image: string;
+  };
+  categorySlug?: string;
 }
 
 interface CartContextType {
@@ -64,6 +78,7 @@ interface CartContextType {
   deliveryTime: string;
   setDeliveryTime: React.Dispatch<React.SetStateAction<string>>;
 
+  addVaseToItem: (cartId: string, vase: { id: string; name: string; price: number; image: string }) => void;
   totalItems: number;
 }
 
@@ -164,7 +179,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         return [...prev, item];
       }
 
-      const found = prev.find((i) => i._id === item._id && !i.custom);
+      const found = prev.find((i) => i._id === item._id && !i.custom && i.vase?.id === item.vase?.id);
 
       if (found) {
         return prev.map((i) =>
@@ -194,7 +209,14 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     );
   };
 
-  /* ---------------- CUSTOM ADDITIONS ---------------- */
+  /* ---------------- ADD VASE TO ITEM ---------------- */
+  const addVaseToItem = (cartId: string, vase: { id: string; name: string; price: number; image: string }) => {
+    setItems((prev) =>
+      prev.map((i) =>
+        i._id === cartId ? { ...i, vase } : i
+      )
+    );
+  };
 
   const removeCustomAddition = (cartId: string, additionId: string) => {
     setItems((prev) =>
@@ -265,6 +287,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     const newPrice =
       item.custom!.base.price +
       (item.custom!.ribbon?.price || 0) +
+      (item.custom!.paper?.price || 0) +
       additions.reduce((s, x) => s + x.item.price * x.qty, 0);
 
     return {
@@ -300,6 +323,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         incrementCustomAddition,
         decrementCustomAddition,
         updateCustomMessage,
+        addVaseToItem,
         clearCart,
         totalItems,
       }}

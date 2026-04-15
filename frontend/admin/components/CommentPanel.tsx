@@ -3,7 +3,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, Bell, Send } from "lucide-react";
 import { toast } from "sonner";
-import { io } from "socket.io-client";
+
 
 import API from "@/config";
 import { useAuth } from "@/context/AuthContext";
@@ -76,30 +76,15 @@ const CommentPanel: React.FC = () => {
     fetchComments();
   }, [token]);
 
-  /* ---------------- SOCKET ---------------- */
-
+  /* ---------------- POLLING REVIEWS (60s) ---------------- */
   useEffect(() => {
     if (!token) return;
 
-    const socket = io(API, {
-      auth: { token },
-      withCredentials: true,
-    });
+    const interval = setInterval(() => {
+        fetchComments();
+    }, 60000);
 
-    socket.on("new-review", (comment: Comment) => {
-      setComments((prev) => [comment, ...prev]);
-      setNotifications((prev) => [comment, ...prev]);
-    });
-
-    socket.on("review-replied", (updatedReview: Comment) => {
-      setComments((prev) =>
-        prev.map((c) => (c._id === updatedReview._id ? updatedReview : c)),
-      );
-    });
-
-    return () => {
-      socket.disconnect();
-    };
+    return () => clearInterval(interval);
   }, [token]);
 
   /* ---------------- DELETE ---------------- */

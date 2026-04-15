@@ -1,19 +1,21 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Mail } from "lucide-react";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { ArrowLeft, Mail, Lock, ShieldCheck } from "lucide-react";
 import Button from "../components/Button";
 import { toast } from "sonner";
+import axios from "axios";
+import API from "../config";
 
 const ForgotPassword: React.FC = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
+    const [otp, setOtp] = useState("");
+    const [newPassword, setNewPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [sent, setSent] = useState(false);
+    const [step, setStep] = useState<"email" | "otp">("email");
 
-    const handleSendResetEmail = async () => {
+    const handleSendOTP = async () => {
         if (!email) {
             toast.error("Please enter your email");
             return;
@@ -21,20 +23,35 @@ const ForgotPassword: React.FC = () => {
 
         try {
             setLoading(true);
-            await sendPasswordResetEmail(auth, email, {
-                url: `${window.location.origin}/login`, // Redirect after reset
-            });
-            setSent(true);
-            toast.success("Password reset email sent!");
+            const response = await axios.post(`${API}/auth/forgot-password`, { email });
+            setStep("otp");
+            toast.success(response.data.msg || "OTP sent to your email!");
         } catch (err: any) {
             console.error(err);
-            if (err.code === "auth/user-not-found") {
-                toast.error("No account found with this email");
-            } else if (err.code === "auth/invalid-email") {
-                toast.error("Invalid email address");
-            } else {
-                toast.error("Failed to send reset email");
-            }
+            toast.error(err.response?.data?.msg || "Failed to send OTP");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResetPassword = async () => {
+        if (!otp || !newPassword) {
+            toast.error("Please enter OTP and new password");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const response = await axios.post(`${API}/auth/reset-password`, {
+                email,
+                otp,
+                newPassword
+            });
+            toast.success(response.data.msg || "Password reset successful!");
+            navigate("/login");
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.response?.data?.msg || "Failed to reset password");
         } finally {
             setLoading(false);
         }
@@ -55,10 +72,12 @@ const ForgotPassword: React.FC = () => {
                         The Mangalam Experience
                     </span>
                     <h2 className="font-serif text-6xl italic font-bold mb-6">
-                        Reset Your <br /> Password.
+                        Recover Your <br /> Access.
                     </h2>
                     <p className="text-white/60 max-w-sm font-light">
-                        We'll send you a link to reset your password.
+                        {step === "email" 
+                            ? "We'll send a 6-digit code to your registered email address."
+                            : "Enter the code we sent and choose your new password."}
                     </p>
                 </div>
             </div>
@@ -71,49 +90,31 @@ const ForgotPassword: React.FC = () => {
                     className="w-full max-w-md"
                 >
                     <button
-                        onClick={() => navigate("/login")}
+                        onClick={() => step === "otp" ? setStep("email") : navigate("/login")}
                         className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold text-gray-400 hover:text-black transition-colors mb-12"
                     >
-                        <ArrowLeft size={14} /> Back to Login
+                        <ArrowLeft size={14} /> {step === "otp" ? "Change Email" : "Back to Login"}
                     </button>
 
                     <div className="mb-12">
                         <h1 className="font-serif text-4xl text-[#1A1A1A] mb-2 font-bold">
-                            Forgot Password?
+                            {step === "email" ? "Forgot Password?" : "Reset Password"}
                         </h1>
                         <p className="text-gray-500 font-light text-sm">
-                            Enter your email and we'll send you a reset link.
+                            {step === "email" 
+                                ? "Enter your email and we'll send you an OTP."
+                                : `We've sent a code to ${email}`}
                         </p>
                     </div>
 
-                    {sent ? (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="text-center py-12 bg-green-50 rounded-3xl"
-                        >
-                            <div className="text-6xl mb-4">📧</div>
-                            <h3 className="font-serif text-2xl text-[#1A1A1A] mb-2 font-bold">
-                                Check Your Email
-                            </h3>
-                            <p className="text-gray-500 text-sm max-w-xs mx-auto">
-                                We've sent a password reset link to <strong>{email}</strong>
-                            </p>
-                            <button
-                                onClick={() => setSent(false)}
-                                className="mt-6 text-[#F8BBD0] hover:underline text-sm font-medium"
-                            >
-                                Didn't receive it? Send again
-                            </button>
-                        </motion.div>
-                    ) : (
-                        <form
-                            className="space-y-6"
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                handleSendResetEmail();
-                            }}
-                        >
+                    <form
+                        className="space-y-6"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            step === "email" ? handleSendOTP() : handleResetPassword();
+                        }}
+                    >
+                        {step === "email" ? (
                             <div className="space-y-2">
                                 <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">
                                     Email Address
@@ -132,17 +133,59 @@ const ForgotPassword: React.FC = () => {
                                     />
                                 </div>
                             </div>
+                        ) : (
+                            <>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">
+                                        Verification Code
+                                    </label>
+                                    <div className="relative group">
+                                        <ShieldCheck
+                                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#F8BBD0] transition-colors"
+                                            size={18}
+                                        />
+                                        <input
+                                            type="text"
+                                            maxLength={6}
+                                            value={otp}
+                                            onChange={(e) => setOtp(e.target.value)}
+                                            placeholder="123456"
+                                            className="w-full h-14 tracking-[1em] font-bold bg-white border border-gray-100 rounded-2xl pl-12 pr-6 text-center text-lg focus:outline-none focus:border-[#F8BBD0] focus:ring-1 focus:ring-[#F8BBD0] transition-all shadow-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">
+                                        New Password
+                                    </label>
+                                    <div className="relative group">
+                                        <Lock
+                                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#F8BBD0] transition-colors"
+                                            size={18}
+                                        />
+                                        <input
+                                            type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            className="w-full h-14 bg-white border border-gray-100 rounded-2xl pl-12 pr-6 text-sm focus:outline-none focus:border-[#F8BBD0] focus:ring-1 focus:ring-[#F8BBD0] transition-all shadow-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
-                            <Button
-                                variant="primary"
-                                type="submit"
-                                className="w-full h-14 shadow-lg"
-                                disabled={loading}
-                            >
-                                {loading ? "Sending..." : "Send Reset Link"}
-                            </Button>
-                        </form>
-                    )}
+                        <Button
+                            variant="primary"
+                            type="submit"
+                            className="w-full h-14 shadow-lg"
+                            disabled={loading}
+                        >
+                            {loading 
+                                ? "Processing..." 
+                                : (step === "email" ? "Send OTP" : "Update Password")}
+                        </Button>
+                    </form>
 
                     <p className="mt-12 text-center text-xs text-gray-500">
                         Remember your password?

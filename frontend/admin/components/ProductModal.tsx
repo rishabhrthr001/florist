@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import API from "../../config";
+import { optimizeCloudinaryUrl } from "../../lib/cloudinary";
 
 interface Category {
   _id: string;
@@ -19,6 +20,8 @@ interface Product {
   images: string[];
   tags?: string[];
   premiumWrapping?: boolean;
+  isOutOfStock?: boolean;
+  isBestSeller?: boolean;
 }
 
 interface ModalProps {
@@ -58,6 +61,8 @@ const ProductModal = ({
     description: "",
     tags: "",
     premiumWrapping: false,
+    isOutOfStock: false,
+    isBestSeller: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,7 +97,10 @@ const ProductModal = ({
         PREFILL WHEN EDITING
   ---------------------------------- */
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setSelectedCategory("");
+      return;
+    }
 
     if (mode === "edit" && product) {
       setForm({
@@ -101,6 +109,7 @@ const ProductModal = ({
         description: product.description || "",
         tags: Array.isArray(product.tags) ? product.tags.join(", ") : (typeof product.tags === "string" ? product.tags : ""),
         premiumWrapping: product.premiumWrapping || false,
+        isOutOfStock: product.isOutOfStock || false,
       });
 
       setSelectedCategory(
@@ -117,7 +126,6 @@ const ProductModal = ({
       ];
       setImageSlots(initialSlots);
     }
-
     if (mode === "add") {
       setForm({
         name: "",
@@ -125,6 +133,8 @@ const ProductModal = ({
         description: "",
         tags: "",
         premiumWrapping: false,
+        isOutOfStock: false,
+        isBestSeller: false,
       });
 
       setImageSlots([
@@ -132,8 +142,13 @@ const ProductModal = ({
         { url: null, file: null },
         { url: null, file: null },
       ]);
+
+      // Automatically select the first category if available
+      if (categories.length > 0 && !selectedCategory) {
+        setSelectedCategory(categories[0]._id);
+      }
     }
-  }, [isOpen, mode, product]);
+  }, [isOpen, mode, product, categories, selectedCategory]);
 
   /* ----------------------------------
         IMAGE PICKER
@@ -178,8 +193,8 @@ const ProductModal = ({
         SUBMIT
   ---------------------------------- */
   const handlePublish = async () => {
-    if (!form.name || !form.price || !selectedCategory) {
-      toast.error("Fill all fields");
+    if (!form.name.trim() || !form.price || !selectedCategory) {
+      toast.error("Please fill Name, Price and Category");
       return;
     }
 
@@ -192,6 +207,8 @@ const ProductModal = ({
       payload.append("description", form.description);
       payload.append("categoryId", selectedCategory);
       payload.append("premiumWrapping", String(form.premiumWrapping));
+      payload.append("isOutOfStock", String(form.isOutOfStock));
+      payload.append("isBestSeller", String(form.isBestSeller));
 
       const parsedTags = form.tags.split(",").map(t => t.trim()).filter(Boolean);
       payload.append("tags", JSON.stringify(parsedTags));
@@ -402,6 +419,40 @@ const ProductModal = ({
                 </button>
               </div>
 
+              {/* OUT OF STOCK TOGGLE */}
+              <div className="flex items-center justify-between p-4 border rounded-xl bg-red-50/30">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Out of Stock</p>
+                  <p className="text-[10px] text-gray-500 uppercase font-medium mt-0.5">Mark product as unavailable</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, isOutOfStock: !form.isOutOfStock })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.isOutOfStock ? 'bg-red-500' : 'bg-gray-200'}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.isOutOfStock ? 'translate-x-6' : 'translate-x-1'}`}
+                  />
+                </button>
+              </div>
+
+              {/* BEST SELLER TOGGLE */}
+              <div className="flex items-center justify-between p-4 border rounded-xl bg-amber-50/30">
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Best Seller</p>
+                  <p className="text-[10px] text-gray-500 uppercase font-medium mt-0.5">Showcase on Best Sellers list</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, isBestSeller: !form.isBestSeller })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${form.isBestSeller ? 'bg-amber-400' : 'bg-gray-200'}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.isBestSeller ? 'translate-x-6' : 'translate-x-1'}`}
+                  />
+                </button>
+              </div>
+
               {/* IMAGE UPLOADER */}
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
@@ -422,7 +473,7 @@ const ProductModal = ({
                       {slot.url ? (
                         <>
                           <img
-                            src={slot.url}
+                            src={slot.url.startsWith("blob:") ? slot.url : optimizeCloudinaryUrl(slot.url, 200, true)}
                             className="w-full h-full object-cover"
                             alt={`Slot ${index + 1}`}
                           />

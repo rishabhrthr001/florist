@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { uploadFields } from "../middleware/upload.js";
 import cloudinary from "../config/cloudinary.js";
+import { getCache, setCache, clearCache } from "../utils/cache.js";
 
 const router = express.Router();
 
@@ -40,8 +41,15 @@ const extractPublicId = (url) => {
 ------------------------------------ */
 router.get("/tags", async (req, res) => {
   try {
+    const cacheKey = "product_tags";
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
     const tags = await Product.distinct("tags");
-    res.json(tags.filter(Boolean));
+    const filtered = tags.filter(Boolean);
+    
+    setCache(cacheKey, filtered, 300000); // 5 mins cache
+    res.json(filtered);
   } catch (err) {
     console.error("TAGS FETCH ERROR:", err);
     res.status(500).json({ msg: "Failed to fetch tags" });
@@ -55,34 +63,55 @@ router.get("/tags", async (req, res) => {
 ------------------------------------ */
 router.get("/", async (req, res) => {
   try {
-    const { categoryId } = req.query;
+    const cacheKey = `products_${JSON.stringify(req.query)}`;
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
+    const { categoryId, tag, search, bestSeller, page = 1, limit = 12 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const filter = {};
 
-    if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
-      const category = await Category.findById(categoryId);
-      if (category) {
-        // Find if the categoryId matches, OR if the category slug matches a tag
-        filter.$or = [
-          { categoryId },
-          { tags: { $regex: new RegExp(`^${category.slug}$`, "i") } } // Case-insensitive exact match
-        ];
-      } else {
-        filter.categoryId = categoryId;
-      }
+    if (categoryId && categoryId !== "all" && mongoose.Types.ObjectId.isValid(categoryId)) {
+      filter.categoryId = categoryId;
     }
 
-    // Support direct tag querying too just in case
-    const { tag } = req.query;
     if (tag) {
       filter.tags = { $regex: new RegExp(tag, "i") };
     }
 
-    const products = await Product.find(filter)
-      .populate("categoryId")
-      .sort({ createdAt: -1 });
+    if (search) {
+      filter.$or = filter.$or || [];
+      filter.$or.push(
+        { name: { $regex: new RegExp(search, "i") } },
+        { description: { $regex: new RegExp(search, "i") } }
+      );
+    }
 
-    res.json(products);
+    if (bestSeller === "true") {
+      filter.isBestSeller = true;
+    }
+
+    const totalCount = await Product.countDocuments(filter);
+    
+    const products = await Product.find(filter)
+      .populate("categoryId", "name slug")
+      .sort({ createdAt: -1, _id: 1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const responseData = {
+      products,
+      totalCount,
+      hasMore: skip + products.length < totalCount,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalCount / parseInt(limit))
+    };
+
+    setCache(cacheKey, responseData, 60000); // 1 min
+
+    res.json(responseData);
   } catch (err) {
     console.error(err);
     res.status(500).json({
@@ -96,6 +125,10 @@ router.get("/", async (req, res) => {
 ------------------------------------ */
 router.get("/Flowers", async (req, res) => {
   try {
+    const cacheKey = "products_flowers";
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
     const category = await Category.findOne({
       slug: "flowers",
       isActive: true,
@@ -111,8 +144,10 @@ router.get("/Flowers", async (req, res) => {
       isActive: true,
     })
       .populate("categoryId")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1, _id: 1 })
+      .lean();
 
+    setCache(cacheKey, products, 60000);
     res.json(products);
   } catch (err) {
     console.error("FLOWER FETCH ERROR:", err);
@@ -127,6 +162,10 @@ router.get("/Flowers", async (req, res) => {
 ------------------------------------ */
 router.get("/Chocolate", async (req, res) => {
   try {
+    const cacheKey = "products_chocolate";
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
     const category = await Category.findOne({
       slug: "chocolate",
       isActive: true,
@@ -142,8 +181,10 @@ router.get("/Chocolate", async (req, res) => {
       isActive: true,
     })
       .populate("categoryId")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1, _id: 1 })
+      .lean();
 
+    setCache(cacheKey, products, 60000);
     res.json(products);
   } catch (err) {
     console.error("CHOCOLATE FETCH ERROR:", err);
@@ -158,16 +199,21 @@ router.get("/Chocolate", async (req, res) => {
 ------------------------------------ */
 router.get("/slug/:slug", async (req, res) => {
   try {
+    const cacheKey = `product_slug_${req.params.slug}`;
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
     const product = await Product.findOne({
       slug: req.params.slug,
       isActive: true,
-    }).populate("categoryId");
+    }).populate("categoryId").lean();
 
     if (!product)
       return res.status(404).json({
         msg: "Product not found",
       });
 
+    setCache(cacheKey, product, 60000);
     res.json(product);
   } catch (err) {
     console.error(err);
@@ -185,15 +231,20 @@ router.get("/:id", async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id))
       return res.status(400).json({ msg: "Invalid product id" });
 
+    const cacheKey = `product_id_${req.params.id}`;
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
     const product = await Product.findById(req.params.id).populate(
       "categoryId",
-    );
+    ).lean();
 
     if (!product)
       return res.status(404).json({
         msg: "Product not found",
       });
 
+    setCache(cacheKey, product, 60000);
     res.json(product);
   } catch (err) {
     console.error(err);
@@ -213,7 +264,7 @@ router.post(
   uploadFields,
   async (req, res) => {
     try {
-      const { name, price, description, categoryId, premiumWrapping } = req.body;
+      const { name, price, description, categoryId, premiumWrapping, isOutOfStock, isBestSeller } = req.body;
       let tags = [];
       if (req.body.tags) {
         tags = Array.isArray(req.body.tags) ? req.body.tags : JSON.parse(req.body.tags);
@@ -252,9 +303,12 @@ router.post(
         tags,
         images,
         premiumWrapping: premiumWrapping === "true" || premiumWrapping === true,
+        isOutOfStock: isOutOfStock === "true" || isOutOfStock === true,
+        isBestSeller: isBestSeller === "true" || isBestSeller === true,
       });
 
       const populated = await product.populate("categoryId");
+      clearCache(); // Invalidate cache
 
       res.status(201).json(populated);
     } catch (err) {
@@ -272,7 +326,7 @@ router.post(
 router.put("/:id", requireAuth, requireAdmin, uploadFields, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, price, description, categoryId, premiumWrapping } = req.body;
+    const { name, price, description, categoryId, premiumWrapping, isOutOfStock, isBestSeller } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ msg: "Invalid product id" });
@@ -320,6 +374,14 @@ router.put("/:id", requireAuth, requireAdmin, uploadFields, async (req, res) => 
     if (premiumWrapping !== undefined) {
       product.premiumWrapping = premiumWrapping === "true" || premiumWrapping === true;
     }
+    // Handle Out of Stock
+    if (isOutOfStock !== undefined) {
+      product.isOutOfStock = isOutOfStock === "true" || isOutOfStock === true;
+    }
+    // Handle Best Seller
+    if (isBestSeller !== undefined) {
+      product.isBestSeller = isBestSeller === "true" || isBestSeller === true;
+    }
 
     // Handle Images Positionally
     let finalImages = [];
@@ -342,6 +404,7 @@ router.put("/:id", requireAuth, requireAdmin, uploadFields, async (req, res) => 
     await product.save();
     
     const populated = await product.populate("categoryId");
+    clearCache(); // Invalidate cache
     res.json(populated);
   } catch (err) {
     console.error("PRODUCT UPDATE ERROR:", err);
@@ -349,6 +412,38 @@ router.put("/:id", requireAuth, requireAdmin, uploadFields, async (req, res) => 
       msg: err.message || "Update failed",
       error: err.name
     });
+  }
+});
+
+router.patch("/:id/stock", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ msg: "Not found" });
+
+    product.isOutOfStock = !product.isOutOfStock;
+    await product.save();
+    
+    clearCache();
+    res.json(product);
+  } catch (err) {
+    console.error("STOCK TOGGLE ERROR:", err);
+    res.status(500).json({ msg: "Stock toggle failed" });
+  }
+});
+
+router.patch("/:id/best-seller", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ msg: "Not found" });
+
+    product.isBestSeller = !product.isBestSeller;
+    await product.save();
+    
+    clearCache();
+    res.json(product);
+  } catch (err) {
+    console.error("BEST SELLER TOGGLE ERROR:", err);
+    res.status(500).json({ msg: "Best seller toggle failed" });
   }
 });
 
@@ -387,6 +482,8 @@ router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
         }
       }
     }
+
+    clearCache(); // Invalidate cache
 
     res.json({
       msg: "Product deleted",
