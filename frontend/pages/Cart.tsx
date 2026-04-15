@@ -405,7 +405,7 @@ const Cart: React.FC = () => {
       
       {/* MOBILE STICKY CHECKOUT */}
       {items.length > 0 && (
-        <div className="md:hidden fixed bottom-1 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-6">
+        <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-5 sm:pb-6">
            <div className="flex flex-col justify-center">
               <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest leading-tight mb-0.5">Total</p>
               <p className="font-sans font-bold text-xl text-gray-900 leading-tight">₹{total.toLocaleString()}</p>

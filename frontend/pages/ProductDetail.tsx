@@ -636,7 +636,7 @@ const ProductDetail: React.FC = () => {
       </div>
       
       {/* MOBILE STICKY ADD TO CART */}
-      <div className="md:hidden fixed bottom-1 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-6">
+      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-5 sm:pb-6">
          <div className={`flex items-center justify-between bg-white rounded-full border border-gray-200/60 p-1 w-[120px] shrink-0 h-14 ${product.isOutOfStock ? "opacity-50 pointer-events-none" : ""}`}>
             <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="w-11 h-11 rounded-full flex items-center justify-center hover:bg-gray-50 transition-all text-gray-400">
                <Minus size={16} />
