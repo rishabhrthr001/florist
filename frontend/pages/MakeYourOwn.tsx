@@ -527,12 +527,13 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
          
         <div 
           ref={containerRef}
-          className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar scroll-smooth py-12 px-1 w-full justify-center"
+          className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar scroll-smooth py-6 px-1 w-full"
         >
-          <div className="w-full py-10 text-center text-xs text-gray-300 uppercase tracking-[0.2em] font-black">
-            No items here
-          </div>
-          {/*
+          {displayItems.length === 0 && (
+            <div className="w-full py-16 text-center text-xs text-gray-300 uppercase tracking-[0.2em] font-black">
+              No items here
+            </div>
+          )}
           {displayItems.map((item: any) => {
             const isSelected = selectedBase?.id === item.id || selectedRibbon?.id === item.id || selectedPaper?.id === item.id;
             const addedItem = additions.find((a: any) => a.item.id === item.id);
@@ -551,27 +552,32 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                       : "border-gray-100 hover:border-gray-300"
                 }`}
               >
-                <div className="w-full aspect-square rounded-lg bg-gray-50 flex items-center justify-center mb-4 relative shrink-0">
+                <div className="w-full aspect-square rounded-lg bg-gray-50/50 flex items-center justify-center mb-4 relative shrink-0">
+                   <img
+                     src={optimizeCloudinaryUrl(item.image, 400, true)}
+                     className="w-[85%] h-[85%] object-contain group-hover:scale-110 transition-transform duration-700 ease-out"
+                     alt={item.name}
+                     loading="lazy"
+                   />
                    {isSelected && (
-                     <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md">
+                     <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md z-10">
                         <Check size={10} strokeWidth={3} />
                      </div>
                    )}
                    {isAdded && (item.type !== 'base' && item.type !== 'ribbon' && item.type !== 'paper') && (
-                     <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md text-[10px] font-bold">
+                     <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md text-[10px] font-bold z-10">
                         {addedItem.qty}
                      </div>
                    )}
                 </div>
 
                 <div className="w-full mt-auto">
-                   <h3 className="font-serif font-bold text-[11px] md:text-[13px] text-gray-900 mb-1 leading-tight">{item.name}</h3>
+                   <h3 className="font-serif font-bold text-[11px] md:text-[13px] text-gray-900 mb-1 leading-tight line-clamp-2">{item.name}</h3>
                    <p className="font-sans font-black text-gray-900 text-[10px] md:text-[12px]">₹{item.price.toLocaleString()}</p>
                 </div>
               </motion.div>
             );
           })}
-          */}
         </div>
       </div>
     </section>
