@@ -33,32 +33,53 @@ const MakeYourOwn: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 1. Fetch Categories to find "Flowers"
+        // 1. Fetch Categories
         const catRes = await axios.get(`${API}/category`);
         const categories = catRes.data;
         
-        // Find categories like "Flower" or "Bouquet" (for stems/fillers in shop)
-        const flowerCat = categories.find((c: any) => 
-          c.name.toLowerCase().includes('flower') || 
-          c.name.toLowerCase().includes('stem')
-        );
+        // Define mapping of category keywords to builder types
+        const typeMapping = {
+          flower: ['flower', 'stem'],
+          base: ['base', 'basket', 'box'],
+          filler: ['filler', 'gyp', 'greenery'],
+          ribbon: ['ribbon', 'bow'],
+          paper: ['paper', 'wrap'],
+          chocolate: ['chocolate', 'sweet', 'cake'],
+          vase: ['vase', 'vessel', 'pot', 'glass']
+        };
 
-        let categoryFlowers: ComponentItem[] = [];
-        if (flowerCat) {
-          const prodRes = await axios.get(`${API}/product?categoryId=${flowerCat._id}&limit=100`);
-          const products = prodRes.data.products || [];
-          
-          categoryFlowers = products.map((p: any) => ({
-            id: p._id,
-            name: p.name,
-            price: p.price,
-            image: (p.images && p.images[0]) || "/placeholder.jpg",
-            type: "flower", // Force type to flower
-            isOutOfStock: p.isOutOfStock || false,
-          }));
-        }
+        const allMappedProducts: ComponentItem[] = [];
 
-        // 2. Fetch curated Custom Bouquet items
+        // 2. Fetch products for each matching category
+        await Promise.all(categories.map(async (cat: any) => {
+          const lowerName = cat.name.toLowerCase();
+          let builderType = '';
+
+          for (const [type, keywords] of Object.entries(typeMapping)) {
+            if (keywords.some(k => lowerName.includes(k))) {
+              builderType = type;
+              break;
+            }
+          }
+
+          if (builderType) {
+            const prodRes = await axios.get(`${API}/product?categoryId=${cat._id}&limit=100`);
+            const products = prodRes.data.products || [];
+            
+            products.forEach((p: any) => {
+              allMappedProducts.push({
+                id: p._id,
+                name: p.name,
+                price: p.price,
+                image: (p.images && p.images[0]) || "/placeholder.jpg",
+                type: builderType,
+                isOutOfStock: p.isOutOfStock || false,
+              });
+            });
+          }
+        }));
+
+        // 3. Also fetch curated Custom Bouquet items (as fallback or for special items not in main categories)
         const res = await axios.get(`${API}/custom-bouquet`);
         const customItems: ComponentItem[] = res.data
           .map((item: any) => {
@@ -86,20 +107,21 @@ const MakeYourOwn: React.FC = () => {
           })
           .filter((i: any): i is ComponentItem => i !== null);
 
-        const curatedNonFlowers = customItems.filter(ci => ci.type !== 'flower');
-        setItems([...categoryFlowers, ...curatedNonFlowers]);
-
-        // 4. Extract Vases from custom bouquet items
-        const vaseItems = res.data
-          .filter((item: any) => (item.type === 'vase' || item.type === 'base') && item.isActive)
-          .map((item: any) => ({
-            _id: item._id,
-            name: item.name,
-            price: item.price,
-            images: [item.image],
-            isOutOfStock: item.isOutOfStock
-          }));
-        setVases(vaseItems);
+        // Merge and deduplicate by ID
+        const merged = [...allMappedProducts, ...customItems];
+        const uniqueItems = Array.from(new Map(merged.map(item => [item.id, item])).values());
+        
+        setItems(uniqueItems);
+        
+        // Populate vases specifically for compatibility if needed (though StepCarousel now handles it)
+        const vaseList = uniqueItems.filter(i => i.type === 'vase' || i.type === 'base');
+        setVases(vaseList.map(v => ({
+           _id: v.id,
+           name: v.name,
+           price: v.price,
+           images: [v.image],
+           isOutOfStock: v.isOutOfStock
+        })));
 
       } catch (err) {
         console.error("BUILDER FETCH ERROR:", err);
@@ -199,7 +221,7 @@ const MakeYourOwn: React.FC = () => {
     { title: "4. Add Sweetness", type: "chocolate" },
     { title: "5. Choose Paper Type", type: "paper" },
     { title: "6. The Final Ribbon", type: "ribbon" },
-    { title: "7. Choose Your Vase", type: "vase" },
+    { title: "7. Select Your Vessel", type: "vase" },
   ];
 
   return (
