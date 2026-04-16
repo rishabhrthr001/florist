@@ -552,20 +552,15 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                       : "border-gray-100 hover:border-gray-300"
                 }`}
               >
-                <div className="w-3/4 mx-auto aspect-square rounded-lg overflow-hidden mb-4 relative shrink-0 bg-transparent flex items-center justify-center">
-                   <img
-                     src={optimizeCloudinaryUrl(item.image, 400, true)}
-                     className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 ease-out"
-                     alt={item.name}
-                     loading="lazy"
-                   />
+                <div className="w-full aspect-square rounded-lg bg-gray-50 flex items-center justify-center mb-4 relative shrink-0">
+                   {/* Images temporarily disabled by user request */}
                    {isSelected && (
-                     <div className="absolute top-1 right-1 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md">
+                     <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md">
                         <Check size={10} strokeWidth={3} />
                      </div>
                    )}
                    {isAdded && (item.type !== 'base' && item.type !== 'ribbon' && item.type !== 'paper') && (
-                     <div className="absolute top-1 right-1 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md text-[10px] font-bold">
+                     <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md text-[10px] font-bold">
                         {addedItem.qty}
                      </div>
                    )}
