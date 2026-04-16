@@ -236,12 +236,12 @@ const MakeYourOwn: React.FC = () => {
         </nav>
       </div>
 
-      <div className="w-full px-4 md:px-8 xl:px-12 grid grid-cols-1 md:grid-cols-[60fr_40fr] lg:grid-cols-[65fr_35fr] gap-6 xl:gap-8 md:items-start">
+      <div className="w-full px-4 md:px-10 xl:px-16 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 xl:gap-16 md:items-start">
         {/* ================= LEFT BUILDER ================= */}
         <motion.div
            initial={{ opacity: 0, y: 12 }}
            animate={{ opacity: 1, y: 0 }}
-           className="flex flex-col gap-10 lg:pr-4"
+           className="flex flex-col gap-14"
         >
           {steps.map((step, idx) => (
             <StepCarousel 
@@ -258,17 +258,16 @@ const MakeYourOwn: React.FC = () => {
             />
           ))}
 
-
           {/* ---------------- INSTRUCTIONS ---------------- */}
-          <section className="bg-white rounded-[2rem] p-8 md:p-10 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-gray-100">
-            <h3 className="font-serif italic text-2xl md:text-3xl text-gray-900 mb-2 tracking-tight">Special Instructions</h3>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-6">Any wrapping style, color preference or notes?</p>
+          <section className="bg-white rounded-[1.5rem] p-10 shadow-sm border border-gray-100">
+            <h3 className="font-serif italic text-3xl text-gray-900 mb-2 tracking-tight">Special Instructions</h3>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-8">Any wrapping style, color preference or notes?</p>
             <textarea
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               placeholder="E.g. Wrap it in dark paper, keep it minimalistic..."
-              rows={3}
-              className="w-full bg-[#FBFBFB] border border-gray-200 rounded-2xl p-4 md:p-5 text-sm font-medium resize-none focus:outline-none focus:border-gray-400 focus:bg-white transition-all shadow-sm"
+              rows={4}
+              className="w-full bg-[#FAFAFA] border border-gray-200 rounded-2xl p-6 text-sm font-medium resize-none focus:outline-none focus:border-black focus:bg-white transition-all shadow-sm"
             />
           </section>
         </motion.div>
@@ -278,35 +277,39 @@ const MakeYourOwn: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-2xl p-5 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col gap-4 min-w-0"
+            className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex flex-col gap-8 min-w-0"
           >
-             <h2 className="font-serif italic text-2xl xl:text-3xl text-gray-900 border-b border-gray-100 pb-5 tracking-tight">
+             <h2 className="font-serif italic text-4xl text-gray-900 tracking-tight">
                 Items Added
              </h2>
-             <SummaryContent
-              {...{
-                selectedBase,
-                selectedRibbon,
-                selectedPaper,
-                additions,
-                handleAdd,
-                handleRemove,
-                clearBase: () => setSelectedBase(null),
-                clearRibbon: () => setSelectedRibbon(null),
-                clearPaper: () => setSelectedPaper(null),
-                selectedVase,
-                clearVase: () => setSelectedVase(null),
-              }}
-             />
-             <div className="border-t border-gray-100 pt-5 mt-auto space-y-4">
-               <div className="flex justify-between items-end border-b border-gray-100 pb-5">
-                 <span className="font-serif italic text-xl xl:text-2xl text-gray-900">Total</span>
-                 <span className="font-sans font-bold text-xl xl:text-2xl text-gray-900">₹{totalPrice.toLocaleString()}</span>
+             
+             <div className="min-h-[100px] flex flex-col justify-center border-b border-gray-100 pb-8">
+               <SummaryContent
+                {...{
+                  selectedBase,
+                  selectedRibbon,
+                  selectedPaper,
+                  additions,
+                  handleAdd,
+                  handleRemove,
+                  clearBase: () => setSelectedBase(null),
+                  clearRibbon: () => setSelectedRibbon(null),
+                  clearPaper: () => setSelectedPaper(null),
+                  selectedVase,
+                  clearVase: () => setSelectedVase(null),
+                }}
+               />
+             </div>
+
+             <div className="space-y-6">
+               <div className="flex justify-between items-baseline">
+                 <span className="font-serif italic text-3xl text-gray-900">Total</span>
+                 <span className="font-sans font-black text-3xl text-gray-900 leading-none">₹{totalPrice.toLocaleString()}</span>
                </div>
                <button 
                  disabled={!selectedBase}
                  onClick={finalizeBouquet}
-                 className="mt-4 w-full py-4 md:py-5 bg-black text-white rounded-[1.25rem] md:rounded-[1.5rem] uppercase tracking-widest text-[11px] md:text-xs font-bold hover:bg-gray-800 transition-all shadow-xl hover:shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:translate-y-0"
+                 className="w-full py-5 bg-[#A1A1A1] text-white rounded-full uppercase tracking-widest text-xs font-bold hover:bg-gray-800 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-40"
                >
                  <ShoppingBag size={14} strokeWidth={2.5}/> Add to Cart
                </button>
@@ -387,62 +390,45 @@ const SummaryContent = ({
 }: any) => (
   <div className="space-y-4">
     {selectedBase ? (
-      <div className="flex justify-between items-center text-sm md:text-base font-bold text-gray-900 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-black leading-tight">Base</span>
-          <span className="leading-tight">{selectedBase.name}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="font-black">₹{selectedBase.price.toLocaleString()}</span>
-          <button onClick={clearBase} className="p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
+      <div className="flex justify-between items-center text-sm md:text-base font-bold text-gray-900 bg-white border border-gray-100 p-4 rounded-xl mb-3">
+        <span className="leading-tight">{selectedBase.name}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-black text-xs text-gray-400">₹{selectedBase.price.toLocaleString()}</span>
+          <button onClick={clearBase} className="p-1 text-red-500 hover:text-red-700 transition-colors">
             <Trash2 size={14} strokeWidth={2.5}/>
           </button>
         </div>
       </div>
     ) : (
-      <p className="text-[11px] uppercase tracking-widest text-gray-400 font-bold mb-4 text-center">Select a base to start</p>
+      <p className="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-black mb-0 text-center">Select a base to start</p>
     )}
 
-     {additions.length > 0 && (
-       <div className="space-y-4 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
-         <span className="text-gray-400 text-[9px] uppercase tracking-widest font-black block mb-3">Flowers & Sweets</span>
+    {additions.length > 0 && (
+       <div className="space-y-4 mb-3">
          {additions.map((a: any) => (
-           <div key={a.item.id} className="flex justify-between items-center border-b border-gray-100/50 pb-4 last:border-0 last:pb-0">
-             <div className="flex flex-col gap-0.5">
-               <span className="text-sm md:text-base font-bold text-gray-900 leading-tight">
-                 {a.item.name}
+           <div key={a.item.id} className="flex justify-between items-center border border-gray-100 p-4 rounded-xl bg-white">
+             <div className="flex flex-col">
+               <span className="text-sm font-bold text-gray-900 leading-tight">
+                 {a.item.name} x {a.qty}
                </span>
-               <span className="text-[10px] font-bold text-gray-400 tracking-wide">₹{a.item.price} / item</span>
              </div>
-             <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-full px-1.5 py-1 shadow-sm">
-                <button
-                  onClick={() => handleRemove(a.item.id)}
-                  className="w-5 h-5 rounded-full hover:bg-gray-50 flex items-center justify-center text-gray-500">
-                  <Minus size={10} strokeWidth={2.5}/>
-                </button>
-                <span className="w-[18px] text-center font-bold text-[10px] text-gray-800">
-                  {a.qty}
-                </span>
-                <button
-                  onClick={() => handleAdd(a.item)}
-                  className="w-5 h-5 rounded-full hover:bg-gray-50 flex items-center justify-center text-gray-500">
-                  <Plus size={10} strokeWidth={2.5}/>
-                </button>
-              </div>
+             <div className="flex items-center gap-2">
+               <span className="font-black text-xs text-gray-400">₹{(a.item.price * a.qty).toLocaleString()}</span>
+               <button onClick={() => handleRemove(a.item.id)} className="p-1 text-red-500 hover:text-red-700">
+                 <Trash2 size={14} strokeWidth={2.5}/>
+               </button>
+             </div>
            </div>
          ))}
        </div>
     )}
 
     {selectedPaper && (
-      <div className="flex justify-between items-center text-sm md:text-base font-bold text-gray-900 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-black leading-tight">Paper</span> 
-          <span className="leading-tight">{selectedPaper.name}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="font-black">₹{selectedPaper.price.toLocaleString()}</span>
-          <button onClick={clearPaper} className="p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
+      <div className="flex justify-between items-center text-sm font-bold text-gray-900 bg-white border border-gray-100 p-4 rounded-xl mb-3">
+        <span className="leading-tight">{selectedPaper.name}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-black text-xs text-gray-400">₹{selectedPaper.price.toLocaleString()}</span>
+          <button onClick={clearPaper} className="p-1 text-red-500 hover:text-red-700">
             <Trash2 size={14} strokeWidth={2.5}/>
           </button>
         </div>
@@ -450,14 +436,11 @@ const SummaryContent = ({
     )}
 
     {selectedRibbon && (
-      <div className="flex justify-between items-center text-sm md:text-base font-bold text-gray-900 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-black leading-tight">Trim</span> 
-          <span className="leading-tight">{selectedRibbon.name}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="font-black">₹{selectedRibbon.price.toLocaleString()}</span>
-          <button onClick={clearRibbon} className="p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
+      <div className="flex justify-between items-center text-sm font-bold text-gray-900 bg-white border border-gray-100 p-4 rounded-xl mb-3">
+        <span className="leading-tight">{selectedRibbon.name}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-black text-xs text-gray-400">₹{selectedRibbon.price.toLocaleString()}</span>
+          <button onClick={clearRibbon} className="p-1 text-red-500 hover:text-red-700">
             <Trash2 size={14} strokeWidth={2.5}/>
           </button>
         </div>
@@ -465,14 +448,11 @@ const SummaryContent = ({
     )}
 
     {selectedVase && (
-       <div className="flex justify-between items-center text-sm md:text-base font-bold text-gray-900 bg-[#FFF0F3] border border-pink-100 p-5 rounded-2xl shadow-sm">
-         <div className="flex flex-col gap-0.5">
-           <span className="text-pink-500 text-[9px] uppercase tracking-widest font-black leading-tight">Vase</span> 
-           <span className="leading-tight">{selectedVase.name}</span>
-         </div>
-         <div className="flex items-center gap-3">
-           <span className="font-black text-pink-600">₹{selectedVase.price.toLocaleString()}</span>
-           <button onClick={clearVase} className="p-2 bg-white text-pink-500 rounded-full hover:bg-pink-50 transition-colors shadow-sm">
+       <div className="flex justify-between items-center text-sm font-bold text-gray-900 bg-white border border-gray-100 p-4 rounded-xl mb-3">
+         <span className="leading-tight">{selectedVase.name}</span>
+         <div className="flex items-center gap-2">
+           <span className="font-black text-xs text-gray-400">₹{selectedVase.price.toLocaleString()}</span>
+           <button onClick={clearVase} className="p-1 text-red-500 hover:text-red-700">
              <Trash2 size={14} strokeWidth={2.5}/>
            </button>
          </div>
@@ -503,54 +483,54 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
   const isEmpty = displayItems.length === 0;
 
   return (
-    <section className="space-y-4 relative">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-3">
+    <section className="space-y-6 relative">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-5">
          <div className="flex items-center gap-4">
-           <span className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center text-xs font-serif italic shrink-0">
+           <span className="w-9 h-9 bg-gray-900 text-white rounded-full flex items-center justify-center text-sm font-sans font-bold shrink-0">
              {step.title.split('.')[0]}
            </span>
-           <h2 className="font-serif text-2xl md:text-3xl text-gray-900 tracking-tight">
+           <h2 className="font-serif text-3xl md:text-4xl text-gray-900 tracking-tight">
              {step.title.split('. ')[1]}
            </h2>
          </div>
          {step.type === 'flower' && (
            <div className="relative mt-2 sm:mt-0 w-full sm:w-auto">
-             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
              <input 
                type="text" 
                placeholder="Search favorite flower..." 
                value={flowerSearch}
                onChange={(e) => setFlowerSearch(e.target.value)}
-               className="pl-9 pr-4 py-2 sm:py-2 text-xs border border-gray-200 rounded-full focus:outline-none focus:border-gray-400 bg-white w-full sm:w-56 transition-all shadow-sm"
+               className="pl-5 pr-12 py-3.5 text-xs border border-gray-200 rounded-full focus:outline-none focus:border-black bg-white w-full sm:w-72 transition-all shadow-sm font-medium"
              />
+             <Search size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400" />
            </div>
          )}
       </div>
 
       <div className="relative group/carousel">
-        {displayItems.length > 5 && (
+        {displayItems.length > 4 && (
           <>
             <button 
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll('left'); }}
-              className="flex absolute -left-4 top-[45%] -translate-y-1/2 z-50 w-10 h-10 bg-white border border-gray-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] hover:bg-gray-50 active:scale-95 transition-all"
+              className="flex absolute -left-6 top-[40%] -translate-y-1/2 z-50 w-11 h-11 bg-white border border-gray-200 rounded-full items-center justify-center shadow-lg hover:bg-gray-50 active:scale-90 transition-all"
             >
-              <ChevronLeft size={20} className="text-gray-900"/>
+              <ChevronLeft size={24} className="text-gray-900"/>
             </button>
             <button 
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll('right'); }}
-              className="flex absolute -right-4 top-[45%] -translate-y-1/2 z-50 w-10 h-10 bg-white border border-gray-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] hover:bg-gray-50 active:scale-95 transition-all"
+              className="flex absolute -right-6 top-[40%] -translate-y-1/2 z-50 w-11 h-11 bg-white border border-gray-200 rounded-full items-center justify-center shadow-lg hover:bg-gray-50 active:scale-90 transition-all"
             >
-              <ChevronRight size={20} className="text-gray-900"/>
+              <ChevronRight size={24} className="text-gray-900"/>
             </button>
           </>
         )}
          
         <div 
           ref={containerRef}
-          className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar scroll-smooth py-2 px-1"
+          className="flex overflow-x-auto gap-6 snap-x snap-mandatory no-scrollbar scroll-smooth py-4 px-1"
         >
           {isEmpty && (
-            <div className="w-full py-6 text-center text-[11px] text-gray-400 uppercase tracking-widest font-bold">
+            <div className="w-full py-10 text-center text-[10px] text-gray-400 uppercase tracking-widest font-black">
               No items here
             </div>
           )}
@@ -561,44 +541,39 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
 
             return (
               <motion.div
-                whileHover={item.isOutOfStock ? {} : { y: -4 }}
+                whileHover={item.isOutOfStock ? {} : { y: -8, scale: 1.01 }}
                 key={item.id}
                 onClick={() => !item.isOutOfStock && handleAdd(item)}
-                className={`flex-none w-[calc(80%-12px)] sm:w-[calc(45%-12px)] md:w-[calc(20%-13px)] snap-start bg-white p-2.5 rounded-2xl border transition-all duration-300 shadow-sm group flex flex-col items-center text-center cursor-pointer ${
+                className={`flex-none w-[calc(80%-12px)] sm:w-[calc(45%-12px)] md:w-[calc(25%-18px)] snap-start bg-white rounded-2xl border transition-all duration-300 shadow-sm group flex flex-col items-center text-center cursor-pointer ${
                   item.isOutOfStock 
                     ? "opacity-50 grayscale cursor-not-allowed" 
                     : isSelected 
-                      ? "border-black ring-1 ring-black shadow-md" 
-                      : "border-gray-100 hover:border-gray-300"
+                      ? "border-black ring-2 ring-black shadow-md" 
+                      : "border-gray-200 hover:border-gray-400"
                 }`}
               >
-                <div className="w-full aspect-square rounded-xl bg-gray-50 overflow-hidden mb-2.5 relative shrink-0">
+                <div className="w-full aspect-square rounded-t-2xl overflow-hidden mb-4 relative shrink-0">
                    <img
-                     src={optimizeCloudinaryUrl(item.image, 300, true)}
-                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                     src={optimizeCloudinaryUrl(item.image, 400, true)}
+                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
                      alt={item.name}
                      loading="lazy"
                    />
                    {isSelected && (
-                     <div className="absolute top-2.5 right-2.5 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center shadow-md">
-                        <Check size={12} strokeWidth={3} />
+                     <div className="absolute top-4 right-4 w-7 h-7 bg-black text-white rounded-full flex items-center justify-center shadow-md">
+                        <Check size={14} strokeWidth={3} />
                      </div>
                    )}
                    {isAdded && (item.type !== 'base' && item.type !== 'ribbon' && item.type !== 'paper') && (
-                     <div className="absolute top-2.5 right-2.5 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center shadow-md text-[11px] font-bold">
+                     <div className="absolute top-4 right-4 w-7 h-7 bg-black text-white rounded-full flex items-center justify-center shadow-md text-xs font-bold">
                         {addedItem.qty}
-                     </div>
-                   )}
-                   {item.isOutOfStock && (
-                     <div className="absolute inset-x-0 bottom-0 py-1.5 bg-red-500/90 text-white text-[9px] font-bold uppercase tracking-widest text-center shadow-sm">
-                       Stocked Out
                      </div>
                    )}
                 </div>
 
-                <div className="mt-auto text-center w-full px-1">
-                   <h3 className="font-serif text-[11px] md:text-[12px] leading-tight text-gray-900 mb-1 line-clamp-1">{item.name}</h3>
-                   <p className="font-sans font-black text-gray-900 text-[10px] md:text-[11px]">₹{item.price.toLocaleString()}</p>
+                <div className="pb-6 px-4 w-full">
+                   <h3 className="font-sans font-bold text-[12px] md:text-[14px] text-gray-900 mb-1.5 leading-tight">{item.name}</h3>
+                   <p className="font-sans font-black text-gray-900 text-[11px] md:text-[13px]">₹{item.price.toLocaleString()}</p>
                 </div>
               </motion.div>
             );
