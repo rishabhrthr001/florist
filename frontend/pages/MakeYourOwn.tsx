@@ -236,7 +236,7 @@ const MakeYourOwn: React.FC = () => {
         </nav>
       </div>
 
-      <div className="w-full px-4 md:px-10 xl:px-16 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 xl:gap-16 md:items-start">
+      <div className="w-full px-4 md:px-10 xl:px-16 grid grid-cols-1 lg:grid-cols-[7fr_3fr] gap-10 xl:gap-16 md:items-start">
         {/* ================= LEFT BUILDER ================= */}
         <motion.div
            initial={{ opacity: 0, y: 12 }}
@@ -508,7 +508,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
       </div>
 
       <div className="relative group/carousel">
-        {displayItems.length > 4 && (
+        {displayItems.length > 5 && (
           <>
             <button 
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll('left'); }}
@@ -544,7 +544,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                 whileHover={item.isOutOfStock ? {} : { y: -8, scale: 1.01 }}
                 key={item.id}
                 onClick={() => !item.isOutOfStock && handleAdd(item)}
-                className={`flex-none w-[calc(80%-12px)] sm:w-[calc(45%-12px)] md:w-[calc(25%-18px)] snap-start bg-white rounded-2xl border transition-all duration-300 shadow-sm group flex flex-col items-center text-center cursor-pointer ${
+                className={`flex-none w-[calc(80%-12px)] sm:w-[calc(45%-12px)] md:w-[calc(20%-19.2px)] snap-start bg-white rounded-2xl border transition-all duration-300 shadow-sm group flex flex-col items-center text-center cursor-pointer ${
                   item.isOutOfStock 
                     ? "opacity-50 grayscale cursor-not-allowed" 
                     : isSelected 
