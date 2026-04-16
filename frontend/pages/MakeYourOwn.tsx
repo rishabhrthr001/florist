@@ -527,13 +527,12 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
          
         <div 
           ref={containerRef}
-          className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar scroll-smooth py-4 px-1 w-full"
+          className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar scroll-smooth py-12 px-1 w-full justify-center"
         >
-          {isEmpty && (
-            <div className="w-full py-10 text-center text-[10px] text-gray-400 uppercase tracking-widest font-black">
-              No items here
-            </div>
-          )}
+          <div className="w-full py-10 text-center text-xs text-gray-300 uppercase tracking-[0.2em] font-black">
+            No items here
+          </div>
+          {/*
           {displayItems.map((item: any) => {
             const isSelected = selectedBase?.id === item.id || selectedRibbon?.id === item.id || selectedPaper?.id === item.id;
             const addedItem = additions.find((a: any) => a.item.id === item.id);
@@ -553,7 +552,6 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                 }`}
               >
                 <div className="w-full aspect-square rounded-lg bg-gray-50 flex items-center justify-center mb-4 relative shrink-0">
-                   {/* Images temporarily disabled by user request */}
                    {isSelected && (
                      <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md">
                         <Check size={10} strokeWidth={3} />
@@ -573,6 +571,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
               </motion.div>
             );
           })}
+          */}
         </div>
       </div>
     </section>
