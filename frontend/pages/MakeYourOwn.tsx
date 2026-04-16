@@ -544,7 +544,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                 whileHover={item.isOutOfStock ? {} : { y: -8, scale: 1.01 }}
                 key={item.id}
                 onClick={() => !item.isOutOfStock && handleAdd(item)}
-                className={`flex-none w-[calc(80%-12px)] sm:w-[calc(45%-12px)] md:w-[calc(20%-19.2px)] snap-start bg-white rounded-2xl border transition-all duration-300 shadow-sm group flex flex-col items-center text-center cursor-pointer ${
+                className={`flex-none w-[calc(80%-12px)] sm:w-[calc(45%-12px)] md:w-[calc(20%-20.8px)] snap-start bg-white rounded-2xl border transition-all duration-300 shadow-sm group flex flex-col items-center text-center cursor-pointer p-4 ${
                   item.isOutOfStock 
                     ? "opacity-50 grayscale cursor-not-allowed" 
                     : isSelected 
@@ -552,7 +552,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                       : "border-gray-200 hover:border-gray-400"
                 }`}
               >
-                <div className="w-full aspect-square rounded-t-2xl overflow-hidden mb-4 relative shrink-0">
+                <div className="w-[75%] mx-auto aspect-square rounded-xl overflow-hidden mb-5 relative shrink-0">
                    <img
                      src={optimizeCloudinaryUrl(item.image, 400, true)}
                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
@@ -560,18 +560,18 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                      loading="lazy"
                    />
                    {isSelected && (
-                     <div className="absolute top-4 right-4 w-7 h-7 bg-black text-white rounded-full flex items-center justify-center shadow-md">
-                        <Check size={14} strokeWidth={3} />
+                     <div className="absolute top-2 right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center shadow-md">
+                        <Check size={12} strokeWidth={3} />
                      </div>
                    )}
                    {isAdded && (item.type !== 'base' && item.type !== 'ribbon' && item.type !== 'paper') && (
-                     <div className="absolute top-4 right-4 w-7 h-7 bg-black text-white rounded-full flex items-center justify-center shadow-md text-xs font-bold">
+                     <div className="absolute top-2 right-2 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center shadow-md text-xs font-bold">
                         {addedItem.qty}
                      </div>
                    )}
                 </div>
 
-                <div className="pb-6 px-4 w-full">
+                <div className="w-full">
                    <h3 className="font-sans font-bold text-[12px] md:text-[14px] text-gray-900 mb-1.5 leading-tight">{item.name}</h3>
                    <p className="font-sans font-black text-gray-900 text-[11px] md:text-[13px]">₹{item.price.toLocaleString()}</p>
                 </div>
