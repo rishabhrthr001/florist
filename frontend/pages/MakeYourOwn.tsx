@@ -236,33 +236,6 @@ const MakeYourOwn: React.FC = () => {
             />
           ))}
 
-          {/* VASE SELECTION (OVERRIDE FOR STEP 7) */}
-          <section className="space-y-4">
-             <div className="flex border-b border-gray-100 pb-3 items-center gap-4">
-               <span className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center text-xs font-serif italic shrink-0">
-                 7
-               </span>
-               <h2 className="font-serif text-2xl md:text-3xl text-gray-900 tracking-tight">
-                 Choose Your Vase (Optional)
-               </h2>
-             </div>
-             
-             <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar scroll-smooth snap-x snap-mandatory">
-                {vases.map((v) => (
-                  <button
-                    key={v._id}
-                    onClick={() => setSelectedVase(v._id === selectedVase?._id ? null : v)}
-                    className={`flex-none w-[calc(45%-16px)] sm:w-[calc(30%-16px)] md:w-[calc(25%-12px)] transition-all snap-start ${selectedVase?._id === v._id ? 'scale-[1.02]' : 'opacity-70 hover:opacity-100'}`}
-                  >
-                    <div className={`aspect-square rounded-2xl overflow-hidden border-2 mb-2 transition-all ${selectedVase?._id === v._id ? 'border-pink-500 shadow-md ring-2 ring-pink-50' : 'border-transparent bg-gray-50'}`}>
-                       <img src={v.images[0]} className="w-full h-full object-cover" alt={v.name} />
-                    </div>
-                    <p className={`text-[11px] font-bold line-clamp-1 mb-0.5 ${selectedVase?._id === v._id ? 'text-pink-600' : 'text-gray-700'}`}>{v.name}</p>
-                    <p className="text-[10px] font-bold text-gray-400">Add + ₹{v.price}</p>
-                  </button>
-                ))}
-             </div>
-          </section>
 
           {/* ---------------- INSTRUCTIONS ---------------- */}
           <section className="bg-white rounded-[2rem] p-8 md:p-10 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-gray-100">
@@ -392,15 +365,15 @@ const SummaryContent = ({
 }: any) => (
   <div className="space-y-4">
     {selectedBase ? (
-      <div className="flex justify-between items-center text-[13px] md:text-sm font-medium text-gray-800 bg-[#FBFBFB] border border-gray-100 p-4 rounded-2xl">
-        <span className="flex items-center gap-2">
-          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-bold">Base</span> 
-          {selectedBase.name}
-        </span>
+      <div className="flex justify-between items-center text-sm md:text-base font-bold text-gray-900 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-black leading-tight">Base</span>
+          <span className="leading-tight">{selectedBase.name}</span>
+        </div>
         <div className="flex items-center gap-3">
-          <span className="font-bold">₹{selectedBase.price.toLocaleString()}</span>
-          <button onClick={clearBase} className="p-1.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
-            <Trash2 size={12} strokeWidth={2.5}/>
+          <span className="font-black">₹{selectedBase.price.toLocaleString()}</span>
+          <button onClick={clearBase} className="p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
+            <Trash2 size={14} strokeWidth={2.5}/>
           </button>
         </div>
       </div>
@@ -408,14 +381,17 @@ const SummaryContent = ({
       <p className="text-[11px] uppercase tracking-widest text-gray-400 font-bold mb-4 text-center">Select a base to start</p>
     )}
 
-    {additions.length > 0 && (
-       <div className="space-y-3 bg-[#FBFBFB] border border-gray-100 p-4 rounded-2xl">
-         <span className="text-gray-400 text-[9px] uppercase tracking-widest font-bold block mb-2">Flowers & Sweets</span>
+     {additions.length > 0 && (
+       <div className="space-y-4 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
+         <span className="text-gray-400 text-[9px] uppercase tracking-widest font-black block mb-3">Flowers & Sweets</span>
          {additions.map((a: any) => (
-           <div key={a.item.id} className="flex justify-between items-center border-b border-gray-100/50 pb-3 last:border-0 last:pb-0">
-             <span className="text-xs font-medium text-gray-800">
-               {a.item.name}
-             </span>
+           <div key={a.item.id} className="flex justify-between items-center border-b border-gray-100/50 pb-4 last:border-0 last:pb-0">
+             <div className="flex flex-col gap-0.5">
+               <span className="text-sm md:text-base font-bold text-gray-900 leading-tight">
+                 {a.item.name}
+               </span>
+               <span className="text-[10px] font-bold text-gray-400 tracking-wide">₹{a.item.price} / item</span>
+             </div>
              <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-full px-1.5 py-1 shadow-sm">
                 <button
                   onClick={() => handleRemove(a.item.id)}
@@ -437,45 +413,45 @@ const SummaryContent = ({
     )}
 
     {selectedPaper && (
-      <div className="flex justify-between items-center text-[13px] md:text-sm font-medium text-gray-800 bg-[#FBFBFB] border border-gray-100 p-4 rounded-2xl">
-        <span className="flex items-center gap-2">
-          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-bold">Paper</span> 
-          {selectedPaper.name}
-        </span>
+      <div className="flex justify-between items-center text-sm md:text-base font-bold text-gray-900 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-black leading-tight">Paper</span> 
+          <span className="leading-tight">{selectedPaper.name}</span>
+        </div>
         <div className="flex items-center gap-3">
-          <span className="font-bold">₹{selectedPaper.price.toLocaleString()}</span>
-          <button onClick={clearPaper} className="p-1.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
-            <Trash2 size={12} strokeWidth={2.5}/>
+          <span className="font-black">₹{selectedPaper.price.toLocaleString()}</span>
+          <button onClick={clearPaper} className="p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
+            <Trash2 size={14} strokeWidth={2.5}/>
           </button>
         </div>
       </div>
     )}
 
     {selectedRibbon && (
-      <div className="flex justify-between items-center text-[13px] md:text-sm font-medium text-gray-800 bg-[#FBFBFB] border border-gray-100 p-4 rounded-2xl">
-        <span className="flex items-center gap-2">
-          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-bold">Trim</span> 
-          {selectedRibbon.name}
-        </span>
+      <div className="flex justify-between items-center text-sm md:text-base font-bold text-gray-900 bg-white border border-gray-100 p-5 rounded-2xl shadow-sm">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-gray-400 text-[9px] uppercase tracking-widest font-black leading-tight">Trim</span> 
+          <span className="leading-tight">{selectedRibbon.name}</span>
+        </div>
         <div className="flex items-center gap-3">
-          <span className="font-bold">₹{selectedRibbon.price.toLocaleString()}</span>
-          <button onClick={clearRibbon} className="p-1.5 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
-            <Trash2 size={12} strokeWidth={2.5}/>
+          <span className="font-black">₹{selectedRibbon.price.toLocaleString()}</span>
+          <button onClick={clearRibbon} className="p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-colors">
+            <Trash2 size={14} strokeWidth={2.5}/>
           </button>
         </div>
       </div>
     )}
 
     {selectedVase && (
-       <div className="flex justify-between items-center text-[13px] md:text-sm font-medium text-gray-800 bg-[#FFF0F3] border border-pink-100 p-4 rounded-2xl">
-         <span className="flex items-center gap-2">
-           <span className="text-pink-500 text-[9px] uppercase tracking-widest font-bold">Vase</span> 
-           {selectedVase.name}
-         </span>
+       <div className="flex justify-between items-center text-sm md:text-base font-bold text-gray-900 bg-[#FFF0F3] border border-pink-100 p-5 rounded-2xl shadow-sm">
+         <div className="flex flex-col gap-0.5">
+           <span className="text-pink-500 text-[9px] uppercase tracking-widest font-black leading-tight">Vase</span> 
+           <span className="leading-tight">{selectedVase.name}</span>
+         </div>
          <div className="flex items-center gap-3">
-           <span className="font-bold text-pink-600">₹{selectedVase.price.toLocaleString()}</span>
-           <button onClick={clearVase} className="p-1.5 bg-white text-pink-500 rounded-full hover:bg-pink-50 transition-colors shadow-sm">
-             <Trash2 size={12} strokeWidth={2.5}/>
+           <span className="font-black text-pink-600">₹{selectedVase.price.toLocaleString()}</span>
+           <button onClick={clearVase} className="p-2 bg-white text-pink-500 rounded-full hover:bg-pink-50 transition-colors shadow-sm">
+             <Trash2 size={14} strokeWidth={2.5}/>
            </button>
          </div>
        </div>
@@ -540,12 +516,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
            ref={containerRef}
            className="flex overflow-x-auto gap-3 snap-x snap-mandatory no-scrollbar scroll-smooth"
          >
-           {isEmpty && (
-             <div className="w-full py-6 text-center text-[11px] text-gray-400 uppercase tracking-widest font-bold">
-               No items here
-             </div>
-           )}
-           {displayItems.map((item: any) => {
+           {displayItems.slice(0, 5).map((item: any) => {
              const isSelected = selectedBase?.id === item.id || selectedRibbon?.id === item.id || selectedPaper?.id === item.id;
              const addedItem = additions.find((a: any) => a.item.id === item.id);
              const isAdded = !!addedItem;
