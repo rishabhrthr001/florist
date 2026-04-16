@@ -465,8 +465,9 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
 
   const scroll = (direction: 'left' | 'right') => {
     if (containerRef.current) {
-      const scrollAmount = containerRef.current.clientWidth * 0.8;
-      containerRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+      // Use a fixed scroll amount or base it on item width
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      containerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 
@@ -480,7 +481,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
   const isEmpty = displayItems.length === 0;
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4 relative">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-3">
          <div className="flex items-center gap-4">
            <span className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center text-xs font-serif italic shrink-0">
@@ -496,87 +497,77 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
              <input 
                type="text" 
                placeholder="Search favorite flower..." 
-               value={flowerSearch}
-               onChange={(e) => setFlowerSearch(e.target.value)}
-               className="pl-9 pr-4 py-2 sm:py-2 text-xs border border-gray-200 rounded-full focus:outline-none focus:border-gray-400 bg-white w-full sm:w-56 transition-all shadow-sm"
+              className="pl-9 pr-4 py-2 sm:py-2 text-xs border border-gray-200 rounded-full focus:outline-none focus:border-gray-400 bg-white w-full sm:w-56 transition-all shadow-sm"
              />
            </div>
          )}
       </div>
 
       <div className="relative group/carousel">
-         {displayItems.length > 4 && (
-           <button 
-             onClick={(e) => { e.stopPropagation(); scroll('left'); }}
-             className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white border border-gray-200 rounded-full items-center justify-center shadow-md opacity-0 group-hover/carousel:opacity-100 transition-all hover:bg-gray-50 active:scale-90"
-           >
-             <ChevronLeft size={20} className="text-gray-900"/>
-           </button>
-         )}
+        <>
+          <button 
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll('left'); }}
+            className="flex absolute -left-4 top-[45%] -translate-y-1/2 z-50 w-10 h-10 bg-white border border-gray-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] hover:bg-gray-50 active:scale-95 transition-all"
+          >
+            <ChevronLeft size={20} className="text-gray-900"/>
+          </button>
+          <button 
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll('right'); }}
+            className="flex absolute -right-4 top-[45%] -translate-y-1/2 z-50 w-10 h-10 bg-white border border-gray-200 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.12)] hover:bg-gray-50 active:scale-95 transition-all"
+          >
+            <ChevronRight size={20} className="text-gray-900"/>
+          </button>
+        </>
          
-         <div 
-           ref={containerRef}
-           className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar scroll-smooth py-1 px-1"
-         >
-           {displayItems.slice(0, 5).map((item: any) => {
-             const isSelected = selectedBase?.id === item.id || selectedRibbon?.id === item.id || selectedPaper?.id === item.id;
-             const addedItem = additions.find((a: any) => a.item.id === item.id);
-             const isAdded = !!addedItem;
+        <div 
+          ref={containerRef}
+          className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar scroll-smooth py-2 px-1"
+        >
+          {displayItems.slice(0, 5).map((item: any) => {
+            const isSelected = selectedBase?.id === item.id || selectedRibbon?.id === item.id || selectedPaper?.id === item.id;
+            const addedItem = additions.find((a: any) => a.item.id === item.id);
+            const isAdded = !!addedItem;
 
-             return (
-               <motion.div
-                 whileHover={item.isOutOfStock ? {} : { y: -4 }}
-                 key={item.id}
-                 onClick={() => !item.isOutOfStock && handleAdd(item)}
-                 className={`flex-none w-[calc(48%-8px)] md:w-[calc(20%-13px)] snap-start bg-white p-2 rounded-xl border transition-all duration-300 shadow-sm group flex flex-col items-center text-center cursor-pointer ${
-                   item.isOutOfStock 
-                     ? "opacity-50 grayscale cursor-not-allowed" 
-                     : isSelected 
-                       ? "border-black ring-1 ring-black" 
-                       : "border-gray-100 hover:border-gray-300"
-                 }`}
-               >
-                 <div className="w-full aspect-square rounded-lg bg-gray-50 overflow-hidden mb-2 relative shrink-0">
-                    <img
-                      src={optimizeCloudinaryUrl(item.image, 300, true)}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      alt={item.name}
-                      loading="lazy"
-                    />
-                    {isSelected && (
-                      <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md">
-                         <Check size={10} strokeWidth={3} />
-                      </div>
-                    )}
-                    {isAdded && (item.type !== 'base' && item.type !== 'ribbon' && item.type !== 'paper') && (
-                      <div className="absolute top-2 right-2 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md text-[10px] font-bold">
-                         {addedItem.qty}
-                      </div>
-                    )}
-                    {item.isOutOfStock && (
-                      <div className="absolute inset-x-0 bottom-0 py-1 bg-red-500/90 text-white text-[8px] font-bold uppercase tracking-widest text-center shadow-sm">
-                        Stocked Out
-                      </div>
-                    )}
-                 </div>
+            return (
+              <motion.div
+                whileHover={item.isOutOfStock ? {} : { y: -4 }}
+                key={item.id}
+                onClick={() => !item.isOutOfStock && handleAdd(item)}
+                className={`flex-none w-[calc(80%-12px)] sm:w-[calc(45%-12px)] md:w-[calc(25%-12px)] snap-start bg-white p-2.5 rounded-2xl border transition-all duration-300 shadow-sm group flex flex-col items-center text-center cursor-pointer ${
+                  item.isOutOfStock 
+                    ? "opacity-50 grayscale cursor-not-allowed" 
+                    : isSelected 
+                      ? "border-black ring-1 ring-black shadow-md" 
+                      : "border-gray-100 hover:border-gray-300"
+                }`}
+              >
+                <div className="w-full aspect-square rounded-xl bg-gray-50 overflow-hidden mb-2.5 relative shrink-0">
+                   <img
+                     src={optimizeCloudinaryUrl(item.image, 300, true)}
+                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                     alt={item.name}
+                     loading="lazy"
+                   />
+                   {isSelected && (
+                     <div className="absolute top-2.5 right-2.5 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center shadow-md">
+                        <Check size={12} strokeWidth={3} />
+                     </div>
+                   )}
+                   {isAdded && (item.type !== 'base' && item.type !== 'ribbon' && item.type !== 'paper') && (
+                     <div className="absolute top-2.5 right-2.5 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center shadow-md text-[11px] font-bold">
+                        {addedItem.qty}
+                     </div>
+                   )}
+                </div>
 
-                 <div className="mt-auto text-center w-full">
-                    <h3 className="font-serif text-[10px] md:text-[12px] leading-tight text-gray-900 mb-0.5 line-clamp-1">{item.name}</h3>
-                    <p className="font-sans font-bold text-gray-900 text-[10px] md:text-[11px]">₹{item.price.toLocaleString()}</p>
-                 </div>
-               </motion.div>
-             );
-           })}
-         </div>
-
-         {displayItems.length > 4 && (
-           <button 
-             onClick={(e) => { e.stopPropagation(); scroll('right'); }}
-             className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white border border-gray-200 rounded-full items-center justify-center shadow-md opacity-0 group-hover/carousel:opacity-100 transition-all hover:bg-gray-50 active:scale-90"
-           >
-             <ChevronRight size={20} className="text-gray-900"/>
-           </button>
-         )}
+                <div className="mt-auto text-center w-full px-1">
+                   <h3 className="font-serif text-[11px] md:text-[13px] leading-tight text-gray-900 mb-1 line-clamp-1">{item.name}</h3>
+                   <p className="font-sans font-black text-gray-900 text-[11px] md:text-[12px]">₹{item.price.toLocaleString()}</p>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
