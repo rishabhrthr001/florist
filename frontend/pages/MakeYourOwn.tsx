@@ -552,10 +552,10 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                       : "border-gray-100 hover:border-gray-300"
                 }`}
               >
-                <div className="w-[40%] aspect-square rounded-lg bg-gray-50/50 flex items-center justify-center mb-4 relative shrink-0">
+                <div className="w-[20%] aspect-square rounded-lg bg-gray-50/50 flex items-center justify-center mb-4 relative shrink-0">
                    <img
                      src={optimizeCloudinaryUrl(item.image, 400, true)}
-                     className="w-[85%] h-[85%] object-contain group-hover:scale-110 transition-transform duration-700 ease-out"
+                     className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 ease-out"
                      alt={item.name}
                      loading="lazy"
                    />
