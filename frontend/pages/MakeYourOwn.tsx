@@ -505,16 +505,18 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
       </div>
 
       <div className="relative group/carousel">
-         <button 
-           onClick={() => scroll('left')}
-           className="hidden md:flex absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white border border-gray-100 rounded-full items-center justify-center shadow-lg opacity-0 group-hover/carousel:opacity-100 transition-all hover:scale-110 active:scale-95"
-         >
-           <ChevronLeft size={24} className="text-gray-900"/>
-         </button>
+         {displayItems.length > 4 && (
+           <button 
+             onClick={(e) => { e.stopPropagation(); scroll('left'); }}
+             className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white border border-gray-200 rounded-full items-center justify-center shadow-md opacity-0 group-hover/carousel:opacity-100 transition-all hover:bg-gray-50 active:scale-90"
+           >
+             <ChevronLeft size={20} className="text-gray-900"/>
+           </button>
+         )}
          
          <div 
            ref={containerRef}
-           className="flex overflow-x-auto gap-3 snap-x snap-mandatory no-scrollbar scroll-smooth"
+           className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar scroll-smooth py-1 px-1"
          >
            {displayItems.slice(0, 5).map((item: any) => {
              const isSelected = selectedBase?.id === item.id || selectedRibbon?.id === item.id || selectedPaper?.id === item.id;
@@ -526,7 +528,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                  whileHover={item.isOutOfStock ? {} : { y: -4 }}
                  key={item.id}
                  onClick={() => !item.isOutOfStock && handleAdd(item)}
-                 className={`flex-none w-[calc(48%-6px)] md:w-[calc(25%-9px)] max-w-[120px] md:max-w-[160px] snap-start bg-white p-1.5 rounded-xl border transition-all duration-300 shadow-[0_2px_10px_rgba(0,0,0,0.02)] group hover:shadow-[0_6px_15px_rgba(0,0,0,0.06)] flex flex-col items-center text-center cursor-pointer ${
+                 className={`flex-none w-[calc(48%-8px)] md:w-[calc(20%-13px)] snap-start bg-white p-2 rounded-xl border transition-all duration-300 shadow-sm group flex flex-col items-center text-center cursor-pointer ${
                    item.isOutOfStock 
                      ? "opacity-50 grayscale cursor-not-allowed" 
                      : isSelected 
@@ -534,7 +536,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                        : "border-gray-100 hover:border-gray-300"
                  }`}
                >
-                 <div className="w-full aspect-square rounded-lg bg-gray-50 overflow-hidden mb-1.5 relative shrink-0">
+                 <div className="w-full aspect-square rounded-lg bg-gray-50 overflow-hidden mb-2 relative shrink-0">
                     <img
                       src={optimizeCloudinaryUrl(item.image, 300, true)}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
@@ -558,8 +560,8 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                     )}
                  </div>
 
-                 <div className="mt-auto text-center">
-                    <h3 className="font-serif text-[10px] md:text-[12px] leading-tight text-gray-900 mb-0.5 line-clamp-2">{item.name}</h3>
+                 <div className="mt-auto text-center w-full">
+                    <h3 className="font-serif text-[10px] md:text-[12px] leading-tight text-gray-900 mb-0.5 line-clamp-1">{item.name}</h3>
                     <p className="font-sans font-bold text-gray-900 text-[10px] md:text-[11px]">₹{item.price.toLocaleString()}</p>
                  </div>
                </motion.div>
@@ -567,12 +569,14 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
            })}
          </div>
 
-         <button 
-           onClick={() => scroll('right')}
-           className="hidden md:flex absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white border border-gray-100 rounded-full items-center justify-center shadow-lg opacity-0 group-hover/carousel:opacity-100 transition-all hover:scale-110 active:scale-95"
-         >
-           <ChevronRight size={24} className="text-gray-900"/>
-         </button>
+         {displayItems.length > 4 && (
+           <button 
+             onClick={(e) => { e.stopPropagation(); scroll('right'); }}
+             className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white border border-gray-200 rounded-full items-center justify-center shadow-md opacity-0 group-hover/carousel:opacity-100 transition-all hover:bg-gray-50 active:scale-90"
+           >
+             <ChevronRight size={20} className="text-gray-900"/>
+           </button>
+         )}
       </div>
     </section>
   );
