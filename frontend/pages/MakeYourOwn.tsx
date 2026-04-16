@@ -519,10 +519,15 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
              <input 
                type="text" 
                placeholder="Search favorite flower..." 
-              className="pl-9 pr-4 py-2 sm:py-2 text-xs border border-gray-200 rounded-full focus:outline-none focus:border-gray-400 bg-white w-full sm:w-56 transition-all shadow-sm"
+               value={flowerSearch}
+               onChange={(e) => setFlowerSearch(e.target.value)}
+               className="pl-9 pr-4 py-2 sm:py-2 text-xs border border-gray-200 rounded-full focus:outline-none focus:border-gray-400 bg-white w-full sm:w-56 transition-all shadow-sm"
              />
            </div>
-            <div className="relative group/carousel">
+         )}
+      </div>
+
+      <div className="relative group/carousel">
         {displayItems.length > 5 && (
           <>
             <button 
