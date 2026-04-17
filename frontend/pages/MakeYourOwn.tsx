@@ -527,7 +527,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
          
         <div 
           ref={containerRef}
-          className="flex overflow-x-auto gap-4 snap-x snap-mandatory no-scrollbar scroll-smooth py-6 px-1 w-full"
+          className="flex overflow-x-auto gap-12 snap-x snap-mandatory no-scrollbar scroll-smooth py-6 px-1 w-full max-w-[950px]"
         >
           {displayItems.length === 0 && (
             <div className="w-full py-16 text-center text-xs text-gray-300 uppercase tracking-[0.2em] font-black">
@@ -544,11 +544,11 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                 whileHover={item.isOutOfStock ? {} : { y: -5, scale: 1.02 }}
                 key={item.id}
                 onClick={() => !item.isOutOfStock && handleAdd(item)}
-                className={`flex-none w-[calc(80%-12px)] sm:w-[calc(45%-12px)] md:w-[calc(20%-12.8px)] snap-start bg-transparent border-none transition-all duration-300 group flex flex-col items-center text-center cursor-pointer p-0 ${
+                className={`flex-none w-[140px] snap-start bg-transparent border-none transition-all duration-300 group flex flex-col items-center text-center cursor-pointer p-0 ${
                   item.isOutOfStock 
                     ? "opacity-50 grayscale cursor-not-allowed" 
                     : isSelected 
-                      ? "ring-2 ring-black rounded-xl" 
+                      ? "ring-2 ring-black rounded-xl p-2" 
                       : ""
                 }`}
               >
