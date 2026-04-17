@@ -211,7 +211,6 @@ const MakeYourOwn: React.FC = () => {
     setSelectedRibbon(null);
     setAdditions([]);
     setInstructions("");
-    setSelectedVase(null);
   };
 
   const steps = [
@@ -221,7 +220,6 @@ const MakeYourOwn: React.FC = () => {
     { title: "4. Add Sweetness", type: "chocolate" },
     { title: "5. Choose Paper Type", type: "paper" },
     { title: "6. The Final Ribbon", type: "ribbon" },
-    { title: "7. Select Your Vessel", type: "vase" },
   ];
 
   return (
@@ -447,17 +445,6 @@ const SummaryContent = ({
       </div>
     )}
 
-    {selectedVase && (
-       <div className="flex justify-between items-center text-sm font-bold text-gray-900 bg-white border border-gray-100 p-4 rounded-xl mb-3">
-         <span className="leading-tight">{selectedVase.name}</span>
-         <div className="flex items-center gap-2">
-           <span className="font-black text-xs text-gray-400">₹{selectedVase.price.toLocaleString()}</span>
-           <button onClick={clearVase} className="p-1 text-red-500 hover:text-red-700">
-             <Trash2 size={14} strokeWidth={2.5}/>
-           </button>
-         </div>
-       </div>
-    )}
   </div>
 );
 
