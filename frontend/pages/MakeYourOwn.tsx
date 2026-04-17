@@ -544,15 +544,15 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                 whileHover={item.isOutOfStock ? {} : { y: -5, scale: 1.02 }}
                 key={item.id}
                 onClick={() => !item.isOutOfStock && handleAdd(item)}
-                className={`flex-none w-[160px] snap-start bg-transparent border-none transition-all duration-300 group flex flex-col items-center text-center cursor-pointer p-0 ${
+                className={`flex-none w-[180px] snap-start bg-transparent border-none transition-all duration-300 group flex flex-col items-center text-center cursor-pointer p-0 ${
                   item.isOutOfStock 
                     ? "opacity-50 grayscale cursor-not-allowed" 
                     : isSelected 
-                      ? "ring-1 ring-black/10 p-2 rounded-2xl" 
+                      ? "ring-1 ring-black/10 p-3 rounded-2xl" 
                       : ""
                 }`}
               >
-                <div className="w-[100px] h-[100px] mb-4 relative shrink-0 flex items-center justify-center">
+                <div className="w-[120px] h-[120px] mb-4 relative shrink-0 flex items-center justify-center">
                    <img
                      src={optimizeCloudinaryUrl(item.image, 400, true)}
                      className="w-full h-full object-contain rounded-2xl group-hover:scale-105 transition-transform duration-700 ease-out"
@@ -572,8 +572,8 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                 </div>
 
                 <div className="w-full mt-auto px-2">
-                   <h3 className="font-serif font-bold text-[11px] md:text-[13px] text-gray-900 mb-1 leading-tight line-clamp-2 min-h-[2.5rem] flex items-center justify-center">{item.name}</h3>
-                   <p className="font-sans font-black text-gray-900 text-[10px] md:text-[12px]">₹{item.price.toLocaleString()}</p>
+                   <h3 className="font-serif font-bold text-[12px] md:text-[14px] text-gray-900 mb-1 leading-tight line-clamp-2 min-h-[2.5rem] flex items-center justify-center">{item.name}</h3>
+                   <p className="font-sans font-black text-gray-900 text-[11px] md:text-[13px]">₹{item.price.toLocaleString()}</p>
                 </div>
               </motion.div>
             );
