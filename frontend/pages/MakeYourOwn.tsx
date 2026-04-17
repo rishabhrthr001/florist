@@ -552,10 +552,10 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                       : ""
                 }`}
               >
-                <div className="w-[6%] mb-2 relative shrink-0 flex items-center justify-center">
+                <div className="w-[70px] h-[70px] mb-3 relative shrink-0 flex items-center justify-center">
                    <img
                      src={optimizeCloudinaryUrl(item.image, 400, true)}
-                     className="w-full h-auto object-contain group-hover:scale-110 transition-transform duration-700 ease-out"
+                     className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 ease-out"
                      alt={item.name}
                      loading="lazy"
                    />
@@ -571,9 +571,9 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                    )}
                 </div>
 
-                <div className="w-full">
-                   <h3 className="font-serif font-bold text-[10px] md:text-[12px] text-gray-900 mb-0.5 leading-tight line-clamp-1">{item.name}</h3>
-                   <p className="font-sans font-black text-gray-900 text-[9px] md:text-[11px]">₹{item.price.toLocaleString()}</p>
+                <div className="w-full mt-auto">
+                   <h3 className="font-serif font-bold text-[11px] md:text-[13px] text-gray-900 mb-1 leading-tight line-clamp-2">{item.name}</h3>
+                   <p className="font-sans font-black text-gray-900 text-[10px] md:text-[12px]">₹{item.price.toLocaleString()}</p>
                 </div>
               </motion.div>
             );
