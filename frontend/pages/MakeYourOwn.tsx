@@ -507,7 +507,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
           )}
       </div>
 
-      <div className="relative w-fit mx-auto">
+      <div className="relative w-fit ml-0">
         {displayItems.length > 5 && (
           <>
             <button 
