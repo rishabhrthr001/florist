@@ -504,30 +504,31 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
              />
              <Search size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400" />
            </div>
-         )}
+            </div>
+          )}
       </div>
 
-      <div className="relative group/carousel">
+      <div className="relative w-fit mx-auto">
         {displayItems.length > 5 && (
           <>
             <button 
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll('left'); }}
-              className="flex absolute -left-6 top-[40%] -translate-y-1/2 z-50 w-11 h-11 bg-white border border-gray-200 rounded-full items-center justify-center shadow-lg hover:bg-gray-50 active:scale-90 transition-all"
+              className="flex absolute -left-10 top-1/2 -translate-y-1/2 z-50 w-10 h-10 bg-white border border-gray-100 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:bg-gray-50 active:scale-95 transition-all"
             >
-              <ChevronLeft size={24} className="text-gray-900"/>
+              <ChevronLeft size={20} className="text-gray-900"/>
             </button>
             <button 
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); scroll('right'); }}
-              className="flex absolute -right-6 top-[40%] -translate-y-1/2 z-50 w-11 h-11 bg-white border border-gray-200 rounded-full items-center justify-center shadow-lg hover:bg-gray-50 active:scale-90 transition-all"
+              className="flex absolute -right-10 top-1/2 -translate-y-1/2 z-50 w-10 h-10 bg-white border border-gray-100 rounded-full items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:bg-gray-50 active:scale-95 transition-all"
             >
-              <ChevronRight size={24} className="text-gray-900"/>
+              <ChevronRight size={20} className="text-gray-900"/>
             </button>
           </>
         )}
-         
+          
         <div 
           ref={containerRef}
-          className="flex overflow-x-auto gap-12 snap-x snap-mandatory no-scrollbar scroll-smooth py-6 px-1 w-full max-w-[950px]"
+          className="flex overflow-x-auto gap-8 snap-x snap-mandatory no-scrollbar scroll-smooth py-6 px-1 w-full max-w-[1000px]"
         >
           {displayItems.length === 0 && (
             <div className="w-full py-16 text-center text-xs text-gray-300 uppercase tracking-[0.2em] font-black">
@@ -544,35 +545,35 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                 whileHover={item.isOutOfStock ? {} : { y: -5, scale: 1.02 }}
                 key={item.id}
                 onClick={() => !item.isOutOfStock && handleAdd(item)}
-                className={`flex-none w-[140px] snap-start bg-transparent border-none transition-all duration-300 group flex flex-col items-center text-center cursor-pointer p-0 ${
+                className={`flex-none w-[160px] snap-start bg-transparent border-none transition-all duration-300 group flex flex-col items-center text-center cursor-pointer p-0 ${
                   item.isOutOfStock 
                     ? "opacity-50 grayscale cursor-not-allowed" 
                     : isSelected 
-                      ? "ring-2 ring-black rounded-xl p-2" 
+                      ? "ring-1 ring-black/10 p-2 rounded-2xl" 
                       : ""
                 }`}
               >
-                <div className="w-[70px] h-[70px] mb-3 relative shrink-0 flex items-center justify-center">
+                <div className="w-[100px] h-[100px] mb-4 relative shrink-0 flex items-center justify-center">
                    <img
                      src={optimizeCloudinaryUrl(item.image, 400, true)}
-                     className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 ease-out"
+                     className="w-full h-full object-contain rounded-2xl group-hover:scale-105 transition-transform duration-700 ease-out"
                      alt={item.name}
                      loading="lazy"
                    />
                    {isSelected && (
-                     <div className="absolute -top-1 -right-1 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md z-10">
-                        <Check size={10} strokeWidth={3} />
+                     <div className="absolute -top-1 -right-1 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center shadow-md z-10 scale-90">
+                        <Check size={12} strokeWidth={3} />
                      </div>
                    )}
                    {isAdded && (item.type !== 'base' && item.type !== 'ribbon' && item.type !== 'paper') && (
-                     <div className="absolute -top-1 -right-1 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-md text-[10px] font-bold z-10">
+                     <div className="absolute -top-1 -right-1 w-6 h-6 bg-black text-white rounded-full flex items-center justify-center shadow-md text-[11px] font-bold z-10 scale-90">
                         {addedItem.qty}
                      </div>
                    )}
                 </div>
 
-                <div className="w-full mt-auto">
-                   <h3 className="font-serif font-bold text-[11px] md:text-[13px] text-gray-900 mb-1 leading-tight line-clamp-2">{item.name}</h3>
+                <div className="w-full mt-auto px-2">
+                   <h3 className="font-serif font-bold text-[11px] md:text-[13px] text-gray-900 mb-1 leading-tight line-clamp-2 min-h-[2.5rem] flex items-center justify-center">{item.name}</h3>
                    <p className="font-sans font-black text-gray-900 text-[10px] md:text-[12px]">₹{item.price.toLocaleString()}</p>
                 </div>
               </motion.div>
