@@ -135,9 +135,24 @@ const MakeYourOwn: React.FC = () => {
   /* ================= ADD / REMOVE ================= */
 
   const handleAdd = (item: ComponentItem) => {
-    if (item.type === "base") setSelectedBase(item);
-    else if (item.type === "ribbon") setSelectedRibbon(item);
-    else if (item.type === "paper") setSelectedPaper(item);
+    if (item.type === "base") {
+      if (selectedBase?.id === item.id) setSelectedBase(null);
+      else {
+        setSelectedBase(item);
+        setSelectedPaper(null);
+      }
+    }
+    else if (item.type === "ribbon") {
+      if (selectedRibbon?.id === item.id) setSelectedRibbon(null);
+      else setSelectedRibbon(item);
+    }
+    else if (item.type === "paper") {
+      if (selectedPaper?.id === item.id) setSelectedPaper(null);
+      else {
+        setSelectedPaper(item);
+        setSelectedBase(null);
+      }
+    }
     else {
       setAdditions((prev) => {
         const existing = prev.find((a) => a.item.id === item.id);
