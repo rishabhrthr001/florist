@@ -552,7 +552,7 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
                       : ""
                 }`}
               >
-                <div className="w-[20%] mb-2 relative shrink-0 flex items-center justify-center">
+                <div className="w-[6%] mb-2 relative shrink-0 flex items-center justify-center">
                    <img
                      src={optimizeCloudinaryUrl(item.image, 400, true)}
                      className="w-full h-auto object-contain group-hover:scale-110 transition-transform duration-700 ease-out"
