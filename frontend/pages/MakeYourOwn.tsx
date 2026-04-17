@@ -432,8 +432,7 @@ const SummaryContent = ({
             <Trash2 size={14} strokeWidth={2.5}/>
           </button>
         </div>
-      </div>
-    )}
+          )}
 
     {selectedRibbon && (
       <div className="flex justify-between items-center text-sm font-bold text-gray-900 bg-white border border-gray-100 p-4 rounded-xl mb-3">
@@ -444,8 +443,7 @@ const SummaryContent = ({
             <Trash2 size={14} strokeWidth={2.5}/>
           </button>
         </div>
-      </div>
-    )}
+          )}
 
     {selectedVase && (
        <div className="flex justify-between items-center text-sm font-bold text-gray-900 bg-white border border-gray-100 p-4 rounded-xl mb-3">
@@ -456,8 +454,7 @@ const SummaryContent = ({
              <Trash2 size={14} strokeWidth={2.5}/>
            </button>
          </div>
-       </div>
-     )}
+          )}
   </div>
 );
 
@@ -504,7 +501,6 @@ const StepCarousel = ({ step, items, selectedBase, selectedRibbon, selectedPaper
              />
              <Search size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400" />
            </div>
-            </div>
           )}
       </div>
 
