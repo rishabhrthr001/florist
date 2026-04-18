@@ -19,8 +19,8 @@ export const optimizeCloudinaryUrl = (
   const baseUrl = splitUrl[0];
   const rest = splitUrl[1];
 
-  // Best practices: f_auto (format), q_auto (quality), dpr_auto (device pixel ratio)
-  const transformations = ["f_auto", "q_auto:good", "dpr_auto"];
+  // Best practices: f_auto (format), q_auto:eco (aggressive size reduction), dpr_auto (device pixel ratio)
+  const transformations = ["f_auto", "q_auto:eco", "dpr_auto"];
 
   if (width) {
     transformations.push(`w_${width}`);

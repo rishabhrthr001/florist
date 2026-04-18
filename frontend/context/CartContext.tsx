@@ -10,7 +10,7 @@ interface CustomAddition {
 }
 
 interface CustomBouquet {
-  base: {
+  base?: {
     id: string;
     name: string;
     price: number;
@@ -285,7 +285,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     additions: CustomAddition[],
   ): CartItem => {
     const newPrice =
-      item.custom!.base.price +
+      (item.custom!.base?.price || 0) +
       (item.custom!.ribbon?.price || 0) +
       (item.custom!.paper?.price || 0) +
       additions.reduce((s, x) => s + x.item.price * x.qty, 0);

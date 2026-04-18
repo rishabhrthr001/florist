@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.99.0",
     "axios": "^1.13.2",
     "canvas-confetti": "^1.9.4",
     "dotenv": "^17.2.3",

@@ -92,7 +92,11 @@ export interface Order {
 
   orderStatus: "placed" | "confirmed" | "preparing" | "delivered" | "cancelled";
 
-  paymentStatus: string;
+  paymentStatus: "pending" | "paid" | "failed";
+  paymentMethod: "cod" | "online";
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
 
   createdAt: string;
   deliveryType?: "standard" | "scheduled";
@@ -215,6 +219,7 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                   <th className="px-6 py-4">Phone</th>
                   <th className="px-6 py-4">Address</th>
                   <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Payment</th>
                   <th className="px-6 py-4">Delivery</th>
                   <th className="px-6 py-4">Total</th>
                   <th className="px-6 py-4 text-right">Manage</th>
@@ -264,6 +269,17 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                       >
                         {order.orderStatus}
                       </span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md w-fit ${order.paymentMethod === 'online' ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-orange-50 text-orange-600 border border-orange-100'}`}>
+                          {order.paymentMethod === 'online' ? 'Online' : 'COD'}
+                        </span>
+                        <span className={`text-[8px] font-bold uppercase ${order.paymentStatus === 'paid' ? 'text-green-500' : 'text-gray-400'}`}>
+                          {order.paymentStatus === 'paid' ? '● PAID' : '○ PENDING'}
+                        </span>
+                      </div>
                     </td>
 
                     <td className="px-6 py-4 font-bold">
@@ -356,8 +372,8 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
 
               {/* Body */}
               <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
-                {/* Customer */}
-                <div className="grid grid-cols-2 gap-6 pb-6 border-b border-gray-50">
+                {/* Customer, Delivery, Payment */}
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 pb-6 border-b border-gray-50">
                   <div>
                     <p className="text-[10px] uppercase tracking-widest text-gray-400">
                       Customer
@@ -380,6 +396,21 @@ const OrdersPanel = ({ orders = [], setOrders }: OrdersProps) => {
                     {selectedOrder.deliveryType === 'scheduled' && (
                       <p className="text-xs text-purple-600 font-bold mt-0.5">
                         {selectedOrder.deliveryDate} — {selectedOrder.deliveryTime}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-gray-400">
+                      Payment
+                    </p>
+                    <p className={`text-sm font-bold ${selectedOrder.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'}`}>
+                      {selectedOrder.paymentMethod === 'online' ? 'Online' : 'Cash on Delivery'}
+                      {selectedOrder.paymentStatus === 'paid' ? ' (PAID)' : ' (PENDING)'}
+                    </p>
+                    {selectedOrder.razorpayPaymentId && (
+                      <p className="text-[10px] text-gray-400 font-mono mt-0.5">
+                        ID: {selectedOrder.razorpayPaymentId}
                       </p>
                     )}
                   </div>

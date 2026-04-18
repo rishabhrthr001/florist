@@ -148,6 +148,21 @@ const Checkout: React.FC = () => {
 
   /* ---------------- CONFETTI ---------------- */
 
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "online">("online");
+
+  /* ---------------- LOAD RAZORPAY SCRIPT ---------------- */
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  /* ---------------- CONFETTI ---------------- */
+
   const fireConfetti = () => {
     confetti({
       particleCount: 150,
@@ -247,7 +262,7 @@ const Checkout: React.FC = () => {
         subtotal,
         totalAmount,
 
-        paymentMethod: "cod",
+        paymentMethod: paymentMethod,
       };
 
       const { data } = await axios.post(`${API}/orders`, payload, {
@@ -256,19 +271,77 @@ const Checkout: React.FC = () => {
         },
       });
 
-      /* 🎉 SUCCESS */
-      setSuccessOrderId(data.orderId);
-      fireConfetti();
-      clearCart();
+      if (paymentMethod === "online") {
+        const { razorpayOrder, order } = data;
 
-      setTimeout(() => {
-        navigate("/explore");
-      }, 5000); // Increased wait time to appreciate the success screen
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          name: "Mangalam Florist",
+          description: "Bouquet Purchase",
+          order_id: razorpayOrder.id,
+          handler: async (response: any) => {
+            try {
+              setLoading(true);
+              const verifyRes = await axios.post(
+                `${API}/orders/verify`,
+                {
+                  ...response,
+                  orderId: order._id,
+                },
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+
+              if (verifyRes.data.order) {
+                setSuccessOrderId(verifyRes.data.order.orderId);
+                fireConfetti();
+                clearCart();
+                setTimeout(() => navigate("/explore"), 5000);
+              }
+            } catch (err) {
+              console.error("Verification failed", err);
+              toast.error("Payment verification failed. Please contact support.");
+            } finally {
+              setLoading(false);
+            }
+          },
+          prefill: {
+            name: finalName,
+            contact: finalPhone,
+            email: user.email,
+          },
+          theme: {
+            color: "#EE1C47",
+          },
+          modal: {
+            ondismiss: function() {
+              setLoading(false);
+            }
+          }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+      } else {
+        /* 🎉 SUCCESS COD */
+        setSuccessOrderId(data.orderId);
+        fireConfetti();
+        clearCart();
+
+        setTimeout(() => {
+          navigate("/explore");
+        }, 5000);
+      }
     } catch (err: any) {
       console.error(err);
       toast.error(err?.response?.data?.msg || "Failed to place order.");
     } finally {
-      setLoading(false);
+      if (paymentMethod === "cod") {
+        setLoading(false);
+      }
     }
   };
 
@@ -622,6 +695,35 @@ const Checkout: React.FC = () => {
               onChange={(e) => setSpecialRequest(e.target.value)}
               className="w-full bg-[#FBFBFB] border border-gray-200 rounded-2xl p-5 text-sm font-medium resize-none focus:outline-none focus:border-blue-300 focus:bg-white transition-all shadow-sm"
             />
+          </section>
+
+          {/* 4. PAYMENT METHOD */}
+          <section className="bg-white rounded-[2rem] shadow-[0_4px_30px_rgba(0,0,0,0.02)] border border-gray-100 p-6 md:p-10 relative overflow-hidden">
+            <div className="flex items-center gap-3 mb-8">
+               <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center text-green-500">
+                 <ShieldCheck size={20} strokeWidth={2}/>
+               </div>
+               <h2 className="font-serif italic text-2xl md:text-3xl text-gray-900">Secure Online Payment</h2>
+            </div>
+
+            <div className="max-w-md">
+               <div
+                 className="text-left rounded-3xl border p-6 transition-all relative overflow-hidden border-[#EE1C47] bg-white ring-4 ring-pink-50 shadow-md"
+               >
+                 <div className="flex items-center justify-between mb-4">
+                    <span className="font-sans font-bold text-gray-900 text-lg">Razorpay Secure</span>
+                    <CheckCircle2 size={24} className="text-[#EE1C47]" />
+                 </div>
+                 <p className="text-xs text-gray-500 leading-relaxed font-medium">
+                   Pay securely using UPI, Credit/Debit Cards, or Netbanking. Your payment information is encrypted and never stored on our servers.
+                 </p>
+                 <div className="mt-4 flex gap-3">
+                    <div className="h-6 w-10 bg-gray-50 rounded border border-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-400">UPI</div>
+                    <div className="h-6 w-10 bg-gray-50 rounded border border-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-400">CARD</div>
+                    <div className="h-6 w-10 bg-gray-50 rounded border border-gray-100 flex items-center justify-center text-[8px] font-bold text-gray-400">NET</div>
+                 </div>
+               </div>
+            </div>
           </section>
 
         </div>

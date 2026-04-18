@@ -173,10 +173,12 @@ const Cart: React.FC = () => {
                         </p>
 
                         <div className="space-y-3">
-                          <div className="flex justify-between text-[11px] md:text-xs font-medium text-gray-800">
-                             <span className="flex items-center gap-2"><span className="text-gray-400 text-[9px] border bg-white px-1 py-0.5 rounded uppercase font-bold tracking-wide">Base</span> {item.custom.base.name}</span>
-                             <span className="font-semibold text-gray-500">₹{item.custom.base.price}</span>
-                          </div>
+                          {item.custom.base && (
+                            <div className="flex justify-between text-[11px] md:text-xs font-medium text-gray-800">
+                               <span className="flex items-center gap-2"><span className="text-gray-400 text-[9px] border bg-white px-1 py-0.5 rounded uppercase font-bold tracking-wide">Base</span> {item.custom.base.name}</span>
+                               <span className="font-semibold text-gray-500">₹{item.custom.base.price}</span>
+                            </div>
+                          )}
 
                           {item.custom.additions.map((a: any) => (
                             <div
@@ -403,9 +405,8 @@ const Cart: React.FC = () => {
         </div>
       </div>
       
-      {/* MOBILE STICKY CHECKOUT */}
       {items.length > 0 && (
-        <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-4 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-5 sm:pb-6">
+        <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-5 px-6 z-50 flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-8 sm:pb-6">
            <div className="flex flex-col justify-center">
               <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest leading-tight mb-0.5">Total</p>
               <p className="font-sans font-bold text-xl text-gray-900 leading-tight">₹{total.toLocaleString()}</p>

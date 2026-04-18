@@ -5,6 +5,17 @@ import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
 import { HelmetProvider } from "react-helmet-async";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -15,13 +26,15 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <HelmetProvider>
-      <WishlistProvider>
-        <CartProvider>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </CartProvider>
-      </WishlistProvider>
+      <QueryClientProvider client={queryClient}>
+        <WishlistProvider>
+          <CartProvider>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </CartProvider>
+        </WishlistProvider>
+      </QueryClientProvider>
     </HelmetProvider>
   </React.StrictMode>,
 );
