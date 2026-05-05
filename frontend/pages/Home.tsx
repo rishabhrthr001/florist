@@ -11,6 +11,7 @@ import ProductSkeleton from "../components/ProductSkeleton";
 import { optimizeCloudinaryUrl } from "../lib/cloudinary";
 
 import API from "../config";
+import SEO from "../components/SEO";
 import { Helmet } from "react-helmet-async";
 
 /* ---------------- TYPES ---------------- */
@@ -83,7 +84,7 @@ const FALLBACK_FLOWERS = [
 ];
 
 /* ---------------- CACHE ---------------- */
-const HOME_CACHE_KEY = "home_data_cache_v1";
+const HOME_CACHE_KEY = "home_data_cache_v2";
 
 const getHomeCache = () => {
   try {
@@ -153,8 +154,13 @@ const Home: React.FC = () => {
 
   const displayBanners = defaultBanners;
 
-  // Show EVERYTHING in Shop by Category as requested
-  const shopCategories = categories.length > 0 ? categories : FALLBACK_SHOP_CATEGORIES;
+  // Show EVERYTHING in Shop by Category, but map the fallback icons so they keep their original look
+  const shopCategories = categories.length > 0 
+    ? categories.map(cat => {
+        const fallback = FALLBACK_SHOP_CATEGORIES.find(f => f.name.toLowerCase() === cat.name.toLowerCase() || f.slug === cat.slug);
+        return { ...cat, image: fallback ? fallback.image : cat.image };
+      })
+    : FALLBACK_SHOP_CATEGORIES;
 
   const backendLoveCats = categories.filter(c => c.section === 'celebrate-love' && !['thinking-of-you', 'sorry'].includes(c.slug));
   const celebrateLoveCategories = backendLoveCats.length > 0 ? backendLoveCats : FALLBACK_CELEBRATE_LOVE;
@@ -169,10 +175,70 @@ const Home: React.FC = () => {
 
   return (
     <div className="bg-[#FAF9F6] min-h-screen pt-32 pb-10">
-      <Helmet>
-        <title>Mangalam Florist | Luxury Flower Delivery</title>
-        <meta name="description" content="Send fresh, luxury flowers and premium floral gifts with Mangalam Florist." />
-      </Helmet>
+      <SEO 
+        title="Luxury Flower Delivery & Premium Floral Gifts"
+        description="Send fresh, luxury flowers and premium floral gifts with Mangalam Florist. Handcrafted bouquets for birthdays, anniversaries, and every story."
+        schema={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Mangalam Florist",
+            "url": "https://www.mangalamflorist.com",
+            "logo": "https://www.mangalamflorist.com/newLogo.png",
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "telephone": "+91-9876543210",
+              "contactType": "customer service"
+            },
+            "sameAs": [
+              "https://www.instagram.com/mangalamflorist",
+              "https://www.facebook.com/mangalamflorist"
+            ]
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Do you offer same-day flower delivery?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes, Mangalam Florist offers same-day express delivery for orders placed before 4 PM. We ensure your flowers arrive fresh and beautiful."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I customize my own bouquet?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Absolutely! Our 'Make Your Own' atelier allows you to hand-pick every bloom, base, and ribbon to create a truly unique floral gift."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What occasions do you cater to?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "We provide premium floral arrangements for birthdays, anniversaries, weddings, corporate events, and more."
+                }
+              }
+            ]
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://www.mangalamflorist.com"
+              }
+            ]
+          }
+        ]}
+      />
       
       <section className="mb-20 max-w-[120rem] mx-auto px-4 md:px-8">
         <div className="flex gap-4 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -255,6 +321,9 @@ const Home: React.FC = () => {
                       className="w-full h-full rounded-full object-cover group-hover:scale-[1.12] transition-transform duration-[1500ms]"
                       alt={cat.name}
                       loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=300&q=80";
+                      }}
                     />
                   </div>
                 </div>

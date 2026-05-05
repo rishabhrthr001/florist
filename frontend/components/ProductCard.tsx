@@ -34,14 +34,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const inWishlist = isInWishlist(product._id);
 
   const prefetchProduct = async () => {
-    if (prefetchCache.has(product.slug)) return;
+    const detailKey = product.slug || product._id;
+    if (prefetchCache.has(detailKey)) return;
     
     // Prefetch Product Details
     queryClient.prefetchQuery({
-      queryKey: ["product", product.slug],
+      queryKey: ["product", detailKey],
       queryFn: async () => {
-        const { data } = await axios.get(`${API}/product/slug/${product.slug}`);
-        sessionStorage.setItem(`product_detail_${product.slug}`, JSON.stringify(data));
+        const { data } = await axios.get(`${API}/product/slug/${detailKey}`);
+        sessionStorage.setItem(`product_detail_${detailKey}`, JSON.stringify(data));
         return data;
       },
       staleTime: 5 * 60 * 1000,
@@ -49,16 +50,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
     // Prefetch Reviews
     queryClient.prefetchQuery({
-      queryKey: ["reviews", product.slug],
+      queryKey: ["reviews", detailKey],
       queryFn: async () => {
-        const { data } = await axios.get(`${API}/reviews/product/${product.slug}`);
-        sessionStorage.setItem(`product_reviews_${product.slug}`, JSON.stringify(data));
+        const { data } = await axios.get(`${API}/reviews/product/${detailKey}`);
+        sessionStorage.setItem(`product_reviews_${detailKey}`, JSON.stringify(data));
         return data;
       },
       staleTime: 5 * 60 * 1000,
     });
 
-    prefetchCache.add(product.slug);
+    prefetchCache.add(detailKey);
   };
 
   const handleMouseEnter = () => {
@@ -109,7 +110,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       className={`group h-full flex flex-col ${product.isOutOfStock ? "opacity-60 grayscale-[0.3]" : ""}`}
     >
       <Link
-        to={`/product/${product.slug}`}
+        to={`/product/${product.slug || product._id}`}
         className="block relative overflow-hidden rounded-[1.25rem] bg-[#F9F9F9] aspect-[4/5] mb-4"
       >
         <motion.img
@@ -137,7 +138,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       </Link>
 
       <div className="flex flex-col flex-1 px-1">
-        <Link to={`/product/${product.slug}`} className="w-full">
+        <Link to={`/product/${product.slug || product._id}`} className="w-full">
           <h3 className="font-sans text-[13px] md:text-[15px] font-medium text-gray-900 group-hover:text-pink-600 transition-colors leading-[1.3] mb-1.5 line-clamp-2">{product.name}</h3>
         </Link>
         <div className="flex items-center gap-1.5 mb-2.5">
